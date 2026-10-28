@@ -38,9 +38,10 @@ export const THEREMIN_MAX_MIDI = 84; // C6
 export function createThereminModel(initial = {}) {
   return {
     enabled: initial.enabled !== undefined ? Boolean(initial.enabled) : true,
-    scaleSnap: initial.scaleSnap !== undefined ? Boolean(initial.scaleSnap) : true,
+    scaleSnap: initial.scaleSnap !== undefined ? Boolean(initial.scaleSnap) : false,
     decoherenceBuildup: Number(initial.decoherenceBuildup) || 0.0,
     classicalTurns: Number(initial.classicalTurns) || 0,
+    stillnessTime: Number(initial.stillnessTime) || 0.0,
     isStuck: Boolean(initial.isStuck),
     resinFlow: Number(initial.resinFlow) || 0.0,
     status: initial.status || "FLOW", // "FLOW" | "CALCIFYING" | "STUCK" | "SHATTERED" | "MELTED"
@@ -56,9 +57,10 @@ export function createThereminModel(initial = {}) {
 
 /**
  * Maps horizontal normalized coordinate (-1..1) to a frequency in Hz.
+ * Defaults to continuous microtonal analog glide (scaleSnap = false).
  * When scaleSnap is true, snaps to the closest degree of the creature's scale.
  */
-export function pitchForThereminCoordinate(normX, score, scaleSnap = true) {
+export function pitchForThereminCoordinate(normX, score, scaleSnap = false) {
   const rootMidi = score?.root !== undefined ? score.root : 60;
   const scaleIndex = score?.scale !== undefined ? score.scale % SCALES.length : 0;
   const scale = SCALES[scaleIndex] || SCALES[0];
@@ -75,7 +77,7 @@ export function pitchForThereminCoordinate(normX, score, scaleSnap = true) {
     return {
       midi: rawMidi,
       frequency: 440 * (2 ** ((rawMidi - 69) / 12)),
-      pitchClass: Math.round(rawMidi) % 12,
+      pitchClass: (Math.round(rawMidi) % 12 + 12) % 12,
     };
   }
 
@@ -104,6 +106,7 @@ export function pitchForThereminCoordinate(normX, score, scaleSnap = true) {
 
 /**
  * Updates the physical-metabolic Theremin state based on vitrine motion.
+ * Uses real delta time dt (seconds) to prevent high frame-rate rapid runaway.
  * Returns an array of events: ["MELT", "SHATTER", "CALCIFY", "STUCK", "COLLAPSE", "FREE"]
  */
 export function updateThereminModel(model, {
@@ -113,16 +116,19 @@ export function updateThereminModel(model, {
   isInteracting = false,
   pitchClass = null,
   midi = null,
+  dt = 0.016,
 } = {}) {
   const events = [];
+  const safeDt = Math.max(0.0001, Math.min(5.0, Number(dt) || 0.016));
 
   if (!model.enabled || !isInteracting) {
     // Natural dissipation when not active
-    model.resinFlow = Math.max(0, model.resinFlow * 0.9);
+    model.stillnessTime = 0.0;
+    model.resinFlow = Math.max(0, model.resinFlow - safeDt * 4.0);
     if (!model.isStuck) {
-      model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - 0.08);
-      model.classicalTurns = Math.max(0, model.classicalTurns - 1);
-      model.slag = Math.max(0, model.slag * 0.95);
+      model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - safeDt * 5.0);
+      model.classicalTurns = Math.max(0, model.classicalTurns - safeDt * 2.0);
+      model.slag = Math.max(0, model.slag - safeDt * 0.8);
       model.status = "FLOW";
     } else if (model.decoherenceBuildup < THEREMIN_MELT_THRESHOLD) {
       model.isStuck = false;
@@ -141,48 +147,61 @@ export function updateThereminModel(model, {
   model.lastX = normX;
   model.lastY = normY;
 
-  // Resin flow from kinetic motion
-  model.resinFlow = Math.min(25.0, currentSpeed * 4.0);
+  // Fluid resin flow from kinetic motion
+  const targetResin = Math.min(10.0, currentSpeed * 14.0);
+  model.resinFlow += (targetResin - model.resinFlow) * Math.min(1, safeDt * 5.0);
 
-  // 1. Melt: rapid turbulent movement dissolves decoherence
-  if (currentSpeed > 0.45 && model.decoherenceBuildup > 0) {
-    const dissolved = currentSpeed * 10.0;
+  // 1. Melt: rapid, turbulent flick dissolves decoherence and slag
+  if (currentSpeed > 0.32 && (model.decoherenceBuildup > 0 || model.slag > 0)) {
+    const dissolved = currentSpeed * 35.0 * safeDt;
     model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - dissolved);
-    model.classicalTurns = 0;
-    model.slag = Math.max(0, model.slag - 0.2);
+    model.stillnessTime = 0.0;
+    model.classicalTurns = Math.max(0, model.classicalTurns - safeDt * 3.0);
+    model.slag = Math.max(0, model.slag - safeDt * 2.5);
     model.status = "MELTED";
     events.push("MELT");
   }
-  // 2. Calcify: hovering stationary builds classical turns and calcified slag
-  else if (currentSpeed < 0.035) {
-    model.classicalTurns += 1;
-    const slagInc = Math.min(2.0, model.classicalTurns * 0.15);
-    model.decoherenceBuildup += slagInc;
-    model.slag = Math.min(1.0, model.classicalTurns * 0.04);
-    model.status = "CALCIFYING";
-    events.push("CALCIFY");
-  }
-  // 3. Complexity / Shatter: note progression relieves decoherence
-  else if (pitchClass !== null && model.lastPitchClass !== null && pitchClass !== model.lastPitchClass) {
-    if (model.classicalTurns > 0) {
-      model.classicalTurns = 0;
-      const relief = 12.0;
-      model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - relief);
-      model.status = "SHATTERED";
-      events.push("SHATTER");
-    } else {
+  // 2. Calcify: hovering motionlessly builds stillness and calcified slag
+  else if (currentSpeed < 0.012) {
+    model.stillnessTime += safeDt;
+    // Generous grace period: first 2.5 seconds are completely clean for sustained singing notes
+    if (model.stillnessTime > 2.5) {
+      const activeStill = model.stillnessTime - 2.5;
+      model.classicalTurns += safeDt;
+      const rate = 1.2 + Math.min(2.0, activeStill * 0.25);
+      model.decoherenceBuildup += rate * safeDt;
+      model.slag = Math.min(1.0, activeStill * 0.09);
+      model.status = "CALCIFYING";
+      events.push("CALCIFY");
+    } else if (!model.isStuck) {
       model.status = "FLOW";
     }
-  } else if (!model.isStuck) {
-    model.status = "FLOW";
+  }
+  // 3. Fluid Melodic Motion: moving between notes naturally relieves decoherence
+  else {
+    model.stillnessTime = Math.max(0, model.stillnessTime - safeDt * 3.0);
+    if (!model.isStuck) {
+      model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - safeDt * 4.0);
+      model.slag = Math.max(0, model.slag - safeDt * 0.6);
+      model.status = "FLOW";
+    }
+  }
+
+  // Melodic transitions quietly relieve stationary tension without abrasive burst pings
+  if (pitchClass !== null && model.lastPitchClass !== null && pitchClass !== model.lastPitchClass) {
+    model.stillnessTime = 0.0;
+    if (model.decoherenceBuildup > 0 && !model.isStuck) {
+      model.decoherenceBuildup = Math.max(0, model.decoherenceBuildup - 1.2);
+    }
   }
 
   model.lastPitchClass = pitchClass;
   model.lastMidi = midi;
 
-  // 4. Critical Shatter Point Collapse
+  // 4. Critical Shatter Point Collapse (extreme buildup discharge)
   if (model.decoherenceBuildup >= THEREMIN_SHATTER_POINT) {
     model.decoherenceBuildup = 0.0;
+    model.stillnessTime = 0.0;
     model.classicalTurns = 0;
     model.slag = 0.0;
     model.isStuck = false;
@@ -232,60 +251,73 @@ export function formatThereminTelemetry(model, frequency = null) {
   return `THEREMIN · FLOW · RESIN ${resin}${freqStr}`;
 }
 
+// Pre-computed static soft-clip tanh curve for click-free saturation
+const STATIC_TANH_CURVE = (() => {
+  const samples = 512;
+  const curve = new Float32Array(samples);
+  const norm = Math.tanh(1.6);
+  for (let i = 0; i < samples; i += 1) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = Math.tanh(x * 1.6) / norm;
+  }
+  return curve;
+})();
+
 /**
  * Creates the Web Audio synthesizer node graph for the Aetheric Bone Theremin.
+ * Operates as a pure, vocal, liquid-gliding analog instrument with zero beating
+ * and smooth tube warmth.
  */
 export function createThereminVoice(audioContext, destination) {
   if (!audioContext || !destination) return null;
 
   const now = audioContext.currentTime;
 
-  // Primary carrier oscillator (vacuum tube warm triangle)
+  // Primary warm singing carrier oscillator (triangle)
   const carrier = audioContext.createOscillator();
   carrier.type = "triangle";
   carrier.frequency.setValueAtTime(440, now);
 
-  // Beating heterodyne partial (slight detune for analog tube chorusing)
-  const beater = audioContext.createOscillator();
-  beater.type = "sine";
-  beater.frequency.setValueAtTime(441.5, now);
-
-  // Sub-octave harmonic foundation
+  // Phase-locked sub-octave foundation (pure sine at exact 0.5x, zero beating!)
   const sub = audioContext.createOscillator();
   sub.type = "sine";
   sub.frequency.setValueAtTime(220, now);
 
   const subGain = audioContext.createGain();
-  subGain.gain.setValueAtTime(0.18, now);
+  subGain.gain.setValueAtTime(0.08, now);
 
-  const beaterGain = audioContext.createGain();
-  beaterGain.gain.setValueAtTime(0.35, now);
+  // Pre-drive gain node for smooth, click-free saturation control
+  const slagDrive = audioContext.createGain();
+  slagDrive.gain.setValueAtTime(1.0, now);
 
-  // Calcified slag saturator (WaveShaper for calcification overdrive)
+  // Static soft-clipping WaveShaper
   const slagShaper = audioContext.createWaveShaper();
-  slagShaper.curve = makeSlagCurve(0);
+  slagShaper.curve = STATIC_TANH_CURVE;
   slagShaper.oversample = "2x";
 
-  // Vacuum-tube amber resonance filter
+  // Post-saturation makeup trim
+  const slagPostGain = audioContext.createGain();
+  slagPostGain.gain.setValueAtTime(0.85, now);
+
+  // Vacuum-tube warm resonant lowpass filter
   const filter = audioContext.createBiquadFilter();
   filter.type = "lowpass";
-  filter.frequency.setValueAtTime(4200, now);
-  filter.Q.setValueAtTime(2.2, now);
+  filter.frequency.setValueAtTime(3200, now);
+  filter.Q.setValueAtTime(1.3, now);
 
   // Master Theremin voice gain
   const masterGain = audioContext.createGain();
   masterGain.gain.setValueAtTime(0.0001, now);
 
-  // Panner for stereo projection across the vitrine
+  // Stereo panner for smooth spatial projection across the vitrine
   const panner = audioContext.createStereoPanner ? audioContext.createStereoPanner() : null;
 
-  // Graph wiring:
-  // carrier + beater + sub -> slagShaper -> filter -> panner -> masterGain -> destination
-  carrier.connect(slagShaper);
-  beater.connect(beaterGain).connect(slagShaper);
-  sub.connect(subGain).connect(slagShaper);
+  // Audio Graph:
+  // carrier + (sub * subGain) -> slagDrive -> slagShaper -> slagPostGain -> filter -> (panner) -> masterGain -> destination
+  carrier.connect(slagDrive);
+  sub.connect(subGain).connect(slagDrive);
+  slagDrive.connect(slagShaper).connect(slagPostGain).connect(filter);
 
-  slagShaper.connect(filter);
   if (panner) {
     filter.connect(panner);
     panner.connect(masterGain);
@@ -295,24 +327,22 @@ export function createThereminVoice(audioContext, destination) {
   masterGain.connect(destination);
 
   carrier.start(now);
-  beater.start(now);
   sub.start(now);
 
   return {
     carrier,
-    beater,
     sub,
     subGain,
-    beaterGain,
+    slagDrive,
     slagShaper,
+    slagPostGain,
     filter,
     masterGain,
     panner,
     currentFreq: 440,
-    currentSlag: 0,
     shatterTine(freq, atTime = null) {
       const time = atTime ?? audioContext.currentTime;
-      // High crystalline shatter pings
+      // High crystalline shatter pings (used only on critical collapse)
       const ratios = [2.76, 3.52, 4.18];
       for (const ratio of ratios) {
         const pingOsc = audioContext.createOscillator();
@@ -329,7 +359,7 @@ export function createThereminVoice(audioContext, destination) {
     },
     silence(atTime = null) {
       const time = atTime ?? audioContext.currentTime;
-      masterGain.gain.setTargetAtTime(0.0001, time, 0.03);
+      masterGain.gain.setTargetAtTime(0.0001, time, 0.035);
     },
     updateAudio({
       frequency = 440,
@@ -340,57 +370,34 @@ export function createThereminVoice(audioContext, destination) {
       now: currentTime = null,
     }) {
       const time = currentTime ?? audioContext.currentTime;
-      // Portamento frequency tracking
-      carrier.frequency.setTargetAtTime(frequency, time, 0.024);
-      beater.frequency.setTargetAtTime(frequency * 1.003, time, 0.024);
-      sub.frequency.setTargetAtTime(frequency * 0.5, time, 0.024);
+      // Portamento frequency tracking: smooth, liquid vocal glide (0.040s)
+      carrier.frequency.setTargetAtTime(frequency, time, 0.040);
+      sub.frequency.setTargetAtTime(frequency * 0.5, time, 0.040);
 
       // Pan following vitrine location
       if (panner) {
-        panner.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, normX * 0.9)), time, 0.03);
+        panner.pan.setTargetAtTime(Math.max(-0.85, Math.min(0.85, normX * 0.85)), time, 0.045);
       }
 
-      // Filter cutoff: heavily muffled when trapped in amber
-      const targetCutoff = isStuck ? 280 : (3200 + gain * 3800);
-      const targetQ = isStuck ? 4.8 : (1.8 + slag * 3.5);
-      filter.frequency.setTargetAtTime(targetCutoff, time, 0.035);
-      filter.Q.setTargetAtTime(targetQ, time, 0.035);
+      // Filter cutoff: warmly opens with volume, smoothly muffles down when trapped in amber
+      const targetCutoff = isStuck ? 420 : (2400 + gain * 4600);
+      const targetQ = isStuck ? 2.4 : (1.2 + slag * 0.8);
+      filter.frequency.setTargetAtTime(targetCutoff, time, 0.055);
+      filter.Q.setTargetAtTime(targetQ, time, 0.055);
 
-      // Slag saturation curve
-      if (Math.abs(slag - this.currentSlag) > 0.08) {
-        this.currentSlag = slag;
-        slagShaper.curve = makeSlagCurve(slag);
-      }
+      // Slag saturation drive (smooth parameter ramp, zero clicks!)
+      const drive = 1.0 + Math.max(0, Math.min(1, slag)) * 2.2;
+      slagDrive.gain.setTargetAtTime(drive, time, 0.045);
 
       // Voice gain
-      masterGain.gain.setTargetAtTime(Math.max(0.0001, gain), time, 0.028);
+      masterGain.gain.setTargetAtTime(Math.max(0.0001, gain), time, 0.030);
       this.currentFreq = frequency;
     },
     dispose() {
       try {
         carrier.stop();
-        beater.stop();
         sub.stop();
       } catch {}
     },
   };
-}
-
-/**
- * Generates an asymmetric saturation distortion curve for calcified slag.
- */
-function makeSlagCurve(slag = 0) {
-  const samples = 256;
-  const curve = new Float32Array(samples);
-  const drive = 1 + slag * 8.0;
-  for (let i = 0; i < samples; i += 1) {
-    const x = (i * 2) / samples - 1;
-    if (slag <= 0.01) {
-      curve[i] = x;
-    } else {
-      // Soft-clipping hyperbolic tangent with odd harmonic saturation
-      curve[i] = Math.tanh(x * drive);
-    }
-  }
-  return curve;
 }

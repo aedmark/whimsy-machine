@@ -14,7 +14,7 @@ import {
 test("theremin model initializes with BoneAmanita defaults", () => {
   const model = createThereminModel();
   assert.equal(model.enabled, true);
-  assert.equal(model.scaleSnap, true);
+  assert.equal(model.scaleSnap, false);
   assert.equal(model.decoherenceBuildup, 0.0);
   assert.equal(model.classicalTurns, 0);
   assert.equal(model.isStuck, false);
@@ -37,7 +37,7 @@ test("pitchForThereminCoordinate maps horizontal range to creature scale", () =>
   assert.ok(dorianPCs.includes(center.pitchClass));
   assert.ok(dorianPCs.includes(right.pitchClass));
 
-  // Continuous microtonal glide when scaleSnap is false
+  // Continuous microtonal glide when scaleSnap is false (default)
   const unquantized = pitchForThereminCoordinate(0.1234, score, false);
   assert.ok(Number.isFinite(unquantized.frequency));
   assert.ok(unquantized.frequency > 0);
@@ -46,19 +46,20 @@ test("pitchForThereminCoordinate maps horizontal range to creature scale", () =>
 test("stationary hovering calcifies into slag and transitions to trapped in amber", () => {
   const model = createThereminModel();
 
-  // Hover stationary for 30 ticks
-  for (let tick = 0; tick < 30; tick += 1) {
+  // Hover stationary for 16 seconds (16 ticks of dt = 1.0)
+  for (let tick = 0; tick < 16; tick += 1) {
     updateThereminModel(model, {
       normX: 0.1,
       normY: 0.2,
-      speed: 0.01, // low speed
+      speed: 0.005, // motionless stillness
       isInteracting: true,
       pitchClass: 0,
       midi: 60,
+      dt: 1.0,
     });
   }
 
-  assert.ok(model.classicalTurns > 20, "classical turns accumulate on stationary hold");
+  assert.ok(model.stillnessTime > 12, "stillness accumulates on stationary hold");
   assert.ok(model.slag > 0.5, "slag increases with calcification");
   assert.ok(model.decoherenceBuildup > THEREMIN_AMBER_THRESHOLD, "decoherence crosses amber threshold");
   assert.equal(model.isStuck, true, "theremin becomes trapped in amber");
@@ -72,7 +73,7 @@ test("rapid turbulence melts decoherence and frees from amber", () => {
     status: "STUCK",
   });
 
-  // Fast movement / turbulence
+  // Fast movement / turbulence (dt = 0.5, speed = 0.8)
   const events = updateThereminModel(model, {
     normX: 0.5,
     normY: -0.5,
@@ -80,6 +81,7 @@ test("rapid turbulence melts decoherence and frees from amber", () => {
     isInteracting: true,
     pitchClass: 7,
     midi: 67,
+    dt: 0.5,
   });
 
   assert.ok(events.includes("MELT"), "turbulence triggers MELT event");
@@ -93,6 +95,7 @@ test("rapid turbulence melts decoherence and frees from amber", () => {
       speed: 0.9,
       isInteracting: true,
       pitchClass: (i * 2) % 12,
+      dt: 0.5,
     });
   }
 

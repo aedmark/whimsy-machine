@@ -6,15 +6,15 @@
 
 - The Aetheric Bone Theremin (`P10-01`, `D-089`):
   - Expressive live gesture electrophone mapped directly across the Apparition Vitrine (`src/theremin.mjs`, `src/vitrine-canvas.mjs`, `src/app.mjs`).
-  - Dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span with scale quantization (`#theremin-scale-snap`) or continuous microtonal glide; vertical Y-axis maps proximity, vacuum-tube gain, and filter openness.
-  - Full BoneAmanita somatic physics modeled on `TheTheremin` and the `GLASS` archetype:
-    - *Resin Flow:* Continuous pointer movement accumulates amber resin.
-    - *Calcification (Slag):* Lingering stationary accumulates classical turns and calcified slag, driving harmonic saturation with a hyperbolic tangent WaveShaper overdrive curve.
-    - *Melt:* Rapid turbulent gestures ($> 0.45$) melt slag and dissolve decoherence.
-    - *Shatter:* Melodic transitions relieve decoherence with crystalline high-partial sine tines.
-    - *Trapped in Amber:* Buildup exceeding `THEREMIN_AMBER_THRESHOLD` (20.0) muffles the instrument into a subterranean thrum until flicked free.
+  - Dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span defaulting to continuous analog glide (`SCALE SNAP: OFF (GLIDE)`) with 40 ms portamento, plus optional creature scale degree quantization; vertical Y-axis maps proximity, vacuum-tube gain, and filter openness.
+  - Full BoneAmanita somatic physics calibrated to elapsed delta time:
+    - *Resin Flow:* Continuous pointer movement smoothly builds fluid amber resin ($0\dots 10.0$).
+    - *Stillness Grace Period & Calm Calcification:* Dwells under 2.5 seconds remain completely clean and unhindered for long sustained singing notes. Dwells beyond 2.5s gradually accumulate calcified slag ($0\dots 1.0$) driving smooth tube overdrive, taking 12–15s of unbroken stillness to reach the amber threshold.
+    - *Melt:* Rapid turbulent gestures ($> 0.32$) melt slag and dissolve decoherence.
+    - *Fluid Melodic Motion:* Moving between notes cleanly dissipates decoherence without stochastic burst pings.
+    - *Trapped in Amber:* Buildup exceeding `THEREMIN_AMBER_THRESHOLD` (20.0) warmly darkens the filter into an amber subterranean thrum until flicked free.
     - *Critical Collapse:* Buildup exceeding `THEREMIN_SHATTER_POINT` (100.0) triggers a resonant harmonic discharge.
-  - Heterodyne Web Audio synthesizer voice with warm triangle carrier, detuned sine beater partial, sub-octave foundation, dynamic saturation, and stereo panning.
+  - Pure singing Web Audio synthesizer voice with warm triangle carrier, phase-locked sub-octave foundation (zero beating tremolo), static soft-clipping saturation with smooth input pre-drive ramping (zero audio clicks), and stereo panning.
   - Vitrine Canvas visual feedback: amber-golden pitch and volume antenna cross-beams, glowing vacuum-tube node aura, branching calcification filaments, and faceted amber gem crystallization ring.
   - Stage pedestal controller (`#theremin-bar`) with `#theremin-toggle`, `#theremin-scale-snap`, and live `#theremin-status` telemetry.
 

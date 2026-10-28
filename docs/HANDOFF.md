@@ -104,14 +104,14 @@ _Last updated: 2026-10-28, session 90, on `main`._
 
 **Changed:**
 1. State & Metabolic Model (`src/theremin.mjs`, `tests/theremin.test.mjs`):
-   - Created pure physical-metabolic state model with dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span with optional scale snapping (`scaleSnap`) to creature scale degrees; vertical Y-axis maps proximity/gain.
-   - Modeled BoneAmanita somatic transitions: kinetic resin flow, stationary calcification slag ($0..1.0$) driving WaveShaper saturation, turbulent flick melt ($> 0.45$), note progression shatter pings, trapped-in-amber muffling at threshold $20.0$, and critical collapse at threshold $100.0$.
+   - Created pure physical-metabolic state model with dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span defaulting to continuous analog glide (`scaleSnap: false`) with 40 ms portamento, plus optional creature scale degree quantization; vertical Y-axis maps proximity/gain.
+   - Modeled BoneAmanita somatic transitions calibrated to elapsed delta time: kinetic resin flow, stillness dwell with a 2.5s grace period before calcified slag ($0..1.0$) accumulates, turbulent flick melt ($> 0.32$), fluid note transitions without stochastic burst pings, trapped-in-amber muffling at threshold $20.0$, and critical collapse at threshold $100.0$.
 2. Web Audio Synthesizer Graph (`src/theremin.mjs`, `src/app.mjs`):
-   - Tri-oscillator core: warm triangle carrier, detuned sine heterodyne beater (tube chorusing), and sub-octave foundation.
-   - Dynamic `WaveShaperNode` with variable tanh overdrive saturation for calcification slag.
+   - Single warm singing triangle carrier oscillator and phase-locked sub-octave foundation ($0.5\times$, zero beating tremolo!).
+   - Static soft-clipping `WaveShaperNode` with smooth `slagDrive` input gain ramping ($1.0\dots 3.2$), eliminating real-time buffer reallocation and audio clicks.
    - Resonant `BiquadFilterNode` with vacuum-tube warmth and dynamic amber muffling.
    - Stereo `StereoPannerNode` tracking vitrine horizontal location.
-   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$ ratios).
+   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$ ratios) reserved strictly for critical collapse overloads.
    - Dedicated master gain output routing adhering to mute, local control, and master volume.
 3. Canvas Overlays & DOM Pedestal Controls (`src/vitrine-canvas.mjs`, `index.html`, `styles.css`, `src/app.mjs`):
    - Apparition Vitrine renders amber-golden pitch and volume antenna rays, glowing vacuum-tube node aura, dynamic branching calcification filaments, and faceted amber gem crystallization ring.

@@ -1877,34 +1877,34 @@ Investigation showed two root causes:
 
 ## D-089 The Aetheric Bone Theremin, BoneAmanita Physics, and Vitrine Electrophone Synthesis (2026-10-28, status: accepted)
 
-**Context:** The maintainer requested introducing elements of BoneAmanita (`~/PycharmProjects/BoneAmanita`) into the Whimsy Machine to add a tactile, playful live instrument. Candidate 1 (The Aetheric Bone Theremin) was selected for immediate implementation (P10-01), modeled on BoneAmanita's `TheTheremin` (`machine/theremin.py`) and the `GLASS` archetype ("Focus on resonance and vibration. Speak of echoes and empty spaces. Be fragile and reactive. Detect invisible patterns.").
+**Context:** The maintainer requested introducing elements of BoneAmanita (`~/PycharmProjects/BoneAmanita`) into the Whimsy Machine to add a tactile, playful live instrument. Candidate 1 (The Aetheric Bone Theremin) was selected for immediate implementation (P10-01), modeled on BoneAmanita's `TheTheremin` (`machine/theremin.py`) and the `GLASS` archetype ("Focus on resonance and vibration. Speak of echoes and empty spaces. Be fragile and reactive. Detect invisible patterns."). Hands-on review noted that initial frame-rate buildup caused calcification to lock up in a fraction of a second, an artificial detuned partial caused distracting amplitude pulsing, and discrete scale snapping interrupted natural continuous vocal glide.
 
 **Decision:**
 1. **Physical & Metabolic State Model (`src/theremin.mjs`):**
-   - Implemented dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span with scale quantization (`scaleSnap`) or continuous microtonal glide; vertical Y-axis maps proximity and volume.
-   - Modeled somatic state transitions directly from BoneAmanita:
-     - *Resin Flow:* Continuous movement accumulates fluid amber resin.
-     - *Calcification (Slag):* Lingering stationary accumulates classical turns and calcified slag ($0..1.0$), driving a hyperbolic tangent WaveShaper saturation overdrive curve.
-     - *Melt:* Rapid turbulent gestures ($> 0.45$) dissolve decoherence buildup and melt slag.
-     - *Shatter:* Melodic motion across pitch classes relieves decoherence with crystalline high partial pings.
-     - *Trapped in Amber (STUCK):* Decoherence over `THEREMIN_AMBER_THRESHOLD` (20.0) muffles the filter cutoff down to 280 Hz into an amber subterranean thrum until flicked free.
+   - Implemented dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span defaulting to continuous analog microtonal glide (`scaleSnap: false`), with optional scale degree quantization toggle; vertical Y-axis maps proximity and volume.
+   - Modeled somatic state transitions calibrated to real elapsed delta time (`dt`):
+     - *Continuous Vocal Glissando:* Theremin glides smoothly across the vitrine with 40 ms portamento tracking and zero stochastic interruption.
+     - *Stillness Grace Period & Calm Calcification:* Dwell times under 2.5 seconds remain completely clean and unhindered for long sustained singing notes. Dwell beyond 2.5s gradually accumulates calcified slag ($0..1.0$), taking 12–15s of unbroken stillness to reach the amber threshold.
+     - *Resin Flow:* Continuous motion builds fluid amber resin ($0..10.0$).
+     - *Melt:* Rapid turbulent gestures ($> 0.32$) dissolve decoherence buildup and melt slag.
+     - *Trapped in Amber (STUCK):* Decoherence over `THEREMIN_AMBER_THRESHOLD` (20.0) warmly darkens the filter cutoff to 420 Hz into an amber subterranean thrum until flicked free.
      - *Critical Shatter Point Collapse:* Buildup exceeding `THEREMIN_SHATTER_POINT` (100.0) triggers a resonant harmonic discharge and reset.
-2. **Web Audio Heterodyne Synthesizer Graph:**
-   - Tri-oscillator core: warm triangle carrier, detuned sine heterodyne beater (tube chorusing), and sub-octave foundation.
-   - Dynamic `WaveShaperNode` with variable drive saturation for calcified slag.
-   - Resonant `BiquadFilterNode` with vacuum-tube warmth and dynamic amber muffling.
+2. **Web Audio Pure Singing Synthesizer Graph:**
+   - Single warm singing triangle carrier oscillator and phase-locked sub-octave foundation ($0.5\times$ harmonic, zero beating!), eliminating all artificial amplitude tremolo pulsing.
+   - Static soft-clipping `WaveShaperNode` with smooth `slagDrive` input gain ramping ($1.0\dots 3.2$), completely eliminating real-time buffer reallocation and audio clicks.
+   - Resonant `BiquadFilterNode` with vacuum-tube warmth and smooth amber darkening.
    - Stereo `StereoPannerNode` tracking vitrine horizontal location.
-   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$ ratios).
+   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$) reserved strictly for critical collapse overloads, never firing on normal melodic glide.
 3. **Apparition Vitrine Canvas Overlays (`src/vitrine-canvas.mjs`):**
    - Renders dual virtual antenna rays (vertical pitch ray and horizontal volume level).
    - Pulsing vacuum-tube golden node glow at the contact point.
    - Dynamic branching calcification filaments growing with slag accumulation.
    - Faceted amber gem crystallization ring pulsing when trapped in amber.
 4. **Pedestal Controls & DOM Integration (`index.html`, `styles.css`, `src/app.mjs`):**
-   - Added `#theremin-bar` with `#theremin-toggle`, `#theremin-scale-snap`, and `#theremin-status` telemetry.
+   - Added `#theremin-bar` with `#theremin-toggle`, `#theremin-scale-snap` (defaulting to `SCALE SNAP: OFF (GLIDE)`), and `#theremin-status` telemetry.
    - Wired pointer listeners and frame loop in `src/app.mjs` to update theremin frequency, gain, and metabolic events with zero-latency audio routing.
 
 **Consequences:**
-- Players can now expressively play live theremin melodies and glissandi directly on the Apparition Vitrine during playback or pause.
-- Delivers rich tactile feedback with physical calcification and amber entrapment physics.
-- Verified by unit tests in `tests/theremin.test.mjs`; all 261 suite tests pass cleanly.
+- The Aetheric Bone Theremin sings with Clara Rockmore-style vocal fluidity, pure analog portamento, and zero amplitude pulsing.
+- Players can sustain notes naturally without premature amber lockup, while somatic BoneAmanita physics reward stillness and turbulent gestures.
+- All 261 regression and unit tests pass cleanly.

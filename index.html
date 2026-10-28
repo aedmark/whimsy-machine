@@ -76,8 +76,8 @@
           <button class="theremin-button" id="theremin-toggle" type="button" aria-pressed="true" title="Engage or mute the Aetheric Bone Theremin">
             <span class="theremin-glyph" aria-hidden="true">⚡</span> BONE THEREMIN: ACTIVE
           </button>
-          <button class="theremin-button" id="theremin-scale-snap" type="button" aria-pressed="true" title="Snap theremin pitch to the creature's scale degrees">
-            SCALE SNAP: ON
+          <button class="theremin-button" id="theremin-scale-snap" type="button" aria-pressed="false" title="Toggle between continuous analog glide and scale degree quantization">
+            SCALE SNAP: OFF (GLIDE)
           </button>
           <output class="theremin-readout" id="theremin-status" aria-live="off">THEREMIN · FLOW · RESIN 0.0</output>
         </div>
@@ -969,7 +969,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "6c5a2cb127a5";
+      const ASSET_VERSION = "0914ae803d79";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

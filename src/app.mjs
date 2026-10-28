@@ -534,6 +534,7 @@ let funMachineDryGain = null;
 let thereminModel = createThereminModel();
 let thereminVoice = null;
 let thereminMasterGain = null;
+let lastThereminFrameAt = 0;
 
 function getThereminDestination(context) {
   if (!thereminMasterGain || thereminMasterGain.context !== context) {
@@ -688,6 +689,10 @@ function updateAudioInteraction() {
   if (thereminModel.enabled && interaction.active && !muted) {
     ensureThereminVoice();
     if (thereminVoice) {
+      const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+      const dt = lastThereminFrameAt ? Math.min(0.1, (nowMs - lastThereminFrameAt) / 1000) : 0.016;
+      lastThereminFrameAt = nowMs;
+
       const score = currentScore || vision.score;
       const pitchInfo = pitchForThereminCoordinate(interaction.smoothX, score, thereminModel.scaleSnap);
       const speed = interaction.dragSpeed || 0;
@@ -698,17 +703,17 @@ function updateAudioInteraction() {
         isInteracting: true,
         pitchClass: pitchInfo.pitchClass,
         midi: pitchInfo.midi,
+        dt,
       });
 
-      if (events.includes("SHATTER") || events.includes("COLLAPSE")) {
+      // Only critical collapse discharges crystalline pings; normal note movement glides purely
+      if (events.includes("COLLAPSE")) {
         thereminVoice.shatterTine(pitchInfo.frequency);
-        if (events.includes("COLLAPSE")) {
-          triggerPercussion("strike", interaction.smoothX, interaction.smoothY, 0.9);
-          vision.burstSpores(2.0);
-        }
+        triggerPercussion("strike", interaction.smoothX, interaction.smoothY, 0.9);
+        vision.burstSpores(2.0);
       }
 
-      const gain = Math.max(0.08, Math.min(0.75, (1 - interaction.smoothY) * 0.45 * (0.35 + 0.65 * interaction.hold)));
+      const gain = Math.max(0.08, Math.min(0.72, (1 - interaction.smoothY) * 0.45 * (0.35 + 0.65 * interaction.hold)));
       thereminVoice.updateAudio({
         frequency: pitchInfo.frequency,
         gain,
@@ -726,6 +731,7 @@ function updateAudioInteraction() {
       updateThereminUI(pitchInfo.frequency);
     }
   } else {
+    lastThereminFrameAt = 0;
     if (thereminVoice && interaction.thereminActive) {
       thereminVoice.silence(now);
       interaction.thereminActive = false;
