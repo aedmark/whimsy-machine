@@ -2027,6 +2027,39 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P6-01 (choose public hosting and domain) or user hands-on DAW production with the standalone companion.
 
+### Session 78 (2026-10-25): Neocities Static Web Release & Accessibility Completion (D-065, P4-02, P6-01)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Verify accessibility completion (P4-02), resolve public hosting selection with Neocities (Q-001, P6-01, D-065), and add dual-extension fallback handling and bundle staging for seamless deployment across free and supporter Neocities tiers.
+
+**Done:** All parts implemented and verified under D-065. P4-02 marked complete. 196/196 tests pass.
+
+**Changed:**
+1. Esoteric Spell Fetch Fallback (`src/app.mjs`):
+   - Implemented `fetchSource(name)`: attempts `sourceUrl(name)`, and upon 404/403 status (common on free Neocities accounts where non-standard extensions are whitelisted out), seamlessly falls back to `sourceUrl(name + ".txt")`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
+2. Neocities Staging Tool (`tools/stage_neocities.py`):
+   - Creates a self-contained static release directory (`dist-neocities/`) containing `index.html`, `styles.css`, `manual.html`, and `src/`.
+   - Automatically generates `.txt` dual-fallbacks alongside all nine esoteric source files (`oracle.lol.txt`, `beat.mal.txt`, etc.).
+   - Added `dist-neocities/` to root `.gitignore`.
+3. Roadmap & Decisions:
+   - Marked P4-02 complete in `ROADMAP.md` following maintainer accessibility verification.
+   - Set P6-01 in progress in `ROADMAP.md` with Neocities hosting.
+   - Recorded D-065 in `docs/DECISIONS.md` and answered Q-001.
+   - Added `tools/stage_neocities.py` to `AGENTS.md` repository map.
+   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
+   - Archived Session 68 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `python3 tools/stage_neocities.py` successfully stages 48 files (1071.7 KB) with 9 fallbacks.
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** P6-01 Neocities public deployment and v1.0.0 release.
+
+
 
 
 

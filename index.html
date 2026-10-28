@@ -72,6 +72,15 @@
           <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
           <p class="stage-caption" id="stage-caption">ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE</p>
         </div>
+        <div class="theremin-bar" id="theremin-bar" role="group" aria-label="Aetheric Bone Theremin">
+          <button class="theremin-button" id="theremin-toggle" type="button" aria-pressed="true" title="Engage or mute the Aetheric Bone Theremin">
+            <span class="theremin-glyph" aria-hidden="true">⚡</span> BONE THEREMIN: ACTIVE
+          </button>
+          <button class="theremin-button" id="theremin-scale-snap" type="button" aria-pressed="true" title="Snap theremin pitch to the creature's scale degrees">
+            SCALE SNAP: ON
+          </button>
+          <output class="theremin-readout" id="theremin-status" aria-live="off">THEREMIN · FLOW · RESIN 0.0</output>
+        </div>
       </div>
 
       <form id="oracle-controls" class="summon-form">
@@ -960,12 +969,12 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "d6bc0688e0c3";
+      const ASSET_VERSION = "6c5a2cb127a5";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
-        "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
       for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;

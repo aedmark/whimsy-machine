@@ -32,6 +32,10 @@ export const interaction = {
   sulk: 0,
   retaliationPoint: { x: 0, y: 0 },
   retaliationFractures: [],
+  thereminActive: false,
+  thereminSlag: 0,
+  thereminStuck: false,
+  thereminFrequency: 440,
 };
 
 export function mulberry32(seed) {
@@ -2395,7 +2399,6 @@ export class OracleVision {
 
     if (interaction.retaliationFlash > 0.01) {
       ctx.save();
-      ctx.globalCompositeOperation = "screen";
       const rx = (interaction.retaliationPoint.x * 0.5 + 0.5) * width;
       const ry = (interaction.retaliationPoint.y * 0.5 + 0.5) * height;
 
@@ -2422,6 +2425,89 @@ export class OracleVision {
           ctx.stroke();
         }
       }
+      ctx.restore();
+    }
+
+    // Aetheric Bone Theremin visual projection (P10-01, D-089)
+    if (interaction.active && interaction.thereminActive) {
+      ctx.save();
+      const tx = (interaction.smoothX * 0.5 + 0.5) * width;
+      const ty = (interaction.smoothY * 0.5 + 0.5) * height;
+
+      // 1. Dual Virtual Antenna Rays:
+      // Vertical Pitch Antenna Ray
+      const pitchGrad = ctx.createLinearGradient(tx, 0, tx, height);
+      pitchGrad.addColorStop(0, "rgba(255, 184, 77, 0)");
+      pitchGrad.addColorStop(Math.max(0, (ty / height) - 0.25), "rgba(255, 184, 77, 0.15)");
+      pitchGrad.addColorStop(ty / height, interaction.thereminStuck ? "rgba(245, 158, 11, 0.75)" : "rgba(255, 214, 153, 0.65)");
+      pitchGrad.addColorStop(Math.min(1, (ty / height) + 0.25), "rgba(255, 184, 77, 0.15)");
+      pitchGrad.addColorStop(1, "rgba(255, 184, 77, 0)");
+
+      ctx.strokeStyle = pitchGrad;
+      ctx.lineWidth = interaction.thereminStuck ? 2.8 : 1.6;
+      ctx.beginPath();
+      ctx.moveTo(tx, 0);
+      ctx.lineTo(tx, height);
+      ctx.stroke();
+
+      // Horizontal Volume Level Ray
+      ctx.strokeStyle = "rgba(255, 184, 77, 0.22)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(0, ty);
+      ctx.lineTo(width, ty);
+      ctx.stroke();
+
+      // 2. Vacuum-Tube Node Glow
+      const nodeRadius = 14 + (interaction.hold || 0) * 10;
+      const nodeGrad = ctx.createRadialGradient(tx, ty, 0, tx, ty, nodeRadius * 2.2);
+      nodeGrad.addColorStop(0, interaction.thereminStuck ? "rgba(251, 191, 36, 0.9)" : "rgba(255, 238, 204, 0.85)");
+      nodeGrad.addColorStop(0.35, interaction.thereminStuck ? "rgba(245, 158, 11, 0.55)" : "rgba(255, 184, 77, 0.45)");
+      nodeGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
+      ctx.fillStyle = nodeGrad;
+      ctx.beginPath();
+      ctx.arc(tx, ty, nodeRadius * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Calcification (Slag) Branching Filaments
+      if (interaction.thereminSlag > 0.04) {
+        const slagLevel = interaction.thereminSlag;
+        const filamentCount = 4 + Math.floor(slagLevel * 8);
+        ctx.strokeStyle = `rgba(245, 158, 11, ${Math.min(0.85, 0.3 + slagLevel * 0.55)})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let i = 0; i < filamentCount; i += 1) {
+          const ang = (i / filamentCount) * Math.PI * 2 + (elapsed * 0.4);
+          const fLen = (12 + slagLevel * 28) * (0.8 + 0.4 * Math.sin(ang * 3 + elapsed * 2));
+          const fx = tx + Math.cos(ang) * fLen;
+          const fy = ty + Math.sin(ang) * fLen;
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(fx, fy);
+        }
+        ctx.stroke();
+      }
+
+      // 4. Trapped in Amber Crystallization Ring
+      if (interaction.thereminStuck) {
+        const amberPulse = 0.85 + 0.15 * Math.sin(timestamp * 0.006);
+        const amberR = (nodeRadius + 12) * amberPulse;
+        ctx.strokeStyle = "rgba(245, 158, 11, 0.9)";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (let a = 0; a < 6; a += 1) {
+          const angle = (a / 6) * Math.PI * 2 + (timestamp * 0.001);
+          const hx = tx + Math.cos(angle) * amberR;
+          const hy = ty + Math.sin(angle) * amberR;
+          if (a === 0) ctx.moveTo(hx, hy);
+          else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(217, 119, 6, 0.22)";
+        ctx.fill();
+      }
+
       ctx.restore();
     }
 

@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 89, on `main`._
+_Last updated: 2026-10-28, session 90, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
@@ -13,14 +13,15 @@ _Last updated: 2026-10-28, session 89, on `main`._
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 - Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
+- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01 complete, D-089; P10-02 and P10-03 planned). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone mapped across the Apparition Vitrine with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse).
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), and Polish Pass (D-088) are fully implemented, verified, and passing across all suites! Version 1.4.4. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01) are fully implemented, verified, and passing across all suites! Version 1.5.0. 261/261 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 89, local Linux environment)
+**Verified** (2026-10-28, session 90, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **255/255 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **261/261 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -92,6 +93,43 @@ _Last updated: 2026-10-28, session 89, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 90 (2026-10-28): The Aetheric Bone Theremin, BoneAmanita Resonances, and Vitrine Electrophone Synthesis (P10-01, D-089)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Candidate 1 of Phase 10: The Aetheric Bone Theremin (*The Thereminist / GLASS*) inspired by BoneAmanita (`~/PycharmProjects/BoneAmanita`), adding Candidate 3 (The Bone Beat Machine) and Candidate 4 (The BioParasite Spore Harp) to the roadmap (P10-01, D-089).
+
+**Done:** All parts implemented and verified under D-089. P10-01 marked complete. 261/261 tests pass.
+
+**Changed:**
+1. State & Metabolic Model (`src/theremin.mjs`, `tests/theremin.test.mjs`):
+   - Created pure physical-metabolic state model with dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span with optional scale snapping (`scaleSnap`) to creature scale degrees; vertical Y-axis maps proximity/gain.
+   - Modeled BoneAmanita somatic transitions: kinetic resin flow, stationary calcification slag ($0..1.0$) driving WaveShaper saturation, turbulent flick melt ($> 0.45$), note progression shatter pings, trapped-in-amber muffling at threshold $20.0$, and critical collapse at threshold $100.0$.
+2. Web Audio Synthesizer Graph (`src/theremin.mjs`, `src/app.mjs`):
+   - Tri-oscillator core: warm triangle carrier, detuned sine heterodyne beater (tube chorusing), and sub-octave foundation.
+   - Dynamic `WaveShaperNode` with variable tanh overdrive saturation for calcification slag.
+   - Resonant `BiquadFilterNode` with vacuum-tube warmth and dynamic amber muffling.
+   - Stereo `StereoPannerNode` tracking vitrine horizontal location.
+   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$ ratios).
+   - Dedicated master gain output routing adhering to mute, local control, and master volume.
+3. Canvas Overlays & DOM Pedestal Controls (`src/vitrine-canvas.mjs`, `index.html`, `styles.css`, `src/app.mjs`):
+   - Apparition Vitrine renders amber-golden pitch and volume antenna rays, glowing vacuum-tube node aura, dynamic branching calcification filaments, and faceted amber gem crystallization ring.
+   - Added `#theremin-bar` with `#theremin-toggle`, `#theremin-scale-snap`, and `#theremin-status` telemetry readout.
+   - Continuous audio interaction updates during vitrine pointermove, drag, and animation frames.
+4. Documentation & Roadmap:
+   - Added Phase 10 to `ROADMAP.md` (P10-01 marked complete, P10-02 and P10-03 added).
+   - Recorded D-089 in `docs/DECISIONS.md`.
+   - Updated `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, and `docs/HANDOFF.md`.
+   - Archived Session 78 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 261/261 checks passed (including 6 unit tests in `tests/theremin.test.mjs`).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
+
+**Next session should start with:** P10-02 The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), modeling struck bone, resonant mineral plates, tempered brass, and quenching steam.
 
 ### Session 89 (2026-10-28): Codebase Polish, Dead Code Pruning, 60 FPS Attractor Drawing Optimization, and DOM Wiring Consolidation (D-088)
 
@@ -401,37 +439,6 @@ _Last updated: 2026-10-28, session 89, on `main`._
 
 **Next session should start with:** Push release tag `v1.0.0` and deploy staged bundle (`dist-neocities/`) to Neocities.
 
-### Session 78 (2026-10-25): Neocities Static Web Release & Accessibility Completion (D-065, P4-02, P6-01)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Verify accessibility completion (P4-02), resolve public hosting selection with Neocities (Q-001, P6-01, D-065), and add dual-extension fallback handling and bundle staging for seamless deployment across free and supporter Neocities tiers.
-
-**Done:** All parts implemented and verified under D-065. P4-02 marked complete. 196/196 tests pass.
-
-**Changed:**
-1. Esoteric Spell Fetch Fallback (`src/app.mjs`):
-   - Implemented `fetchSource(name)`: attempts `sourceUrl(name)`, and upon 404/403 status (common on free Neocities accounts where non-standard extensions are whitelisted out), seamlessly falls back to `sourceUrl(name + ".txt")`.
-   - Restamped asset version (`tools/stamp_assets.mjs`).
-2. Neocities Staging Tool (`tools/stage_neocities.py`):
-   - Creates a self-contained static release directory (`dist-neocities/`) containing `index.html`, `styles.css`, `manual.html`, and `src/`.
-   - Automatically generates `.txt` dual-fallbacks alongside all nine esoteric source files (`oracle.lol.txt`, `beat.mal.txt`, etc.).
-   - Added `dist-neocities/` to root `.gitignore`.
-3. Roadmap & Decisions:
-   - Marked P4-02 complete in `ROADMAP.md` following maintainer accessibility verification.
-   - Set P6-01 in progress in `ROADMAP.md` with Neocities hosting.
-   - Recorded D-065 in `docs/DECISIONS.md` and answered Q-001.
-   - Added `tools/stage_neocities.py` to `AGENTS.md` repository map.
-   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
-   - Archived Session 68 to `docs/archive/sessions.md`.
-
-**Verified:**
-- `python3 tools/stage_neocities.py` successfully stages 48 files (1071.7 KB) with 9 fallbacks.
-- `node --test tests/*.test.mjs`: 196/196 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** P6-01 Neocities public deployment and v1.0.0 release.
 
 
 

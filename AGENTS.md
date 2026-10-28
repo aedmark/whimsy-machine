@@ -110,6 +110,7 @@ Never force-push or rewrite shared history.
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
+| `src/theremin.mjs` | The Aetheric Bone Theremin model, BoneAmanita physics transitions, and heterodyne synth voice (P10-01, D-089) |
 | `src/vitrine-canvas.mjs` | Apparition Vitrine 2D Canvas renderer (`OracleVision`), silhouette/kinetic/appendage/mycelium geometry, and gesture physics (D-067) |
 | `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |

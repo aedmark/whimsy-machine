@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.0] - 2026-10-28
+
+### Added
+
+- The Aetheric Bone Theremin (`P10-01`, `D-089`):
+  - Expressive live gesture electrophone mapped directly across the Apparition Vitrine (`src/theremin.mjs`, `src/vitrine-canvas.mjs`, `src/app.mjs`).
+  - Dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span with scale quantization (`#theremin-scale-snap`) or continuous microtonal glide; vertical Y-axis maps proximity, vacuum-tube gain, and filter openness.
+  - Full BoneAmanita somatic physics modeled on `TheTheremin` and the `GLASS` archetype:
+    - *Resin Flow:* Continuous pointer movement accumulates amber resin.
+    - *Calcification (Slag):* Lingering stationary accumulates classical turns and calcified slag, driving harmonic saturation with a hyperbolic tangent WaveShaper overdrive curve.
+    - *Melt:* Rapid turbulent gestures ($> 0.45$) melt slag and dissolve decoherence.
+    - *Shatter:* Melodic transitions relieve decoherence with crystalline high-partial sine tines.
+    - *Trapped in Amber:* Buildup exceeding `THEREMIN_AMBER_THRESHOLD` (20.0) muffles the instrument into a subterranean thrum until flicked free.
+    - *Critical Collapse:* Buildup exceeding `THEREMIN_SHATTER_POINT` (100.0) triggers a resonant harmonic discharge.
+  - Heterodyne Web Audio synthesizer voice with warm triangle carrier, detuned sine beater partial, sub-octave foundation, dynamic saturation, and stereo panning.
+  - Vitrine Canvas visual feedback: amber-golden pitch and volume antenna cross-beams, glowing vacuum-tube node aura, branching calcification filaments, and faceted amber gem crystallization ring.
+  - Stage pedestal controller (`#theremin-bar`) with `#theremin-toggle`, `#theremin-scale-snap`, and live `#theremin-status` telemetry.
+
 ## [1.4.4] - 2026-10-28
 
 ### Enhanced

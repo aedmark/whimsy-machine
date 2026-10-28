@@ -170,6 +170,13 @@ import {
   serializeCabinetState,
 } from "./cabinet.mjs";
 import { OracleVision, interaction } from "./vitrine-canvas.mjs";
+import {
+  createThereminModel,
+  createThereminVoice,
+  formatThereminTelemetry,
+  pitchForThereminCoordinate,
+  updateThereminModel,
+} from "./theremin.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
@@ -287,6 +294,9 @@ const elements = {
   canvas: document.querySelector("#vision"),
   stageBellJar: document.querySelector("#stage-bell-jar"),
   stageCaption: document.querySelector("#stage-caption"),
+  thereminToggle: document.querySelector("#theremin-toggle"),
+  thereminScaleSnap: document.querySelector("#theremin-scale-snap"),
+  thereminStatus: document.querySelector("#theremin-status"),
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
@@ -521,6 +531,35 @@ let parlorReverbEnabled = true;
 let parlorTickEnabled = true;
 let funMachineStyle = DEFAULT_ACCOMPANIMENT_STYLE;
 let funMachineDryGain = null;
+let thereminModel = createThereminModel();
+let thereminVoice = null;
+let thereminMasterGain = null;
+
+function getThereminDestination(context) {
+  if (!thereminMasterGain || thereminMasterGain.context !== context) {
+    thereminMasterGain = context.createGain();
+    const gainValue = muted || !localControlEnabled ? 0 : masterGainFor(masterVolume);
+    thereminMasterGain.gain.setValueAtTime(gainValue, context.currentTime);
+    thereminMasterGain.connect(context.destination);
+  }
+  return thereminMasterGain;
+}
+
+function ensureThereminVoice() {
+  if (!audioContext) return null;
+  if (!thereminVoice) {
+    const dest = getThereminDestination(audioContext);
+    thereminVoice = createThereminVoice(audioContext, dest);
+  }
+  return thereminVoice;
+}
+
+function updateThereminUI(frequency = null) {
+  if (!elements.thereminStatus) return;
+  elements.thereminStatus.textContent = formatThereminTelemetry(thereminModel, frequency);
+  elements.thereminStatus.classList.toggle("is-stuck", thereminModel.isStuck);
+  elements.thereminStatus.classList.toggle("is-calcifying", thereminModel.status === "CALCIFYING" && !thereminModel.isStuck);
+}
 let activeHeldFunKey = null;
 let activeFunPerformance = null;
 let lastFunKeyReleaseTime = 0;
@@ -563,6 +602,11 @@ function setLocalControl(enabled) {
     funMachineDryGain.gain.cancelScheduledValues(now);
     funMachineDryGain.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
   }
+  if (audioContext && thereminMasterGain) {
+    const now = audioContext.currentTime;
+    thereminMasterGain.gain.cancelScheduledValues(now);
+    thereminMasterGain.gain.setTargetAtTime(muted || !localControlEnabled ? 0 : masterGainFor(masterVolume), now, 0.018);
+  }
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.output.gain.cancelScheduledValues(now);
@@ -582,6 +626,11 @@ function setMasterVolume(value) {
     const now = audioContext.currentTime;
     funMachineDryGain.gain.cancelScheduledValues(now);
     funMachineDryGain.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  }
+  if (audioContext && thereminMasterGain) {
+    const now = audioContext.currentTime;
+    thereminMasterGain.gain.cancelScheduledValues(now);
+    thereminMasterGain.gain.setTargetAtTime(muted || !localControlEnabled ? 0 : masterGainFor(masterVolume), now, 0.018);
   }
   if (!audioContext || !currentTransport) return;
   const now = audioContext.currentTime;
@@ -632,9 +681,63 @@ async function ensureAudioContext() {
 }
 
 function updateAudioInteraction() {
-  if (!audioContext || !currentTransport || muted) return;
-  const score = currentScore || vision.score;
+  if (!audioContext) return;
   const now = audioContext.currentTime;
+
+  // Aetheric Bone Theremin real-time audio interaction (P10-01, D-089)
+  if (thereminModel.enabled && interaction.active && !muted) {
+    ensureThereminVoice();
+    if (thereminVoice) {
+      const score = currentScore || vision.score;
+      const pitchInfo = pitchForThereminCoordinate(interaction.smoothX, score, thereminModel.scaleSnap);
+      const speed = interaction.dragSpeed || 0;
+      const events = updateThereminModel(thereminModel, {
+        normX: interaction.smoothX,
+        normY: interaction.smoothY,
+        speed,
+        isInteracting: true,
+        pitchClass: pitchInfo.pitchClass,
+        midi: pitchInfo.midi,
+      });
+
+      if (events.includes("SHATTER") || events.includes("COLLAPSE")) {
+        thereminVoice.shatterTine(pitchInfo.frequency);
+        if (events.includes("COLLAPSE")) {
+          triggerPercussion("strike", interaction.smoothX, interaction.smoothY, 0.9);
+          vision.burstSpores(2.0);
+        }
+      }
+
+      const gain = Math.max(0.08, Math.min(0.75, (1 - interaction.smoothY) * 0.45 * (0.35 + 0.65 * interaction.hold)));
+      thereminVoice.updateAudio({
+        frequency: pitchInfo.frequency,
+        gain,
+        normX: interaction.smoothX,
+        slag: thereminModel.slag,
+        isStuck: thereminModel.isStuck,
+        now,
+      });
+
+      interaction.thereminActive = true;
+      interaction.thereminSlag = thereminModel.slag;
+      interaction.thereminStuck = thereminModel.isStuck;
+      interaction.thereminFrequency = pitchInfo.frequency;
+
+      updateThereminUI(pitchInfo.frequency);
+    }
+  } else {
+    if (thereminVoice && interaction.thereminActive) {
+      thereminVoice.silence(now);
+      interaction.thereminActive = false;
+      interaction.thereminSlag = 0;
+      interaction.thereminStuck = false;
+      updateThereminModel(thereminModel, { isInteracting: false });
+      updateThereminUI(null);
+    }
+  }
+
+  if (!currentTransport || muted) return;
+  const score = currentScore || vision.score;
   const transport = currentTransport;
   const field = harmonicField();
 
@@ -733,6 +836,10 @@ function stopCurrentSound() {
   audibleCasioKey = 0;
   audibleCasioPerformance = null;
   pendingCasioSection = null;
+  thereminVoice?.silence();
+  interaction.thereminActive = false;
+  interaction.thereminSlag = 0;
+  interaction.thereminStuck = false;
   if (!currentTransport || !audioContext) return null;
   const transport = currentTransport;
   currentTransport = null;
@@ -3342,6 +3449,7 @@ function triggerRetaliation(normX, normY) {
 
 elements.canvas.addEventListener("pointerdown", async (event) => {
   if (event.button !== undefined && event.button !== 0) return;
+  await ensureAudioContext();
   const coords = vitrineCoordinates(event);
   const now = performance.now();
 
@@ -3462,6 +3570,14 @@ function endVitrineInteraction(event) {
   if (event?.pointerId !== undefined && interaction.pointerId !== null && event.pointerId !== interaction.pointerId) {
     return;
   }
+  if (thereminVoice && interaction.thereminActive) {
+    thereminVoice.silence();
+    interaction.thereminActive = false;
+    interaction.thereminSlag = 0;
+    interaction.thereminStuck = false;
+    updateThereminModel(thereminModel, { isInteracting: false });
+    updateThereminUI(null);
+  }
   interaction.active = false;
   interaction.pointerId = null;
   stageContainer?.classList.remove("is-interacting");
@@ -3482,6 +3598,29 @@ function endVitrineInteraction(event) {
 elements.canvas.addEventListener("pointerup", endVitrineInteraction);
 elements.canvas.addEventListener("pointercancel", endVitrineInteraction);
 elements.canvas.addEventListener("lostpointercapture", endVitrineInteraction);
+
+// --- Aetheric Bone Theremin Pedestal Controls (P10-01, D-089) ----------------
+elements.thereminToggle?.addEventListener("click", () => {
+  thereminModel.enabled = !thereminModel.enabled;
+  elements.thereminToggle.setAttribute("aria-pressed", String(thereminModel.enabled));
+  elements.thereminToggle.innerHTML = thereminModel.enabled
+    ? '<span class="theremin-glyph" aria-hidden="true">⚡</span> BONE THEREMIN: ACTIVE'
+    : '<span class="theremin-glyph" aria-hidden="true">○</span> BONE THEREMIN: MUTED';
+  if (!thereminModel.enabled) {
+    thereminVoice?.silence();
+    interaction.thereminActive = false;
+  }
+  updateThereminUI(null);
+});
+
+elements.thereminScaleSnap?.addEventListener("click", () => {
+  thereminModel.scaleSnap = !thereminModel.scaleSnap;
+  elements.thereminScaleSnap.setAttribute("aria-pressed", String(thereminModel.scaleSnap));
+  elements.thereminScaleSnap.textContent = thereminModel.scaleSnap
+    ? "SCALE SNAP: ON"
+    : "SCALE SNAP: OFF (GLIDE)";
+  updateThereminUI(null);
+});
 
 // --- Parlor mixing console (P5-19) ---------------------------------------
 
@@ -5854,7 +5993,14 @@ elements.sound.addEventListener("click", () => {
   muted = !muted;
   elements.sound.setAttribute("aria-pressed", String(muted));
   elements.sound.setAttribute("aria-label", muted ? "Enable sound" : "Mute sound");
+  if (audioContext && thereminMasterGain) {
+    const now = audioContext.currentTime;
+    thereminMasterGain.gain.cancelScheduledValues(now);
+    thereminMasterGain.gain.setTargetAtTime(muted || !localControlEnabled ? 0 : masterGainFor(masterVolume), now, 0.018);
+  }
   if (muted) {
+    thereminVoice?.silence();
+    interaction.thereminActive = false;
     const resumeStep = stopCurrentSound();
     if (resumeStep !== null) {
       transportState = Object.freeze({ state: transportState.state, cursor: resumeStep });
