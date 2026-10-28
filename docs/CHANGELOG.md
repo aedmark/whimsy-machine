@@ -46,6 +46,13 @@
   - Vitrine Canvas visual feedback: amber-golden pitch and volume antenna cross-beams, glowing vacuum-tube node aura, branching calcification filaments, and faceted amber gem crystallization ring.
   - Stage pedestal controller (`#theremin-bar`) with `#theremin-toggle`, `#theremin-scale-snap`, and live `#theremin-status` telemetry.
 
+### Fixed
+
+- Modal Scale Closure & Consonant Chimes for Creature Variations (`D-092`):
+  - Fixed a-tonal drift where the Befunge-93 chord organ and Piet/FRACTRAN chimes voiced foreign notes on harmonic passes 1, 2, and 3 by enforcing modal scale closure (`fitsScale`) on all variation substitutions, secondary dominants, borrowed chords, and cadences in `src/variation.mjs`.
+  - Filtered inharmonic microtonal overtone ratios (> 25 cents deviation from 12-TET) out of `CREATURE_GENRE` chime tables in `src/conductor.mjs`, eliminating sour quarter-tone clashes while preserving consonant Just Intonation intervals.
+  - Preserved 100% byte-for-byte fidelity with the 22 Inform 7 genre fixtures in `tests/fixtures/variations-golden.json`.
+
 ## [1.4.4] - 2026-10-28
 
 ### Enhanced

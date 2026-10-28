@@ -2133,6 +2133,44 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
    - Updated repository maps in `AGENTS.md` and `docs/ARCHITECTURE.md`.
    - Updated `ROADMAP.md` and `docs/CHANGELOG.md`.
 
+### Session 83 (2026-10-26): Phase 8 Studio Credibility: Native 16-Step Straight Grid Metre (P8-05, D-079)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Phase 2 of P8-05 (D-079) — native 16-step straight grid metre (4 beats $\times$ 4 sixteenth notes in 4/4 time) alongside the vintage 12-step shuffle/triplet grid, parameterized across all 5 esoteric band generators (Malbolge, Brainfuck, Befunge, FRACTRAN/Piet, Shakespeare), INTERCAL dynamic arrangement conductor, Neo-Riemannian Tonnetz, Fun Machine accompanist, Loop Machine sequencer, and session format v7.
+
+**Done:** All parts implemented and verified. 239/239 automated tests pass.
+
+**Changed:**
+1. `src/tuning.mjs`:
+   - Exported `GRID_STEPS_OPTIONS = Object.freeze([12, 16])` and `DEFAULT_GRID_STEPS = 16`.
+   - Updated `stepUnitSeconds(bpm, rhythmTemplate, barLock44, stepsCount = 12)` so that 16-step mode naturally fills exactly one 4/4 bar (`(60 / bpm) * 4 / unitsInPass`).
+2. Esoteric VM Generators:
+   - Parameterized `composeBeat(source, score, mutation, stepsCount = 12)` in `src/malbolge.mjs` for 16-step ternary drum composition.
+   - Parameterized `composeBass(source, score, mutation, stepsCount = 12)` in `src/brainfuck.mjs` with 16 steps, half-bar octave interval anchors, and looping cells.
+   - Parameterized `composeHarmony(source, score, mutation, stepsCount = 12)` in `src/befunge.mjs` for 16 chord voicings.
+   - Parameterized `composeChimes(pietSource, fractranSource, score, mutation, stepsCount = 12)` in `src/fractran.mjs` executing up to `Math.max(12, stepsCount)` states.
+   - Parameterized `composeChant(source, score, mutation, stepsCount = 12)` in `src/shakespeare.mjs` for 16 dramatic vowel formant cues.
+3. Orchestration & Composition:
+   - Parameterized `melodyFor(score, stepsCount = 12)` in `src/music.mjs` generating 16 melody offsets with octave shifting on steps 12..15.
+   - Parameterized `composeArrangement(source, score, stepsCount = 12)` and `arrangementSectionAt()` in `src/intercal.mjs` for 4 sections $\times$ 4 steps = 16 steps, with turnaround at step 14/15.
+   - Parameterized `buildTonnetzSpine`, `buildRawChaosSpine`, `buildGenreSpine`, `passSpine`, and `conductEnsemble` in `src/conductor.mjs` supporting `stepsCount = 12` or `16` (4 harmonic regions $\times$ 4 steps each; Euclidean rhythm pulse counts scaled to 9 and 7).
+   - Parameterized `buildPerformance(..., stepsCount = 12)` in `src/accompaniment.mjs`.
+4. Loop Machine & Inspector:
+   - Parameterized `emptyTake(steps = LOOP_STEPS)` and `songPosition(song, absoluteStep, stepsPerPass = LOOP_STEPS)` in `src/looper.mjs`.
+   - Allowed 12- or 16-step takes in `validateSong()`, and indexed slots with `step % take.length`.
+   - Updated `src/inspector.mjs` (`normalizeStep(stepIndex, totalSteps = 12)`) and all five plate inspectors to display `STEP ss/16` when in 16-step mode.
+5. Session Format v7:
+   - Added optional `gridSteps` (`12` or `16`) in `src/session.mjs`, supporting plate cell cycles of either 12 or 16 counts while preserving backwards compatibility.
+6. UI & Styling:
+   - Added `#transport-grid-steps` toggle button on Master Transport deck (`index.html`) displaying `16 STEPS (4/4)` or `12 STEPS (TRIPLET)`.
+   - Added `.is-16-steps` CSS grid rules (`repeat(16, minmax(0, 1fr))` desktop, `repeat(8, minmax(0, 1fr))` mobile) for `.looper-steps` and `.beat-grid` in `styles.css`.
+   - Wired live switching in `src/app.mjs`: recomposes plates, re-renders plate step grids and looper ribbon, re-conducts ensemble, and persists `gridSteps` in session captures.
+7. Verification & Tests:
+   - Added `tests/metre.test.mjs` testing step durations, 16-step generation across all 5 esoteric band generators, Tonnetz + INTERCAL 16-step orchestration, and looper + session serialization.
+   - Updated `tests/session.test.mjs`, `tests/static.test.mjs`, `tests/audit.test.mjs`.
+
+
 
 
 

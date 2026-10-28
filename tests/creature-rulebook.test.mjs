@@ -93,3 +93,31 @@ test("the conductor plays a creature's own rulebook, and it agrees with itself",
   installCreatureBook(null);
   assert.ok((100 * clashing) / steps <= 6, `creature rulebooks clash on ${((100 * clashing) / steps).toFixed(1)}% of steps`);
 });
+
+test("creature variations preserve modal scale closure and consonant chimes across all harmonic passes (D-092)", () => {
+  for (const score of scores.slice(0, 50)) {
+    installCreatureBook(buildCreatureBook(score, books));
+    const scale = scalePitchClasses(score);
+    for (let pass = 0; pass < 4; pass += 1) {
+      const c = conductEnsemble({
+        score, melody: melodyFor(score), beat: composeBeat(beat, score, 0), bass: composeBass(bass, score, 0),
+        harmony: composeHarmony(harmony, score, 0), chimes: composeChimes(piet, fractran, score, 0), chant: composeChant(chant, score, 0),
+        genre: CREATURE_GENRE, varied: true, harmonicPass: pass,
+      });
+      for (const chord of c.spine) {
+        for (const pitchClass of chord.pitchClasses) {
+          assert.ok(scale.includes(pitchClass), `Pass ${pass}: chord ${chord.label} tone ${pitchClass} must stay in scale [${scale}] for ${score.title}`);
+        }
+      }
+      for (const step of c.chimes.steps) {
+        if (step.gate && step.ratioValue) {
+          const semi = 12 * Math.log2(step.ratioValue);
+          const centsOff = Math.abs(semi - Math.round(semi)) * 100;
+          assert.ok(centsOff <= 25, `Chime ratio ${step.ratioValue} cents offset ${centsOff.toFixed(1)} must be <= 25 cents`);
+        }
+      }
+    }
+  }
+  installCreatureBook(null);
+});
+

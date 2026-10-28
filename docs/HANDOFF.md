@@ -4,24 +4,24 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 92, on `main`._
+_Last updated: 2026-10-28, session 93, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
-- D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
-- D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
+- D-045–D-071: Console UX (D-056), Studio Companion (P5-32), Neocities release (D-065), v1.0.0, CI (P4-04), MIDI Clock (P5-33), Step Inspector (P5-34), Herbarium (P5-35), Manuscript (P5-36) in v1.1.0.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 - Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
 - Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01, P10-02, P10-03 complete, D-089, D-090, D-091). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse). P10-02: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), a physical acoustic percussion machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam, driven by physical impact counts, heat, and voltage alongside the Malbolge beat machine. P10-03: The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*), an acoustic string-plucked harp where growing mycelium hyphae and anastomoses act as resonant strings under bio-acoustic tension, struck by flying ballistospores, strummed via direct vitrine swiping, and scheduled on loop steps with four symbiosis timbres (Silk, Lichen, Cordyceps, Mutual).
+- Modal Scale Closure & Consonant Chime Overtones (D-092): Eliminated a-tonal harmonic drift occurring every few measures (harmonic passes 1..3) across the Befunge-93 chord organ and Piet/FRACTRAN chimes by constraining chord variation moves to the creature's native modal scale and filtering out microtonal quarter-tone overtone ratios.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01, P10-02, P10-03) are fully implemented, verified, and passing across all suites! Version 1.5.0. 277/277 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), Phase 10 (P10-01, P10-02, P10-03), and Modal Scale Closure (D-092) are fully implemented, verified, and passing across all suites! Version 1.5.0. 278/278 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 92, local Linux environment)
+**Verified** (2026-10-28, session 93, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **277/277 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **278/278 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +93,29 @@ _Last updated: 2026-10-28, session 92, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 93 (2026-10-28): Modal Scale Closure & Consonant Chimes for Creature Variations (D-092)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Resolve user observation that the Befunge-93 chord organ and Piet/FRACTRAN chimes drift into an a-tonal pattern that conflicts with the other instruments every few measures (D-092).
+
+**Done:** Diagnosed root cause, implemented modal scale closure across variation moves, filtered microtonal quarter-tone overtones in creature chimes, and verified zero regressions across 278/278 tests.
+
+**Changed:**
+1. Root Cause Diagnosis:
+   - In `CREATURE_GENRE`, `buildCreatureBook()` constructs the written spine strictly within `scalePitchClasses(score)`. However, `varySpine()` in `src/variation.mjs` was applying unrestricted genre substitution moves (`tritone_substitution` at `root + 6`, `secondary_dominants` at `root + 7`, and `modal_borrowing` with $\flat\text{VI}/\flat\text{VII}/\text{iv}$) copied from the borrowed character across passes 1..3. In simulation, 23.1% of chord steps on passes 1..3 forced foreign notes outside the creature's scale into the chord, directly driving the Befunge chord organ off-scale.
+   - `conductChimes` in `src/conductor.mjs` selected overtone ratios from the borrowed genre's overtone table. When borrowing from jazz or blues genres, ratios like $11/8$ (551 cents $\approx 49$ cents flat of tritone), $13/8$ (840.5 cents $\approx 40.5$ cents sharp of minor 6th), $7/6$ (267 cents $\approx 33$ cents flat of minor 3rd), and $7/4$ (968.8 cents $\approx 31.2$ cents flat of minor 7th) introduced abrasive microtonal quarter-tone beating against 12-TET instruments.
+2. Modal Scale Closure (`src/variation.mjs`, `src/conductor.mjs`):
+   - Added `scale` parameter to `varySpine()`.
+   - Constrained all substitution, secondary dominant, borrowing, and cadence moves with `fitsScale(cand) => !scale || cand.pitchClasses.every((pc) => scale.includes(pc))`.
+   - In `src/conductor.mjs`, passed `creatureScale` when `activeGenre === CREATURE_GENRE`. Out-of-scale chord steps on passes 1..3 dropped from 23.1% to 0.0%.
+   - Standard Inform 7 genres pass `scale = null`, maintaining 100% byte-for-byte fidelity with the 22 Inform 7 genre fixtures in `tests/fixtures/variations-golden.json`.
+3. Consonant Chime Overtones (`src/conductor.mjs`):
+   - In `conductChimes`, filtered `book.overtones` for `CREATURE_GENRE` to ratios with $\le 25$ cents deviation from 12-TET.
+4. Testing & Verification:
+   - Added test in `tests/creature-rulebook.test.mjs` verifying modal closure and consonant chime intervals across all 4 harmonic passes for 50 creatures (200 passes).
+   - All 278/278 automated tests pass.
 
 ### Session 92 (2026-10-28): The BioParasite Spore Harp, Symbiotic Hyphal Strings, and Vitrine Swiping (P10-03, D-091)
 
@@ -410,40 +433,4 @@ _Last updated: 2026-10-28, session 92, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 43 entries, 0 errors, 0 warnings.
 
-### Session 83 (2026-10-26): Phase 8 Studio Credibility: Native 16-Step Straight Grid Metre (P8-05, D-079)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Phase 2 of P8-05 (D-079) — native 16-step straight grid metre (4 beats $\times$ 4 sixteenth notes in 4/4 time) alongside the vintage 12-step shuffle/triplet grid, parameterized across all 5 esoteric band generators (Malbolge, Brainfuck, Befunge, FRACTRAN/Piet, Shakespeare), INTERCAL dynamic arrangement conductor, Neo-Riemannian Tonnetz, Fun Machine accompanist, Loop Machine sequencer, and session format v7.
-
-**Done:** All parts implemented and verified. 239/239 automated tests pass.
-
-**Changed:**
-1. `src/tuning.mjs`:
-   - Exported `GRID_STEPS_OPTIONS = Object.freeze([12, 16])` and `DEFAULT_GRID_STEPS = 16`.
-   - Updated `stepUnitSeconds(bpm, rhythmTemplate, barLock44, stepsCount = 12)` so that 16-step mode naturally fills exactly one 4/4 bar (`(60 / bpm) * 4 / unitsInPass`).
-2. Esoteric VM Generators:
-   - Parameterized `composeBeat(source, score, mutation, stepsCount = 12)` in `src/malbolge.mjs` for 16-step ternary drum composition.
-   - Parameterized `composeBass(source, score, mutation, stepsCount = 12)` in `src/brainfuck.mjs` with 16 steps, half-bar octave interval anchors, and looping cells.
-   - Parameterized `composeHarmony(source, score, mutation, stepsCount = 12)` in `src/befunge.mjs` for 16 chord voicings.
-   - Parameterized `composeChimes(pietSource, fractranSource, score, mutation, stepsCount = 12)` in `src/fractran.mjs` executing up to `Math.max(12, stepsCount)` states.
-   - Parameterized `composeChant(source, score, mutation, stepsCount = 12)` in `src/shakespeare.mjs` for 16 dramatic vowel formant cues.
-3. Orchestration & Composition:
-   - Parameterized `melodyFor(score, stepsCount = 12)` in `src/music.mjs` generating 16 melody offsets with octave shifting on steps 12..15.
-   - Parameterized `composeArrangement(source, score, stepsCount = 12)` and `arrangementSectionAt()` in `src/intercal.mjs` for 4 sections $\times$ 4 steps = 16 steps, with turnaround at step 14/15.
-   - Parameterized `buildTonnetzSpine`, `buildRawChaosSpine`, `buildGenreSpine`, `passSpine`, and `conductEnsemble` in `src/conductor.mjs` supporting `stepsCount = 12` or `16` (4 harmonic regions $\times$ 4 steps each; Euclidean rhythm pulse counts scaled to 9 and 7).
-   - Parameterized `buildPerformance(..., stepsCount = 12)` in `src/accompaniment.mjs`.
-4. Loop Machine & Inspector:
-   - Parameterized `emptyTake(steps = LOOP_STEPS)` and `songPosition(song, absoluteStep, stepsPerPass = LOOP_STEPS)` in `src/looper.mjs`.
-   - Allowed 12- or 16-step takes in `validateSong()`, and indexed slots with `step % take.length`.
-   - Updated `src/inspector.mjs` (`normalizeStep(stepIndex, totalSteps = 12)`) and all five plate inspectors to display `STEP ss/16` when in 16-step mode.
-5. Session Format v7:
-   - Added optional `gridSteps` (`12` or `16`) in `src/session.mjs`, supporting plate cell cycles of either 12 or 16 counts while preserving backwards compatibility.
-6. UI & Styling:
-   - Added `#transport-grid-steps` toggle button on Master Transport deck (`index.html`) displaying `16 STEPS (4/4)` or `12 STEPS (TRIPLET)`.
-   - Added `.is-16-steps` CSS grid rules (`repeat(16, minmax(0, 1fr))` desktop, `repeat(8, minmax(0, 1fr))` mobile) for `.looper-steps` and `.beat-grid` in `styles.css`.
-   - Wired live switching in `src/app.mjs`: recomposes plates, re-renders plate step grids and looper ribbon, re-conducts ensemble, and persists `gridSteps` in session captures.
-7. Verification & Tests:
-   - Added `tests/metre.test.mjs` testing step durations, 16-step generation across all 5 esoteric band generators, Tonnetz + INTERCAL 16-step orchestration, and looper + session serialization.
-   - Updated `tests/session.test.mjs`, `tests/static.test.mjs`, `tests/audit.test.mjs`.
 

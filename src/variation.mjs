@@ -80,7 +80,7 @@ const sameChord = (a, b) => a.root === b.root && a.quality === b.quality && a.op
  * `{ spine, moves }`; with nothing permitted, or a raw spine, `moves` is empty
  * and the spine comes back as it was.
  */
-export function varySpine(spine, score, permitted, makeChord) {
+export function varySpine(spine, score, permitted, makeChord, scale = null) {
   const allowed = new Set(permitted ?? []);
   if (!allowed.size || spine.some((chord) => chord.quality === "raw")) return { spine, moves: Object.freeze([]) };
   let steps = [...spine];
@@ -102,6 +102,7 @@ export function varySpine(spine, score, permitted, makeChord) {
     const tones = ninths && coloured === "dom7" ? [...TONES.dom7, 2] : TONES[coloured];
     return makeChord(r, coloured, label ?? `${numeral(r, coloured)} (${tag})`, tones.map((tone) => (r + tone) % 12));
   };
+  const fitsScale = (cand) => !scale || cand.pitchClasses.every((pc) => scale.includes(pc));
   const fill = (run, value) => { for (let k = 0; k < run.length; k += 1) steps[run.start + k] = value; };
   const homeMinor = MINORISH.has(spine[0].quality);
 
@@ -127,13 +128,17 @@ export function varySpine(spine, score, permitted, makeChord) {
           const toMinor = current.quality === "major" || current.quality === "maj9" || current.quality === "maj7";
           const quality = { major: "minor", maj9: "min9", maj7: "min7", minor: "major", min9: "maj9", min7: "maj7" }[current.quality];
           const root = current.root + (toMinor ? 9 : 3);
-          fill(run, chord(root, quality, "relative"));
+          const cand = chord(root, quality, "relative");
+          if (!fitsScale(cand)) continue;
+          fill(run, cand);
           moves.push("RELATIVE SUB");
           return;
         }
         if (move === "tritone_substitution" && (current.quality === "dom7" || current.quality === "dom7alt")) {
           const root = current.root + 6;
-          fill(run, chord(root, current.quality, "tritone"));
+          const cand = chord(root, current.quality, "tritone");
+          if (!fitsScale(cand)) continue;
+          fill(run, cand);
           moves.push("TRITONE SUB");
           return;
         }
@@ -141,7 +146,9 @@ export function varySpine(spine, score, permitted, makeChord) {
           const next = steps[(run.start + run.length) % steps.length];
           if (next.quality === "dim") continue;
           const root = next.root + 7;
-          steps[run.start + run.length - 1] = chord(root, "dom7", null, `V7/${numeral(next.root, next.quality)}`);
+          const cand = chord(root, "dom7", null, `V7/${numeral(next.root, next.quality)}`);
+          if (!fitsScale(cand)) continue;
+          steps[run.start + run.length - 1] = cand;
           moves.push("SECONDARY DOMINANT");
           return;
         }
@@ -156,7 +163,9 @@ export function varySpine(spine, score, permitted, makeChord) {
     const borrow = (test, root, quality, name) => {
       const run = runs.find((candidate) => test(steps[candidate.start]));
       if (!run) return;
-      fill(run, chord(root, quality, "borrowed"));
+      const cand = chord(root, quality, "borrowed");
+      if (!fitsScale(cand)) return;
+      fill(run, cand);
       moves.push(`BORROWED ${name}`);
     };
     borrow((c) => c.root === 5 && (c.quality === "major" || c.quality === "maj9"), 5, "minor", "iv");
@@ -171,20 +180,31 @@ export function varySpine(spine, score, permitted, makeChord) {
     const move = cadences[(score.harmonyCadence - 1) % cadences.length];
     if (move === "plagal_cadence") {
       const quality = homeMinor ? "minor" : "major";
-      fill(run, chord(5, quality, "plagal"));
-      moves.push("PLAGAL CADENCE");
+      const cand = chord(5, quality, "plagal");
+      if (fitsScale(cand)) {
+        fill(run, cand);
+        moves.push("PLAGAL CADENCE");
+      }
     } else if (move === "phrygian_cadence") {
-      fill(run, chord(1, "major", "Phrygian"));
-      moves.push("PHRYGIAN CADENCE");
+      const cand = chord(1, "major", "Phrygian");
+      if (fitsScale(cand)) {
+        fill(run, cand);
+        moves.push("PHRYGIAN CADENCE");
+      }
     } else if (move === "authentic_cadence") {
-      fill(run, chord(7, "dom7", "authentic"));
-      moves.push("AUTHENTIC CADENCE");
+      const cand = chord(7, "dom7", "authentic");
+      if (fitsScale(cand)) {
+        fill(run, cand);
+        moves.push("AUTHENTIC CADENCE");
+      }
     } else if (move === "deceptive_cadence") {
       const dominant = chord(7, "dom7", "deceptive");
       const turn = homeMinor ? chord(8, "major", "deceptive") : chord(9, "minor", "deceptive");
-      fill(run, dominant);
-      steps[run.start + run.length - 1] = turn;
-      moves.push("DECEPTIVE CADENCE");
+      if (fitsScale(dominant) && fitsScale(turn)) {
+        fill(run, dominant);
+        steps[run.start + run.length - 1] = turn;
+        moves.push("DECEPTIVE CADENCE");
+      }
     }
   }
 

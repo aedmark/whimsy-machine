@@ -4,6 +4,13 @@
 // them by genre code.
 
 import { varySpine } from "./variation.mjs";
+import { SCALES } from "./music.mjs";
+
+const creatureScalePitchClasses = (score) => (
+  score && score.scale !== undefined && SCALES[score.scale]
+    ? [...new Set(SCALES[score.scale].map((step) => step % 12))].sort((a, b) => a - b)
+    : null
+);
 let installedRulebooks = null;
 
 export function installRulebooks(rulebooks) {
@@ -622,8 +629,9 @@ export function conductEnsemble({
   // rulebook permits (D-043); without it the genre plays as written, which is
   // what the golden fixture guards. A held key's chords are never varied.
   const writtenSpine = buildGenreSpine(activeGenre, score, mutation, stepsCount);
+  const creatureScale = activeGenre === CREATURE_GENRE ? creatureScalePitchClasses(score) : null;
   const variation = varied && !customSpine
-    ? varySpine(writtenSpine, score, book.variation, buildTriad)
+    ? varySpine(writtenSpine, score, book.variation, buildTriad, creatureScale)
     : { spine: writtenSpine, moves: Object.freeze([]) };
   // With `harmonicPass` the band plays that pass of the harmonic cycle (D-044);
   // without it, the whole spine in one loop, as the golden fixture records.
@@ -752,7 +760,13 @@ export function conductEnsemble({
       steps: Object.freeze(
         chimes.steps.map((step, stepIndex) => {
           const chord = spine[stepIndex];
-          const ratios = book.overtones;
+          const ratios = activeGenre === CREATURE_GENRE
+            ? book.overtones.filter((o) => {
+              const semi = 12 * Math.log2(o.value);
+              const centsOff = Math.abs(semi - Math.round(semi)) * 100;
+              return centsOff <= 25;
+            })
+            : book.overtones;
 
           // Only overtones that land on the chord (or a tension its quality
           // carries, such as a 9th) may ring; the table's other ratios used to
