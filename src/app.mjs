@@ -188,6 +188,19 @@ import {
   triggerBoneStrike,
   triggerQuenchSteam,
 } from "./bone-beat.mjs";
+import {
+  HARP_STRING_COUNT,
+  HARP_SYMBIOSIS_MODES,
+  buildHyphalStrings,
+  checkStringIntersection,
+  createSporeHarpModel,
+  cycleSymbiosis,
+  formatSporeHarpTelemetry,
+  pluckHyphalString,
+  scheduleSporeHarpStep,
+  strumHarp,
+  triggerHyphalPluck,
+} from "./spore-harp.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
@@ -308,6 +321,10 @@ const elements = {
   thereminToggle: document.querySelector("#theremin-toggle"),
   thereminScaleSnap: document.querySelector("#theremin-scale-snap"),
   thereminStatus: document.querySelector("#theremin-status"),
+  sporeHarpToggle: document.querySelector("#spore-harp-toggle"),
+  sporeHarpStrum: document.querySelector("#spore-harp-strum"),
+  sporeHarpSymbiosis: document.querySelector("#spore-harp-symbiosis"),
+  sporeHarpTelemetry: document.querySelector("#spore-harp-telemetry"),
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
@@ -509,6 +526,7 @@ let currentArrangement = null;
 let currentBeat = null;
 let currentBoneBeat = null;
 let boneBeatModel = createBoneBeatModel();
+let sporeHarpModel = createSporeHarpModel();
 let currentBass = null;
 let currentHarmony = null;
 let currentChimes = null;
@@ -845,6 +863,21 @@ function triggerSporePuff(strength = 1, atTime = null) {
     currentTransport,
     muted,
   });
+  if (sporeHarpModel.enabled && sporeHarpModel.strings?.length > 0 && !muted) {
+    const hitIdx = Math.floor(Math.random() * sporeHarpModel.strings.length);
+    const pluck = pluckHyphalString(sporeHarpModel, hitIdx, 0.45 * Math.min(1.5, strength));
+    if (pluck && audioContext) {
+      const dest = currentTransport?.fungalBus || audioContext.destination;
+      triggerHyphalPluck(audioContext, dest, pluck.frequency, pluck.velocity, {
+        symbiosis: sporeHarpModel.symbiosis,
+        sporeDensity: pluck.sporeDensity,
+        atTime: atTime || audioContext.currentTime,
+      });
+      if (elements.sporeHarpTelemetry) {
+        elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+      }
+    }
+  }
 }
 
 // Silences the active loop and returns the raw step it should resume from, or
@@ -1024,6 +1057,13 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
   scheduleMyceliumBioStep(context, transport, score, stepIndex, at, stepDuration, {
     logNote,
   });
+  const activeModel = transport.sporeHarpModel || sporeHarpModel;
+  if (activeModel?.enabled && activeModel.autoStrum && transportEngages(transport, "fungal")) {
+    scheduleSporeHarpStep(context, transport.fungalBus, activeModel, stepIndex, at, stepDuration);
+    if (!transport.isOffline && elements.sporeHarpTelemetry) {
+      elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(activeModel);
+    }
+  }
 }
 
 function getFunMachineDirectDestination(context) {
@@ -2585,6 +2625,11 @@ function showScore(rawScore) {
   if (conductorSource) {
     currentArrangement = composeArrangement(conductorSource, score, activeGridSteps);
   }
+  sporeHarpModel.strings = buildHyphalStrings(score, { referencePitch: referencePitch() });
+  interaction.sporeHarpModel = sporeHarpModel;
+  if (elements.sporeHarpTelemetry) {
+    elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+  }
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();
   renderLooper();
@@ -2838,6 +2883,7 @@ async function renderEnsembleLoop(score, {
     ...graph,
     isOffline: true,
     boneBeatModel: createBoneBeatModel(boneBeatModel),
+    sporeHarpModel: createSporeHarpModel(sporeHarpModel),
     melody: currentConductedMelody || melodyFor(score, activeGridSteps),
     engageAll,
     clockTicks,
@@ -3617,6 +3663,29 @@ elements.canvas.addEventListener("pointermove", (event) => {
     triggerSporePuff(0.65);
     vision.burstSpores(0.45);
   }
+
+  // BioParasite Spore Harp: string intersection plucks on vitrine swipe
+  if (sporeHarpModel.enabled && sporeHarpModel.strings?.length > 0 && !muted) {
+    const prevPt = { x: coords.x - dx, y: coords.y - dy };
+    const currPt = { x: coords.x, y: coords.y };
+    for (const str of sporeHarpModel.strings) {
+      if (checkStringIntersection(prevPt, currPt, str, 0.045) && (now - str.lastPluckedAt > 110)) {
+        const vel = Math.max(0.2, Math.min(1.0, 0.4 + delta * 4.5));
+        const pluck = pluckHyphalString(sporeHarpModel, str.index, vel);
+        if (pluck && audioContext) {
+          const dest = currentTransport?.fungalBus || audioContext.destination;
+          triggerHyphalPluck(audioContext, dest, pluck.frequency, pluck.velocity, {
+            symbiosis: sporeHarpModel.symbiosis,
+            sporeDensity: pluck.sporeDensity,
+            atTime: audioContext.currentTime,
+          });
+          if (elements.sporeHarpTelemetry) {
+            elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+          }
+        }
+      }
+    }
+  }
 });
 
 function endVitrineInteraction(event) {
@@ -3713,6 +3782,47 @@ elements.boneBeatQuench?.addEventListener("click", async () => {
   }
   if (elements.boneBeatTelemetry) {
     elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
+});
+
+// --- The BioParasite Spore Harp Controls (P10-03, D-091) ---------------------
+elements.sporeHarpToggle?.addEventListener("click", () => {
+  sporeHarpModel.enabled = !sporeHarpModel.enabled;
+  elements.sporeHarpToggle.setAttribute("aria-pressed", String(sporeHarpModel.enabled));
+  elements.sporeHarpToggle.innerHTML = sporeHarpModel.enabled
+    ? '<span class="harp-glyph" aria-hidden="true">𝄢</span> SPORE HARP: ACTIVE'
+    : '<span class="harp-glyph" aria-hidden="true">○</span> SPORE HARP: MUTED';
+  if (elements.sporeHarpTelemetry) {
+    elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+  }
+});
+
+elements.sporeHarpStrum?.addEventListener("click", async () => {
+  if (audioContext && audioContext.state === "suspended") {
+    await audioContext.resume();
+  }
+  const plucks = strumHarp(sporeHarpModel, { direction: 1, velocity: 0.88, staggerMs: 36 });
+  if (audioContext) {
+    const dest = currentTransport?.fungalBus || audioContext.destination;
+    for (const p of plucks) {
+      const at = audioContext.currentTime + (p.delayMs / 1000);
+      triggerHyphalPluck(audioContext, dest, p.frequency, p.velocity, {
+        symbiosis: sporeHarpModel.symbiosis,
+        sporeDensity: p.sporeDensity,
+        atTime: at,
+      });
+    }
+  }
+  if (elements.sporeHarpTelemetry) {
+    elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+  }
+});
+
+elements.sporeHarpSymbiosis?.addEventListener("click", () => {
+  const sym = cycleSymbiosis(sporeHarpModel);
+  elements.sporeHarpSymbiosis.textContent = `SYMBIOSIS: ${sym}`;
+  if (elements.sporeHarpTelemetry) {
+    elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
   }
 });
 

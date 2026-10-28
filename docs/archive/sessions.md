@@ -2099,6 +2099,41 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** Push release tag `v1.0.0` and deploy staged bundle (`dist-neocities/`) to Neocities.
 
+### Session 82 (2026-10-26): Phase 8 Studio Credibility: 16/24/32f WAV, Tail Folding, Dry Stems, DAW MIDI, Engine Version, Tuning/Key Overrides, 4/4 Bar Lock (D-076–D-080)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Establish Phase 8 in `ROADMAP.md` and deliver production-grade studio tools: high-resolution multi-format WAV export with seamless loop tail folding, dry stem exports, embedded DAW sampler metadata (`smpl`, `acid`, `LIST/INFO`), MIDI key/time signature meta events, engine version integrity guards, host-level key/scale/concert pitch overrides, and a 4/4 Bar Lock transport mode fitting 12-step passes to standard DAW grids.
+
+**Done:** All planned items (P8-01 through P8-05) implemented and verified. 235/235 automated tests pass.
+
+**Changed:**
+1. Studio Audio Export (`src/audio-export.mjs`, `P8-01`, `D-076`):
+   - Created pure audio export module supporting 16-bit PCM (TPDF phrase-seeded dither), 24-bit PCM, and 32-bit float WAV across 44.1, 48, and 96 kHz.
+   - Implemented `cutRender` with sample 0 beat-one alignment, loop-perfect tail folding (decay tails folded into loop start), and one-shot decay modes.
+   - Added `applyPeakCeiling` enforcing a shared −1 dBFS ceiling across stems and master renders.
+   - Encoded RIFF `smpl` loop points, `acid` tempo/beat/root slices, and `LIST/INFO` metadata chunks.
+   - Added export selectors for bit depth, sample rate, loop mode, and stem mode (`#export-bit-depth`, `#export-sample-rate`, `#export-loop-mode`, `#export-stem-mode`) in Wing IV (`index.html`, `src/app.mjs`).
+2. Dry Stems & Linear Mixing (`src/ensemble.mjs`, `src/app.mjs`, `D-076`):
+   - Added `masterDynamics` toggle to `buildEnsembleGraph` allowing stem renders to bypass compressor and reverb for linear, additive multi-track stems.
+3. DAW-Ready MIDI (`src/midi.mjs`, `P8-02`):
+   - Transmit SMF Key Signature (`0xFF 0x59`) and Time Signature (`0xFF 0x58`) meta events on the conductor track.
+   - Guaranteed preservation of General MIDI drum channel 9 when `flattenChannels` is active in Clean DAW export mode.
+4. Engine Versioning (`src/version.mjs`, `P8-03`, `D-077`):
+   - Defined `APP_VERSION`, `ENGINE_VERSION`, and `ENGINE_FINGERPRINT` over esoteric scores and golden fixtures, verified by `tests/engine-version.test.mjs`.
+   - Updated session schema to v7 recording `engineVersion`; telemetry alerts user if session engine version differs from host engine version.
+5. Key, Scale, and Tuning Retuning (`src/tuning.mjs`, `P8-04`, `D-078`):
+   - Pure tuning module providing `midiToFrequency()`, `referencePitch()`, `setReferencePitch()` ($415\dots 466\text{ Hz}$), and `applyScoreOverrides()`.
+   - Wired live key override ($C\dots B$), scale override, and A4 tuning dropdowns in Kapellmeister console (`#kapellmeister-key-override`, `#kapellmeister-scale-override`, `#kapellmeister-tuning-a4`).
+6. 4/4 Bar-Aligned Metre Lock (`src/tuning.mjs`, `src/app.mjs`, `P8-05`, `D-079`):
+   - Implemented `stepUnitSeconds` scaling 12-step passes to fit exactly 4 quarter-beats at the stated BPM.
+   - Added `4/4 BAR LOCK` toggle button (`#transport-bar-lock`) to the Master Transport deck; persisted in v7 sessions (`session.barLock`).
+7. Architecture & Decisions:
+   - Logged D-076 through D-080 in `docs/DECISIONS.md`.
+   - Updated repository maps in `AGENTS.md` and `docs/ARCHITECTURE.md`.
+   - Updated `ROADMAP.md` and `docs/CHANGELOG.md`.
+
+
 
 
 

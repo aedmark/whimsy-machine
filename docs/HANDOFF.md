@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 91, on `main`._
+_Last updated: 2026-10-28, session 92, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
@@ -13,15 +13,15 @@ _Last updated: 2026-10-28, session 91, on `main`._
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 - Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
-- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01 and P10-02 complete, D-089, D-090; P10-03 planned). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse). P10-02: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), a physical acoustic percussion machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam, driven by physical impact counts, heat, and voltage alongside the Malbolge beat machine.
+- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01, P10-02, P10-03 complete, D-089, D-090, D-091). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse). P10-02: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), a physical acoustic percussion machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam, driven by physical impact counts, heat, and voltage alongside the Malbolge beat machine. P10-03: The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*), an acoustic string-plucked harp where growing mycelium hyphae and anastomoses act as resonant strings under bio-acoustic tension, struck by flying ballistospores, strummed via direct vitrine swiping, and scheduled on loop steps with four symbiosis timbres (Silk, Lichen, Cordyceps, Mutual).
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01, P10-02) are fully implemented, verified, and passing across all suites! Version 1.5.0. 270/270 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01, P10-02, P10-03) are fully implemented, verified, and passing across all suites! Version 1.5.0. 277/277 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 91, local Linux environment)
+**Verified** (2026-10-28, session 92, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **270/270 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **277/277 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +93,51 @@ _Last updated: 2026-10-28, session 91, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 92 (2026-10-28): The BioParasite Spore Harp, Symbiotic Hyphal Strings, and Vitrine Swiping (P10-03, D-091)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Candidate 4 of Phase 10: The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*) inspired by BoneAmanita's `BioParasite` (`~/PycharmProjects/BoneAmanita/spores/biome.py`) (P10-03, D-091).
+
+**Done:** All parts implemented and verified under D-091. P10-03 marked complete. 277/277 tests pass.
+
+**Changed:**
+1. State & Symbiosis Model (`src/spore-harp.mjs`, `tests/spore-harp.test.mjs`):
+   - Created pure acoustic string harp model tracking 8 hyphal strings (`hyphalStrings`), symbiosis mode (`SILK`, `LICHEN`, `CORDYCEPS`, `MUTUAL`), dampening, activity counter, and vitrine coordinates.
+   - Hyphal strings tuned across creature scale degrees in concert harp register (C3–C5, MIDI 48..72) with organic inharmonic detune factors and string stiffness coefficients.
+   - Symbiosis modes map to BoneAmanita biological behaviors:
+     - `SILK`: Chitin-sheathed pure harmonic plucks with natural damping.
+     - `LICHEN`: Photobiont harmonic fifth resonance swelling behind each pluck.
+     - `CORDYCEPS`: Inharmonic stiff partials with parasitic pitch bend and chitin scrape.
+     - `MUTUAL`: Guttation water-drop meniscus pop on string release with crystalline resonance.
+   - Implemented geometric segment intersection check (`checkStringIntersection`) using robust 2D orientation tests and distance clamping for tactile vitrine swiping.
+2. Web Audio Acoustic Physical String Pluck Synth (`src/spore-harp.mjs`):
+   - Chitin click impulse transient synthesized via high-frequency enveloped noise burst.
+   - Dual detuned string core oscillators with exponential damping per string tension and length.
+   - High-order sympathetic inharmonic overtone partials modulated by string stiffness and symbiosis mode.
+   - Damped lowpass bio-acoustic string filter tracking pluck velocity and decaying string displacement.
+3. Vitrine Canvas Rendering (`src/vitrine-canvas.mjs`):
+   - Added `drawSporeHarpStrings` rendering 8 organic hyphal string threads spanning the apparition vitrine.
+   - Animated decaying standing-wave visual displacement oscillating at string fundamental pitch.
+   - Glowing spore dust particles shedding from vibrating strings along wave crests.
+4. UI & Transport Integration (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added `#spore-harp-bar` directly beneath `#theremin-bar` in the Vitrine pedestal with `#spore-harp-toggle`, `#spore-harp-strum`, `#spore-harp-symbiosis`, and `#spore-harp-telemetry`.
+   - Wired into `currentTransport.fungalBus` (Fungal mixer channel strip 6, chamber reverb send, master compressor, offline WAV stem exports).
+   - Wired touch/pointer dragging across vitrine to trigger string plucks via segment collision.
+   - Flying ballistospores puffing from vitrine taps collide with and pluck hyphal strings.
+   - Integrated into `scheduleFungalBioStep` for automatic creature loop step arpeggiation.
+5. Assets & Housekeeping:
+   - Added `"spore-harp.mjs"` to `MODULES` in `index.html` boot script and restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
+   - Updated `AGENTS.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/DECISIONS.md`, and `docs/HANDOFF.md`.
+   - Archived Session 82 to `docs/archive/sessions.md` to preserve the 10-session handoff window.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 277/277 tests passing.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** User review of Phase 10 instruments or next roadmap phase.
 
 ### Session 91 (2026-10-28): The Bone Forge & Crucible Beat Machine, Physical Percussion Synthesizers, and Somatic Dynamics (P10-02, D-090)
 
@@ -401,44 +446,4 @@ _Last updated: 2026-10-28, session 91, on `main`._
 7. Verification & Tests:
    - Added `tests/metre.test.mjs` testing step durations, 16-step generation across all 5 esoteric band generators, Tonnetz + INTERCAL 16-step orchestration, and looper + session serialization.
    - Updated `tests/session.test.mjs`, `tests/static.test.mjs`, `tests/audit.test.mjs`.
-
-### Session 82 (2026-10-26): Phase 8 Studio Credibility: 16/24/32f WAV, Tail Folding, Dry Stems, DAW MIDI, Engine Version, Tuning/Key Overrides, 4/4 Bar Lock (D-076–D-080)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Establish Phase 8 in `ROADMAP.md` and deliver production-grade studio tools: high-resolution multi-format WAV export with seamless loop tail folding, dry stem exports, embedded DAW sampler metadata (`smpl`, `acid`, `LIST/INFO`), MIDI key/time signature meta events, engine version integrity guards, host-level key/scale/concert pitch overrides, and a 4/4 Bar Lock transport mode fitting 12-step passes to standard DAW grids.
-
-**Done:** All planned items (P8-01 through P8-05) implemented and verified. 235/235 automated tests pass.
-
-**Changed:**
-1. Studio Audio Export (`src/audio-export.mjs`, `P8-01`, `D-076`):
-   - Created pure audio export module supporting 16-bit PCM (TPDF phrase-seeded dither), 24-bit PCM, and 32-bit float WAV across 44.1, 48, and 96 kHz.
-   - Implemented `cutRender` with sample 0 beat-one alignment, loop-perfect tail folding (decay tails folded into loop start), and one-shot decay modes.
-   - Added `applyPeakCeiling` enforcing a shared −1 dBFS ceiling across stems and master renders.
-   - Encoded RIFF `smpl` loop points, `acid` tempo/beat/root slices, and `LIST/INFO` metadata chunks.
-   - Added export selectors for bit depth, sample rate, loop mode, and stem mode (`#export-bit-depth`, `#export-sample-rate`, `#export-loop-mode`, `#export-stem-mode`) in Wing IV (`index.html`, `src/app.mjs`).
-2. Dry Stems & Linear Mixing (`src/ensemble.mjs`, `src/app.mjs`, `D-076`):
-   - Added `masterDynamics` toggle to `buildEnsembleGraph` allowing stem renders to bypass compressor and reverb for linear, additive multi-track stems.
-3. DAW-Ready MIDI (`src/midi.mjs`, `P8-02`):
-   - Transmit SMF Key Signature (`0xFF 0x59`) and Time Signature (`0xFF 0x58`) meta events on the conductor track.
-   - Guaranteed preservation of General MIDI drum channel 9 when `flattenChannels` is active in Clean DAW export mode.
-4. Engine Versioning (`src/version.mjs`, `P8-03`, `D-077`):
-   - Defined `APP_VERSION`, `ENGINE_VERSION`, and `ENGINE_FINGERPRINT` over esoteric scores and golden fixtures, verified by `tests/engine-version.test.mjs`.
-   - Updated session schema to v7 recording `engineVersion`; telemetry alerts user if session engine version differs from host engine version.
-5. Key, Scale, and Tuning Retuning (`src/tuning.mjs`, `P8-04`, `D-078`):
-   - Pure tuning module providing `midiToFrequency()`, `referencePitch()`, `setReferencePitch()` ($415\dots 466\text{ Hz}$), and `applyScoreOverrides()`.
-   - Wired live key override ($C\dots B$), scale override, and A4 tuning dropdowns in Kapellmeister console (`#kapellmeister-key-override`, `#kapellmeister-scale-override`, `#kapellmeister-tuning-a4`).
-6. 4/4 Bar-Aligned Metre Lock (`src/tuning.mjs`, `src/app.mjs`, `P8-05`, `D-079`):
-   - Implemented `stepUnitSeconds` scaling 12-step passes to fit exactly 4 quarter-beats at the stated BPM.
-   - Added `4/4 BAR LOCK` toggle button (`#transport-bar-lock`) to the Master Transport deck; persisted in v7 sessions (`session.barLock`).
-7. Architecture & Decisions:
-   - Logged D-076 through D-080 in `docs/DECISIONS.md`.
-   - Updated repository maps in `AGENTS.md` and `docs/ARCHITECTURE.md`.
-   - Updated `ROADMAP.md` and `docs/CHANGELOG.md`.
-
-
-
-
-
-
 

@@ -36,6 +36,7 @@ export const interaction = {
   thereminSlag: 0,
   thereminStuck: false,
   thereminFrequency: 440,
+  sporeHarpModel: null,
 };
 
 export function mulberry32(seed) {
@@ -1364,6 +1365,58 @@ export function drawMycelium(ctx, score, mycelium, base, growth, elapsed, colors
   ctx.restore();
 }
 
+export function drawSporeHarpStrings(ctx, model, base, elapsed, colors) {
+  if (!model?.enabled || !model.strings || model.strings.length === 0) return;
+  const now = Date.now();
+  ctx.save();
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < model.strings.length; i += 1) {
+    const str = model.strings[i];
+    const x1 = str.x1 * base;
+    const y1 = str.y1 * base;
+    const x2 = str.x2 * base;
+    const y2 = str.y2 * base;
+
+    const isVibrating = now < str.vibratingUntil;
+    const amp = isVibrating ? str.vibration * Math.max(0, (str.vibratingUntil - now) / 450) : 0;
+
+    const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+    const normX = -(y2 - y1) / len;
+    const normY = (x2 - x1) / len;
+    const wave = Math.sin(elapsed * 48 + i * 1.5) * amp * base * 0.042;
+
+    const midX = (x1 + x2) * 0.5 + normX * wave;
+    const midY = (y1 + y2) * 0.5 + normY * wave;
+
+    const symHue = model.symbiosis === "CORDYCEPS" ? 15 : (model.symbiosis === "SILK" ? 190 : (model.symbiosis === "MUTUAL" ? 280 : 42));
+    const alpha = isVibrating ? 0.95 : (0.35 + str.sporeDensity * 0.35);
+
+    ctx.strokeStyle = `hsla(${symHue}, 90%, ${isVibrating ? "78%" : "62%"}, ${alpha})`;
+    ctx.lineWidth = isVibrating ? 2.2 : (1.0 + str.sporeDensity * 0.8);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(midX, midY, x2, y2);
+    ctx.stroke();
+
+    ctx.fillStyle = `hsla(${symHue}, 100%, 75%, ${isVibrating ? 0.9 : 0.5})`;
+    ctx.beginPath();
+    ctx.arc(x1, y1, isVibrating ? 3.5 : 2.2, 0, Math.PI * 2);
+    ctx.arc(x2, y2, isVibrating ? 3.5 : 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (isVibrating) {
+      ctx.fillStyle = `hsla(${symHue}, 100%, 85%, 0.8)`;
+      ctx.beginPath();
+      ctx.arc(midX + Math.sin(elapsed * 30) * 4, midY + Math.cos(elapsed * 30) * 4, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+}
+
 function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
   const stipeLen = 50 * maturity;
   const capW = 38 * maturity;
@@ -2308,6 +2361,9 @@ export class OracleVision {
 
     drawMycelium(ctx, score, this.mycelium, base, growth, elapsed, colors);
     drawFruitingBodies(ctx, score, this.fruitingBodies, base, growth, elapsed, colors);
+    if (interaction.sporeHarpModel?.enabled && interaction.sporeHarpModel.strings?.length) {
+      drawSporeHarpStrings(ctx, interaction.sporeHarpModel, base, elapsed, colors);
+    }
 
     ctx.save();
     ctx.shadowColor = `hsla(${colors[1]} 100% 70% / 0.58)`;

@@ -81,6 +81,18 @@
           </button>
           <output class="theremin-readout" id="theremin-status" aria-live="off">THEREMIN · FLOW · RESIN 0.0</output>
         </div>
+        <div class="theremin-bar spore-harp-bar" id="spore-harp-bar" role="group" aria-label="The BioParasite Spore Harp">
+          <button class="theremin-button harp-button" id="spore-harp-toggle" type="button" aria-pressed="true" title="Engage or silence the BioParasite Spore Harp">
+            <span class="harp-glyph" aria-hidden="true">𝄢</span> SPORE HARP: ACTIVE
+          </button>
+          <button class="theremin-button harp-button" id="spore-harp-strum" type="button" title="Strum the resonant hyphal strings across the bell jar">
+            STRUM HYPHAE <span aria-hidden="true">≋</span>
+          </button>
+          <button class="theremin-button harp-button" id="spore-harp-symbiosis" type="button" title="Cycle symbiosis mode: LICHEN, CORDYCEPS, SILK, MUTUAL">
+            SYMBIOSIS: LICHEN
+          </button>
+          <output class="theremin-readout harp-telemetry" id="spore-harp-telemetry" aria-live="off">SPORE HARP · 8 HYPHAE · LICHEN · TENSION 1.0</output>
+        </div>
       </div>
 
       <form id="oracle-controls" class="summon-form">
@@ -981,12 +993,12 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "d94662a25c3d";
+      const ASSET_VERSION = "b2366f922d6d";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "bone-beat.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
-        "session.mjs", "shakespeare.mjs", "share.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "spore-harp.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
       for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;

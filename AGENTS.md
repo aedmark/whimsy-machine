@@ -112,6 +112,7 @@ Never force-push or rewrite shared history.
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/theremin.mjs` | The Aetheric Bone Theremin model, BoneAmanita physics transitions, and heterodyne synth voice (P10-01, D-089) |
 | `src/bone-beat.mjs` | The Bone Forge & Crucible Beat Machine, physical percussion synth, and somatic engine (P10-02, D-090) |
+| `src/spore-harp.mjs` | The BioParasite Spore Harp, physical acoustic plucked string synth, and symbiotic hyphae (P10-03, D-091) |
 | `src/vitrine-canvas.mjs` | Apparition Vitrine 2D Canvas renderer (`OracleVision`), silhouette/kinetic/appendage/mycelium geometry, and gesture physics (D-067) |
 | `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |

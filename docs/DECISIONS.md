@@ -1937,3 +1937,32 @@ Investigation showed two root causes:
 - The Whimsy Machine possesses a tactile, physical acoustic rhythm machine with living thermal and voltage dynamics.
 - Offline WAV loop and stem exports faithfully render the physical percussion layers.
 - All 270 regression and unit tests pass.
+
+## D-091 The BioParasite Spore Harp (P10-03)  (2026-10-28, status: accepted)
+
+**Context:** Following Candidate 1 (The Theremin, P10-01) and Candidate 2 (The Bone Beat Machine, P10-02), the maintainer requested Candidate 3 (The BioParasite Spore Harp, P10-03). The Whimsy Machine contains a procedural mycelial network under the parlor glass with branching hyphae, anastomotic fusion bridges, and ballistospore puffs. Drawing directly from BoneAmanita's `BioParasite` (`spores/biome.py`) and symbiotic mechanics, we modeled the hyphal filaments and anastomoses as physical, resonant acoustic strings under bio-acoustic tension inside the bell jar.
+
+**Decision:**
+1. **Physical Acoustic Plucked String Synthesis (`src/spore-harp.mjs`):**
+   - Synthesizes 8 tuned hyphal strings mapped to the creature's scale degrees across concert harp register (C3–C5).
+   - Models physical string acoustics: fast plectrum/spore click transient (3 ms), multi-mode damped partial resonators with inharmonic string stiffness ($\epsilon$), and organic lowpass damping sweeps.
+   - Four Symbiosis Timbres (`HARP_SYMBIOSIS_MODES`):
+     - *SILK (chitin / pure):* Crystalline, delicate concert harp & koto tone with pure harmonic consonance.
+     - *LICHEN (photobiont / bloom):* Photobiont resonance adding a shimmering warm fifth/octave harmonic swell.
+     - *CORDYCEPS (parasite / stiff):* Piercing, high-tension kalimba/harpsichord attack with inharmonic stiffness and rapid parasitic damping.
+     - *MUTUAL (guttation / meniscus):* Deep, resonant cello-pizzicato / bass-koto with water-droplet meniscus surface-tension chirp.
+2. **Apparition Vitrine Canvas Overlays (`src/vitrine-canvas.mjs`):**
+   - Renders the 8 hyphal strings as glowing taut threads spanning diagonally across the bell jar.
+   - Standing-wave displacement animation when plucked with sine wave amplitude decay over 350–450 ms.
+   - Node anchor pips and glowing spore dust specks shed during string vibration.
+3. **Multi-Modal Interactive Excitation (`src/app.mjs`, `index.html`, `styles.css`):**
+   - *Pedestal Controller (`#spore-harp-bar`):* Placed directly below the theremin bar on the vitrine pedestal with `#spore-harp-toggle`, `#spore-harp-strum` (manual ascending/descending strum), `#spore-harp-symbiosis` (mode cycler), and `#spore-harp-telemetry`.
+   - *Direct Vitrine Swiping:* Dragging or swiping across the canvas evaluates segment intersection (`checkStringIntersection`) against all 8 hyphal strings, plucking them in real time with velocity tracking pointer speed.
+   - *Ballistospore Collision:* Spore puffs and eruptions (`triggerSporePuff`, `burstSpores`) launch ballistospores that strike hyphal strings, creating organic Aeolian harp counterpoint.
+   - *Step Arpeggiator:* Synchronized to loop steps in `scheduleFungalBioStep` when auto-strum is active.
+   - *Audio Graph Routing:* Routes through `currentTransport.fungalBus`, integrating seamlessly into the Fungal mixer channel strip, chamber reverb, and offline WAV loop / stem exports (`fungal.wav`).
+
+**Consequences:**
+- The parlor bell jar possesses a tactile, visually resonant acoustic harp with organic symbiosis timbres.
+- Both pointer gestures and flying ballistospores physically sound the strings.
+- All 277 regression and unit tests pass.

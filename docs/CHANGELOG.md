@@ -4,6 +4,20 @@
 
 ### Added
 
+- The BioParasite Spore Harp (`P10-03`, `D-091`):
+  - Physical acoustic plucked string harp modeling symbiotic hyphae and anastomoses across the mycelial network (`src/spore-harp.mjs`).
+  - 8 tuned hyphal strings mapped across the creature's scale degrees in the concert harp register (C3–C5).
+  - Four BoneAmanita symbiosis timbres:
+    - *SILK (chitin / pure):* Crystalline, pure concert harp and koto tone.
+    - *LICHEN (photobiont / bloom):* Harmonic bloom with warm fifth/octave sustaining resonance.
+    - *CORDYCEPS (parasite / stiff):* Piercing, high-tension kalimba/harpsichord pluck with inharmonic stiffness and quick damping.
+    - *MUTUAL (guttation / meniscus):* Deep cello-pizzicato / bass-koto with water-droplet meniscus surface-tension chirp.
+  - Multi-modal physical excitation:
+    - Direct canvas swiping plucks strings in real time when pointer motion intersects hyphal threads (`checkStringIntersection`).
+    - Ballistospore puffs (`triggerSporePuff`, `burstSpores`) launch spores that strike hyphal strings, creating organic Aeolian harp counterpoint.
+    - Vitrine visual feedback (`drawSporeHarpStrings`): glowing taut hyphal threads with decaying standing-wave vibration and spore dust shedding.
+    - Stage pedestal controller (`#spore-harp-bar`): `#spore-harp-toggle`, `#spore-harp-strum`, `#spore-harp-symbiosis`, and `#spore-harp-telemetry`.
+    - Integrated into `currentTransport.fungalBus`, mixing console Fungal strip, parlor reverb, and offline WAV loop / stem exports.
 - The Bone Forge & Crucible Beat Machine (`P10-02`, `D-090`):
   - Physical acoustic rhythm machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam (`src/bone-beat.mjs`).
   - Pure state model with thermal energy accumulation (Heat in °C, ambient 24°C, overheat 80°C) and electrical somatic excitation (Voltage in V, 0.0 to 20.0V).
