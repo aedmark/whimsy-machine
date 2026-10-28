@@ -2059,6 +2059,47 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P6-01 Neocities public deployment and v1.0.0 release.
 
+### Session 79 (2026-10-25): Cross-Platform Application Icon & Official v1.0.0 Release (D-066, P6-01)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Create a cross-platform application icon across Linux, Windows, and macOS capturing the Victorian esoteric parlor aesthetic, bump project version to 1.0.0, and configure automated multi-platform desktop release builds.
+
+**Done:** All parts implemented and verified under D-066. P6-01 marked complete. 198/198 tests pass.
+
+**Changed:**
+1. Cross-Platform Application Icon (`src-tauri/icons/`):
+   - Designed 1024×1024 master icon (`src-tauri/icons/master-icon.png`): centered antique brass-rimmed bell jar vitrine mounted on turned mahogany, enclosing a glowing bioluminescent organism with emerald/amethyst tendrils, flanked by celestial crescent moon (☽) and radiant sun (☉) sigils on parlor velvet.
+   - Generated native platform icons using `@tauri-apps/cli icon`: `icon.ico` (Windows), `icon.icns` (macOS), `icon.png` (512×512 Linux), `128x128.png`, `32x32.png`.
+   - Registered Linux desktop application entry `~/.local/share/applications/whimsy-machine.desktop` and icon `~/.local/share/icons/whimsy-machine.png`.
+2. Version Bump to v1.0.0 & Canonical Branding:
+   - Synchronized product branding to "The Whimsy Machine" (`whimsy-machine`, identifier `com.aedmark.whimsy-machine`) across `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `AGENTS.md`, `README.md`, `LICENSE`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/manual.json`, and desktop manifests.
+   - Cleared legacy PyCharm IDE clutter: purged 8.1 GB of stale `src-tauri/target/` build files via `cargo clean`, added root `.gitignore` rules for desktop build outputs (`src-tauri/target/`, `src-tauri/dist/`, `src-tauri/gen/`), updated `.idea/whimsy-machine.iml` with explicit `<excludeFolder>` paths, and configured `.idea/.name` to display "The Whimsy Machine".
+   - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`.
+   - Rebuilt `manual.html` via `python3 tools/manual.py build --output manual.html docs/manual.json`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
+   - Updated `docs/CHANGELOG.md` converting `Unreleased` into `[1.0.0] - 2026-10-25`.
+   - Marked Phase 6 roadmap item P6-01 complete in `ROADMAP.md`.
+3. Release Packaging & GitHub Actions CI:
+   - Updated `tools/build_desktop.sh` to package portable Linux standalone tarball (`dist-desktop/whimsy-machine-v1.0.0-linux-x86_64.tar.gz`, 3.5 MB) with executable, desktop entry, icon, and install script, and support `--bundle` for `.deb`, `.rpm`, `.AppImage`.
+   - Created `.github/workflows/release.yml` using `tauri-apps/tauri-action@v0` matrix across Ubuntu 22.04 (.deb, .AppImage), Windows (.msi, .exe), and macOS (Universal .dmg) on tag push or manual workflow dispatch.
+   - Added `dist-desktop/` to `.gitignore`.
+   - Logged D-066 in `docs/DECISIONS.md`.
+   - Archived Session 69 to `docs/archive/sessions.md`.
+4. Section Loop Instrumentation & Deterministic Genre Progressions (`src/accompaniment.mjs`, `src/looper.mjs`, `src/app.mjs`):
+   - Overhauled `buildFunSectionProgression` and `buildPerformance` in `src/accompaniment.mjs` so `intro`, `bridge`, and `outro` progressions derive directly from the active rulebook genre's own Inform 7 progression tables and spines (`buildFunProgression`, `book.spine`, `THE CREATURE'S OWN`, and Tonnetz walks) and deterministically vary per creature (`varyProgression`, `score` harmony fields, and `melodyFor(score)`).
+   - Added `setSectionVoices` and `transposeSectionLoops` in `src/looper.mjs` and wired them in `src/app.mjs` so selecting a new Fun Machine voice chip, changing Kapellmeister genre/strictness/variation, or summoning a new creature immediately updates recorded `intro`, `bridge`, and `outro` section loops as well as live playback.
+
+**Verified:**
+- `./tools/build_desktop.sh` built standalone binary and portable tarball in 7.2s.
+- `npx @tauri-apps/cli build` verified local packaging of `.deb`, `.rpm`, and `.AppImage`.
+- `node --test tests/*.test.mjs`: 198/198 tests passing.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Push release tag `v1.0.0` and deploy staged bundle (`dist-neocities/`) to Neocities.
+
+
 
 
 

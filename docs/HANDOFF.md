@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 90, on `main`._
+_Last updated: 2026-10-28, session 91, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
@@ -13,15 +13,15 @@ _Last updated: 2026-10-28, session 90, on `main`._
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 - Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
-- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01 complete, D-089; P10-02 and P10-03 planned). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone mapped across the Apparition Vitrine with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse).
+- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01 and P10-02 complete, D-089, D-090; P10-03 planned). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse). P10-02: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), a physical acoustic percussion machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam, driven by physical impact counts, heat, and voltage alongside the Malbolge beat machine.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01) are fully implemented, verified, and passing across all suites! Version 1.5.0. 261/261 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), and Phase 10 (P10-01, P10-02) are fully implemented, verified, and passing across all suites! Version 1.5.0. 270/270 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 90, local Linux environment)
+**Verified** (2026-10-28, session 91, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **261/261 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **270/270 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +93,43 @@ _Last updated: 2026-10-28, session 90, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 91 (2026-10-28): The Bone Forge & Crucible Beat Machine, Physical Percussion Synthesizers, and Somatic Dynamics (P10-02, D-090)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Candidate 2 of Phase 10: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*) inspired by BoneAmanita's `TheForge` and `TheCrucible` (P10-02, D-090).
+
+**Done:** All parts implemented and verified under D-090. P10-02 marked complete. 270/270 tests pass.
+
+**Changed:**
+1. State & Somatic Model (`src/bone-beat.mjs`, `tests/bone-beat.test.mjs`):
+   - Created pure physical acoustic percussion model tracking Heat (°C, ambient 24°C, overheat 80°C), Voltage (0.0 to 20.0V), Dampeners (default 3), Instability, and Status (`TEMPERED`, `OVERHEAT`, `QUENCHED`, `SURGE`).
+   - Kinetic strikes accumulate thermal energy and voltage excitation.
+   - High voltage surges (> 14.0V) are absorbed by Crucible Dampeners, reducing voltage and damping rhythm.
+   - Overheat conditions (> 80°C) trigger automatic mineral brine steam quench on downbeats, cooling the forge and restoring dampeners.
+   - Deterministic polyrhythmic pattern composition (`composeBoneBeat`) generating Euclidean and cross-rhythm masks across 12-step and 16-step straight grid metres based on creature `beatMode`.
+2. Physical Acoustic Percussion Synthesizers (`src/bone-beat.mjs`):
+   - *Struck Bone (heavy):* Keratin pitch-drop click (1400 -> 380 Hz) and 210 Hz marrow cavity resonance.
+   - *Resonant Mineral Plate (stone):* Subterranean lithophone gong thud utilizing Bessel plate mode partials (1.0x, 2.29x, 3.42x over 82 Hz fundamental).
+   - *Tempered Brass Anvil (kinetic):* Piercing smithy pings with ringing metallic partials (1680 Hz, 2940 Hz, 4410 Hz).
+   - *Quenching Steam (quench):* Hot vapor release synthesizing white noise swept through a resonant bandpass filter (5800 -> 1600 Hz).
+3. UI & Transport Integration (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added `#bone-forge-bar` inside Plate I (`#beat-engine`) with `#bone-beat-toggle`, `#bone-beat-strike`, `#bone-beat-quench`, and live `#bone-beat-telemetry`.
+   - Wired into `scheduleBeatStep`, routing through `currentTransport.beatBus` into mixer console Plate I strip, master compressor, parlor reverb send, and offline WAV loop / stem exports.
+   - Coupled vitrine taps and retaliation strikes directly to forge strikes and excitation.
+   - Isolated offline render states via `boneBeatModel: createBoneBeatModel(boneBeatModel)` on `offlineTransport` to avoid mutating live thermal parameters.
+4. Assets & Housekeeping:
+   - Added `"bone-beat.mjs"` to `MODULES` in `index.html` boot script and restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
+   - Updated `AGENTS.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/DECISIONS.md`, and `docs/HANDOFF.md`.
+   - Archived Session 79 to `docs/archive/sessions.md` to preserve the 10-session handoff window.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 270/270 tests passing.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** P10-03 The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*) or user review of The Bone Forge & Crucible Beat Machine.
 
 ### Session 90 (2026-10-28): The Aetheric Bone Theremin, BoneAmanita Resonances, and Vitrine Electrophone Synthesis (P10-01, D-089)
 
@@ -398,46 +435,6 @@ _Last updated: 2026-10-28, session 90, on `main`._
    - Logged D-076 through D-080 in `docs/DECISIONS.md`.
    - Updated repository maps in `AGENTS.md` and `docs/ARCHITECTURE.md`.
    - Updated `ROADMAP.md` and `docs/CHANGELOG.md`.
-
-### Session 79 (2026-10-25): Cross-Platform Application Icon & Official v1.0.0 Release (D-066, P6-01)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Create a cross-platform application icon across Linux, Windows, and macOS capturing the Victorian esoteric parlor aesthetic, bump project version to 1.0.0, and configure automated multi-platform desktop release builds.
-
-**Done:** All parts implemented and verified under D-066. P6-01 marked complete. 198/198 tests pass.
-
-**Changed:**
-1. Cross-Platform Application Icon (`src-tauri/icons/`):
-   - Designed 1024×1024 master icon (`src-tauri/icons/master-icon.png`): centered antique brass-rimmed bell jar vitrine mounted on turned mahogany, enclosing a glowing bioluminescent organism with emerald/amethyst tendrils, flanked by celestial crescent moon (☽) and radiant sun (☉) sigils on parlor velvet.
-   - Generated native platform icons using `@tauri-apps/cli icon`: `icon.ico` (Windows), `icon.icns` (macOS), `icon.png` (512×512 Linux), `128x128.png`, `32x32.png`.
-   - Registered Linux desktop application entry `~/.local/share/applications/whimsy-machine.desktop` and icon `~/.local/share/icons/whimsy-machine.png`.
-2. Version Bump to v1.0.0 & Canonical Branding:
-   - Synchronized product branding to "The Whimsy Machine" (`whimsy-machine`, identifier `com.aedmark.whimsy-machine`) across `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `AGENTS.md`, `README.md`, `LICENSE`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/manual.json`, and desktop manifests.
-   - Cleared legacy PyCharm IDE clutter: purged 8.1 GB of stale `src-tauri/target/` build files via `cargo clean`, added root `.gitignore` rules for desktop build outputs (`src-tauri/target/`, `src-tauri/dist/`, `src-tauri/gen/`), updated `.idea/whimsy-machine.iml` with explicit `<excludeFolder>` paths, and configured `.idea/.name` to display "The Whimsy Machine".
-   - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`.
-   - Rebuilt `manual.html` via `python3 tools/manual.py build --output manual.html docs/manual.json`.
-   - Restamped asset version (`tools/stamp_assets.mjs`).
-   - Updated `docs/CHANGELOG.md` converting `Unreleased` into `[1.0.0] - 2026-10-25`.
-   - Marked Phase 6 roadmap item P6-01 complete in `ROADMAP.md`.
-3. Release Packaging & GitHub Actions CI:
-   - Updated `tools/build_desktop.sh` to package portable Linux standalone tarball (`dist-desktop/whimsy-machine-v1.0.0-linux-x86_64.tar.gz`, 3.5 MB) with executable, desktop entry, icon, and install script, and support `--bundle` for `.deb`, `.rpm`, `.AppImage`.
-   - Created `.github/workflows/release.yml` using `tauri-apps/tauri-action@v0` matrix across Ubuntu 22.04 (.deb, .AppImage), Windows (.msi, .exe), and macOS (Universal .dmg) on tag push or manual workflow dispatch.
-   - Added `dist-desktop/` to `.gitignore`.
-   - Logged D-066 in `docs/DECISIONS.md`.
-   - Archived Session 69 to `docs/archive/sessions.md`.
-4. Section Loop Instrumentation & Deterministic Genre Progressions (`src/accompaniment.mjs`, `src/looper.mjs`, `src/app.mjs`):
-   - Overhauled `buildFunSectionProgression` and `buildPerformance` in `src/accompaniment.mjs` so `intro`, `bridge`, and `outro` progressions derive directly from the active rulebook genre's own Inform 7 progression tables and spines (`buildFunProgression`, `book.spine`, `THE CREATURE'S OWN`, and Tonnetz walks) and deterministically vary per creature (`varyProgression`, `score` harmony fields, and `melodyFor(score)`).
-   - Added `setSectionVoices` and `transposeSectionLoops` in `src/looper.mjs` and wired them in `src/app.mjs` so selecting a new Fun Machine voice chip, changing Kapellmeister genre/strictness/variation, or summoning a new creature immediately updates recorded `intro`, `bridge`, and `outro` section loops as well as live playback.
-
-**Verified:**
-- `./tools/build_desktop.sh` built standalone binary and portable tarball in 7.2s.
-- `npx @tauri-apps/cli build` verified local packaging of `.deb`, `.rpm`, and `.AppImage`.
-- `node --test tests/*.test.mjs`: 198/198 tests passing.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** Push release tag `v1.0.0` and deploy staged bundle (`dist-neocities/`) to Neocities.
 
 
 

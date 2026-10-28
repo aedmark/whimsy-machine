@@ -1908,3 +1908,32 @@ Investigation showed two root causes:
 - The Aetheric Bone Theremin sings with Clara Rockmore-style vocal fluidity, pure analog portamento, and zero amplitude pulsing.
 - Players can sustain notes naturally without premature amber lockup, while somatic BoneAmanita physics reward stillness and turbulent gestures.
 - All 261 regression and unit tests pass cleanly.
+
+## D-090 The Bone Forge & Crucible Beat Machine (P10-02)  (2026-10-28, status: accepted)
+
+**Context:** Candidate 2 (The Bone Beat Machine) was selected for Phase 10 implementation following Candidate 1 (P10-01). The Whimsy Machine features esoteric melodic and chordal engines across Plates I–V, but lacked an organic, physical tactile percussion machine with somatic metabolic dynamics. Drawing directly from BoneAmanita's `TheForge` (`machine/forge.py`), `TheCrucible` (`machine/crucible.py`), and Janitor Gordon's archetype ("Focus on concrete physical nouns. Use heavy mass and kinetic strikes. Hammer the alloy, regulate the voltage, dampen surges, and quench overheating metal in cold mineral brine."), we designed The Bone Forge & Crucible Beat Machine.
+
+**Decision:**
+1. **Physical Acoustic Materials (`src/bone-beat.mjs`):**
+   - Synthesizes 4 distinct physical percussion timbres via zero-dependency Web Audio graphs:
+     - *Struck Bone (heavy):* Keratin pitch-drop click (1400 -> 380 Hz) and 210 Hz marrow cavity resonance.
+     - *Resonant Mineral Plate (stone):* Subterranean lithophone gong thud utilizing Bessel plate mode partials (1.0x, 2.29x, 3.42x over 82 Hz fundamental).
+     - *Tempered Brass Anvil (kinetic):* Bright, piercing smithy pings with ringing anvil partials (1680 Hz, 2940 Hz, 4410 Hz).
+     - *Quenching Steam (quench):* Hot vapor release synthesizing white noise swept through a resonant bandpass filter (5800 -> 1600 Hz).
+2. **Thermal & Electrical Somatic Engine:**
+   - Tracks Heat (°C, ambient 24°C, overheat at 80°C) and Voltage (0.0 to 20.0V).
+   - Kinetic strikes accumulate heat and electrical excitation, which naturally dissipate over time.
+   - Voltage surges (> 14.0V) are absorbed by Crucible Dampeners, preventing runaway feedback.
+   - Overheat conditions (> 80°C) trigger an automatic steam quench release on the subsequent downbeat, cooling metals in cold mineral brine and replenishing dampeners.
+3. **Deterministic Polyrhythmic Pattern Composition:**
+   - `composeBoneBeat(score, gridSteps, mutation)` generates Euclidean and cross-rhythm patterns mapped across 12-step and 16-step straight metre based on creature `beatMode` (Automaton March, Seance Waltz, Pendulum Galop, Telegram Clatter, Subterranean Foundry, Bell-Tower Toll, Alchemical Loom, Infernal Habanera).
+4. **App & Console Integration (`src/app.mjs`, `index.html`, `styles.css`):**
+   - Added `#bone-forge-bar` inside Plate I (`#beat-engine`) with `#bone-beat-toggle`, `#bone-beat-strike` (manual smithy strike), `#bone-beat-quench` (manual brine quench), and `#bone-beat-telemetry`.
+   - Wired into `scheduleBeatStep`, routing through `currentTransport.beatBus` into mixer console Plate I channel strip, master compressor, parlor reverb send, and stem exports.
+   - Coupled vitrine taps and retaliation strikes directly to forge strikes and excitation.
+   - Isolated offline render states via `boneBeatModel: createBoneBeatModel(boneBeatModel)` on `offlineTransport` to avoid mutating live thermal parameters.
+
+**Consequences:**
+- The Whimsy Machine possesses a tactile, physical acoustic rhythm machine with living thermal and voltage dynamics.
+- Offline WAV loop and stem exports faithfully render the physical percussion layers.
+- All 270 regression and unit tests pass.

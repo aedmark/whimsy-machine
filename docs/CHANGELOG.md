@@ -4,6 +4,20 @@
 
 ### Added
 
+- The Bone Forge & Crucible Beat Machine (`P10-02`, `D-090`):
+  - Physical acoustic rhythm machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam (`src/bone-beat.mjs`).
+  - Pure state model with thermal energy accumulation (Heat in °C, ambient 24°C, overheat 80°C) and electrical somatic excitation (Voltage in V, 0.0 to 20.0V).
+  - Crucible Dampeners that absorb voltage surges (> 14.0V), preventing polyrhythmic runaway feedback.
+  - Automatic mineral brine steam quench on overheat downbeats, cooling metals and restoring dampeners.
+  - Deterministic polyrhythmic pattern composition (`composeBoneBeat`) generating Euclidean and cross-rhythm masks across 12-step and 16-step straight grid metres based on creature `beatMode`.
+  - Zero-dependency Web Audio synthesizers:
+    - *Struck Bone:* Keratin pitch-drop click (1400 -> 380 Hz) and 210 Hz marrow cavity resonance.
+    - *Resonant Mineral Plate:* Bessel mode lithophone gong thud (82 Hz fundamental, 1.0x, 2.29x, 3.42x partials).
+    - *Tempered Brass Anvil:* Piercing smithy pings with ringing metallic partials (1680 Hz, 2940 Hz, 4410 Hz).
+    - *Quenching Steam:* Sweeping resonant bandpass white noise (5800 -> 1600 Hz).
+  - Plate I controller (`#bone-forge-bar`) with `#bone-beat-toggle`, `#bone-beat-strike`, `#bone-beat-quench`, and `#bone-beat-telemetry`.
+  - Seamless integration into `currentTransport.beatBus`, mixing console, parlor reverb, and offline WAV loop / stem exports.
+  - Physical coupling to Apparition Vitrine: organism glass taps and retaliation lunges strike and heat the forge.
 - The Aetheric Bone Theremin (`P10-01`, `D-089`):
   - Expressive live gesture electrophone mapped directly across the Apparition Vitrine (`src/theremin.mjs`, `src/vitrine-canvas.mjs`, `src/app.mjs`).
   - Dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span defaulting to continuous analog glide (`SCALE SNAP: OFF (GLIDE)`) with 40 ms portamento, plus optional creature scale degree quantization; vertical Y-axis maps proximity, vacuum-tube gain, and filter openness.

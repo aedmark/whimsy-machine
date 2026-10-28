@@ -1613,6 +1613,37 @@ h1 em {
   opacity: 0.38;
 }
 
+/* The Bone Forge & Crucible Beat Machine (P10-02, D-090) */
+.bone-forge-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0 0.8rem 0;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(184, 146, 73, 0.4);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #18120f 0%, #0e0a08 100%);
+  box-shadow: inset 0 1px 0 rgba(184, 146, 73, 0.15), 0 2px 6px rgba(0, 0, 0, 0.45);
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.bone-button {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.62rem;
+}
+
+.bone-telemetry {
+  margin-left: auto;
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--brass-bright);
+}
+
 /* Parlor mixing console (P5-19): eight strips, VU column beside each fader. */
 .mixer-strips {
   display: grid;
@@ -2841,6 +2872,18 @@ noscript {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
+  }
+
+  .bone-forge-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .bone-telemetry {
+    margin-left: 0;
+    text-align: center;
+    padding-top: 0.2rem;
   }
 
   .theremin-readout {

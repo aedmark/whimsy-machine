@@ -177,6 +177,17 @@ import {
   pitchForThereminCoordinate,
   updateThereminModel,
 } from "./theremin.mjs";
+import {
+  composeBoneBeat,
+  createBoneBeatModel,
+  formatBoneBeatTelemetry,
+  quenchBoneForge,
+  scheduleBoneBeatStep,
+  stepBoneBeat,
+  strikeBoneForge,
+  triggerBoneStrike,
+  triggerQuenchSteam,
+} from "./bone-beat.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
@@ -365,6 +376,10 @@ const elements = {
   beatToggle: document.querySelector("#beat-toggle"),
   beatMutate: document.querySelector("#beat-mutate"),
   beatGrid: document.querySelector("#beat-grid"),
+  boneBeatToggle: document.querySelector("#bone-beat-toggle"),
+  boneBeatStrike: document.querySelector("#bone-beat-strike"),
+  boneBeatQuench: document.querySelector("#bone-beat-quench"),
+  boneBeatTelemetry: document.querySelector("#bone-beat-telemetry"),
   bassName: document.querySelector("#score-bass"),
   bassTelemetry: document.querySelector("#bass-telemetry"),
   bassToggle: document.querySelector("#bass-toggle"),
@@ -492,6 +507,8 @@ let currentVariation = Object.freeze([]);
 let genreVaried = true;
 let currentArrangement = null;
 let currentBeat = null;
+let currentBoneBeat = null;
+let boneBeatModel = createBoneBeatModel();
 let currentBass = null;
 let currentHarmony = null;
 let currentChimes = null;
@@ -958,6 +975,17 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
     engaged: transportEngages(transport, "beat"),
     logNote,
   });
+  const activeModel = transport.boneBeatModel || boneBeatModel;
+  if (currentBoneBeat && activeModel?.enabled && transportEngages(transport, "beat")) {
+    const stepData = currentBoneBeat.steps[stepIndex % currentBoneBeat.gridSteps];
+    if (stepData) {
+      stepBoneBeat(activeModel, stepData, { dt: stepDuration });
+      scheduleBoneBeatStep(context, transport.beatBus, activeModel, stepData, at, stepDuration);
+      if (!transport.isOffline && elements.boneBeatTelemetry) {
+        elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(activeModel);
+      }
+    }
+  }
 }
 
 function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration) {
@@ -1322,12 +1350,15 @@ function plateMutation(id) {
 function recomposePlate(id) {
   if (!currentScore) return;
   plateCellCycles[id] = Array(activeGridSteps).fill(0);
-  if (id === "beat" && beatSource) {
-    rawBeat = composeBeat(beatSource, currentScore, beatMutation, activeGridSteps);
-    currentBeat = rawBeat;
-    if (elements.beatTelemetry && beatMutation > 0) {
-      elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
+  if (id === "beat") {
+    if (beatSource) {
+      rawBeat = composeBeat(beatSource, currentScore, beatMutation, activeGridSteps);
+      currentBeat = rawBeat;
+      if (elements.beatTelemetry && beatMutation > 0) {
+        elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
+      }
     }
+    currentBoneBeat = composeBoneBeat(currentScore, activeGridSteps, beatMutation);
   } else if (id === "bass" && bassSource) {
     rawBass = composeBass(bassSource, currentScore, bassMutation, activeGridSteps);
     currentBass = rawBass;
@@ -2503,6 +2534,10 @@ function showScore(rawScore) {
   } else if (elements.beatName) {
     elements.beatName.textContent = BEAT_NAMES[score.beatMode];
   }
+  currentBoneBeat = composeBoneBeat(score, activeGridSteps, beatMutation);
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
   if (bassSource) {
     rawBass = composeBass(bassSource, score, bassMutation, activeGridSteps);
     currentBass = rawBass;
@@ -2801,6 +2836,8 @@ async function renderEnsembleLoop(score, {
   const graph = buildEnsembleGraph(offlineCtx, score, options);
   const offlineTransport = {
     ...graph,
+    isOffline: true,
+    boneBeatModel: createBoneBeatModel(boneBeatModel),
     melody: currentConductedMelody || melodyFor(score, activeGridSteps),
     engageAll,
     clockTicks,
@@ -3404,6 +3441,13 @@ function triggerRetaliation(normX, normY) {
 
   // Audio percussion
   triggerPercussion("retaliation", normX, normY, 1.0);
+  strikeBoneForge(boneBeatModel, { type: "mineral", force: 2.0 });
+  if (audioContext && currentTransport) {
+    triggerBoneStrike(audioContext, currentTransport.beatBus, "mineral", audioContext.currentTime, 1.0);
+  }
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
 
   // Disruption across the entire audio ensemble:
   if (currentTransport && audioContext) {
@@ -3491,6 +3535,10 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   } else {
     interaction.tapStreak = 1;
     interaction.agitation = Math.min(1.0, Math.max(0.18, interaction.agitation + 0.15));
+  }
+  strikeBoneForge(boneBeatModel, { type: "bone", force: 0.8 });
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
   }
 
   // Cross retaliation threshold
@@ -3626,6 +3674,46 @@ elements.thereminScaleSnap?.addEventListener("click", () => {
     ? "SCALE SNAP: ON"
     : "SCALE SNAP: OFF (GLIDE)";
   updateThereminUI(null);
+});
+
+// --- The Bone Forge & Crucible Controls (P10-02, D-090) ---------------------
+elements.boneBeatToggle?.addEventListener("click", () => {
+  boneBeatModel.enabled = !boneBeatModel.enabled;
+  elements.boneBeatToggle.setAttribute("aria-pressed", String(boneBeatModel.enabled));
+  elements.boneBeatToggle.textContent = boneBeatModel.enabled
+    ? "BONE FORGE: ACTIVE"
+    : "BONE FORGE: MUTED";
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
+});
+
+elements.boneBeatStrike?.addEventListener("click", async () => {
+  if (audioContext && audioContext.state === "suspended") {
+    await audioContext.resume();
+  }
+  strikeBoneForge(boneBeatModel, { type: "brass", force: 1.2 });
+  if (audioContext) {
+    const dest = currentTransport?.beatBus || audioContext.destination;
+    triggerBoneStrike(audioContext, dest, "brass", audioContext.currentTime, 0.95);
+  }
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
+});
+
+elements.boneBeatQuench?.addEventListener("click", async () => {
+  if (audioContext && audioContext.state === "suspended") {
+    await audioContext.resume();
+  }
+  quenchBoneForge(boneBeatModel);
+  if (audioContext) {
+    const dest = currentTransport?.beatBus || audioContext.destination;
+    triggerQuenchSteam(audioContext, dest, audioContext.currentTime, 1.0);
+  }
+  if (elements.boneBeatTelemetry) {
+    elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+  }
 });
 
 // --- Parlor mixing console (P5-19) ---------------------------------------

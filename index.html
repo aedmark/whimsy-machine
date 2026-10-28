@@ -566,6 +566,18 @@
             </button>
           </div>
         </div>
+        <div class="bone-forge-bar" id="bone-forge-bar" role="group" aria-label="The Bone Forge & Crucible Beat Machine">
+          <button class="beat-button bone-button" id="bone-beat-toggle" type="button" aria-pressed="true" title="Engage or silence the Bone Forge & Crucible percussion">
+            BONE FORGE: ACTIVE
+          </button>
+          <button class="beat-button bone-button" id="bone-beat-strike" type="button" title="Deliver an immediate manual kinetic hammer strike to the forge">
+            HAMMER STRIKE <span aria-hidden="true">⚒</span>
+          </button>
+          <button class="beat-button bone-button" id="bone-beat-quench" type="button" title="Quench overheating forge metals in cold mineral brine">
+            QUENCH STEAM <span aria-hidden="true">♨</span>
+          </button>
+          <output class="beat-telemetry bone-telemetry" id="bone-beat-telemetry" aria-live="off">BONE FORGE · TEMPERED · 24°C · 0.0V · DAMP 3</output>
+        </div>
         <div class="beat-grid" id="beat-grid" role="group" aria-label="Malbolge 12-step ternary beat matrix"></div>
         <div class="vm-inspector" id="beat-inspector" hidden aria-live="off">
           <div class="vm-inspector-row">
@@ -969,9 +981,9 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "0914ae803d79";
+      const ASSET_VERSION = "d94662a25c3d";
       const MODULES = [
-        "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
+        "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "bone-beat.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
