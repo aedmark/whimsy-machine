@@ -1387,24 +1387,6 @@ h1 em {
   text-overflow: ellipsis;
 }
 
-.transport-hint {
-  margin: 0 0 0 auto;
-  align-self: flex-start;
-  padding-top: 0.65rem;
-  color: rgba(228, 215, 190, 0.6);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-}
-
-.transport-hint kbd {
-  padding: 0.12rem 0.4rem;
-  border: 1px solid var(--brass-dim);
-  border-bottom-width: 2px;
-  color: var(--parchment-light);
-  font-family: inherit;
-  font-size: inherit;
-}
-
 /* Workstation wings (D-027): parchment drawer labels between the ebony consoles. */
 .workstation-wing {
   display: flex;
@@ -2424,20 +2406,6 @@ h1 em {
   border-top: 1px solid #4a3822;
 }
 
-.fun-machine-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-#fun-machine-rec[aria-pressed="true"] {
-  background: #541717;
-  border-color: #e04a4a;
-  color: #ffcece;
-  box-shadow: 0 0 8px rgba(224, 74, 74, 0.45);
-}
-
 .fun-machine-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -2815,10 +2783,6 @@ noscript {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .transport-hint {
-    margin-left: 0;
-  }
-
   .volume-control {
     width: 100%;
     grid-auto-columns: minmax(0, 1fr);
@@ -2905,7 +2869,7 @@ noscript {
   }
 
   /* In keep drawer, display active segmented deck panel cleanly */
-  #drawer-body-keep:not([hidden]) {
+  .wing-keep:not([hidden]) {
     display: block;
     padding: 1.2rem clamp(1.1rem, 3vw, 2.8rem);
   }
@@ -3128,12 +3092,13 @@ noscript {
   border-bottom: 1px solid rgba(184, 146, 73, 0.16);
 }
 
-.herbarium-compare-trait {
+.herbarium-compare-label {
   color: var(--brass);
 }
 
-.herbarium-compare-match {
+.herbarium-compare-row.is-match {
   color: var(--parchment-light);
+  font-weight: 600;
 }
 
 /* Custom Rulebook Sandbox ("The Kapellmeister's Manuscript", P5-36, D-071) */

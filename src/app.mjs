@@ -15,7 +15,6 @@ import {
   genreCodes,
   installCreatureBook,
   installRulebooks,
-  RHYTHMIC_FEELS,
   rulebooksInstalled,
   semitoneGradus,
 } from "./conductor.mjs";
@@ -24,7 +23,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
-import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
+import { MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
 import {
   MIDI_CHANNELS,
   MIDI_CLOCK_MODES,
@@ -44,7 +43,6 @@ import {
   makeNoteOff,
   makeNoteOn,
   mapFm1NoteEvent,
-  parseMidiMessage,
   requestMidiAccess,
   sendMidiMessage,
   setAudioOutputSink,
@@ -63,7 +61,6 @@ import {
   toTonicRelative,
 } from "./accompaniment.mjs";
 import { buildCreatureBook } from "./creature-rulebook.mjs";
-import { myceliumEvents } from "./mycelium.mjs";
 import { CREATURE_VOICE_ID, creatureVoice, creatureVoiceLabel, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
 import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import {
@@ -77,7 +74,7 @@ import {
   normalizeExportSettings,
 } from "./audio-export.mjs";
 import { APP_VERSION, ENGINE_VERSION } from "./version.mjs";
-import { DEFAULT_GRID_STEPS, GRID_STEPS_OPTIONS, applyScoreOverrides, effectiveRhythmTemplate, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
+import { DEFAULT_GRID_STEPS, applyScoreOverrides, effectiveRhythmTemplate, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import {
@@ -90,8 +87,6 @@ import {
   creatureFilter,
   delayTimeFor,
   droneFrequencies,
-  foldIntoRange,
-  leadOctaveShift,
   parlorSendLevels,
 } from "./ensemble.mjs";
 import {
@@ -109,7 +104,6 @@ import {
   meterFill,
   meterReading,
   mixerStateFromChannels,
-  resetChannel,
   setFader,
   setMuted,
   setPan,
@@ -129,18 +123,13 @@ import {
   parsePresetStore,
   parseSession,
   removePreset,
-  serializePresetStore,
   serializeSession,
   upsertPreset,
   writePresetStoreTo,
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 import {
-  DEFAULT_LOOP_ROLE,
-  LOOP_ROLES,
   LOOP_STEPS,
-  MAX_LAYERS,
-  MAX_LOOPS,
   MAX_REPEATS,
   MAX_SONG_PASSES,
   appendLoop,
@@ -160,7 +149,6 @@ import {
   overdubLayer,
   recorderReduce,
   sectionPassForLoop,
-  setLoopRole,
   setLoopSlot,
   setRepeats,
   setSectionVoices,
@@ -181,8 +169,8 @@ import {
   parseCabinetState,
   serializeCabinetState,
 } from "./cabinet.mjs";
-import { OracleVision, interaction, mulberry32, paletteFor, shapeRadius } from "./vitrine-canvas.mjs";
-import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas, wrapCanvasText } from "./broadsheet.mjs";
+import { OracleVision, interaction } from "./vitrine-canvas.mjs";
+import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
 import {
@@ -197,11 +185,9 @@ import {
 } from "./herbarium.mjs";
 import {
   LEAD_DUCK_GAIN,
-  ensureNoiseBuffer,
   ensureParlorImpulseResponse,
   ensureWaxCrackleBuffer,
   harmonicField,
-  midiToFrequency,
   scheduleBassStep as scheduleBrainfuckBassStep,
   scheduleBeatStep as scheduleMalbolgeBeatStep,
   scheduleChantStep as scheduleShakespeareChantStep,
@@ -212,7 +198,6 @@ import {
   scheduleNote as scheduleLeadNote,
   triggerPercussion as triggerVitrinePercussion,
   triggerSporePuff as triggerVitrineSporePuff,
-  voiceStack,
 } from "./schedulers.mjs";
 
 // Esoteric sources share this module's ?v= stamp from the index.html import map
@@ -222,16 +207,6 @@ function sourceUrl(name) {
   url.search = new URL(import.meta.url).search;
   return url;
 }
-
-const RHYTHMS = Object.freeze([
-  [1, 1, 1, 1],                   // 0: Steady quarter pulse (length 4)
-  [1.5, 0.5, 1, 1],               // 1: Swing / shuffle (length 4)
-  [0.5, 1.5, 0.5, 1.5],           // 2: Syncopated offbeat push (length 4)
-  [1, 0.5, 0.5, 1, 0.5, 0.5],     // 3: Charleston / gallop (length 6)
-  [2, 0.5, 0.5, 1],               // 4: Dotted stately downbeat (length 4)
-  [0.75, 0.75, 0.5, 1, 0.5, 0.5], // 5: Ragtime / Habanera (length 6)
-  [1.4, 0.8, 0.8],                // 6: Vaudeville / Viennese Waltz (length 3)
-]);
 
 const SURPRISES = Object.freeze([
   "the moon owes me five dollars",
@@ -447,6 +422,42 @@ const elements = {
   funMachineStatus: document.querySelector("#fun-machine-status"),
   funMachineTelemetry: document.querySelector("#fun-machine-telemetry"),
   funKeyboard: document.querySelector("#fun-keyboard"),
+  cabinetSwitch: document.querySelector("#cabinet-switch"),
+  cabinetSwitchText: document.querySelector("#cabinet-switch-text"),
+  cabinetModeToggle: document.querySelector("#cabinet-mode-toggle"),
+  cabinetAnnouncer: document.querySelector("#cabinet-announcer"),
+  looperRecord: document.querySelector("#looper-record"),
+  looperOverdub: document.querySelector("#looper-overdub"),
+  looperStepRec: document.querySelector("#looper-step-rec"),
+  looperRest: document.querySelector("#looper-rest"),
+  looperClear: document.querySelector("#looper-clear"),
+  looperSteps: document.querySelector("#looper-steps"),
+  looperTiles: document.querySelector("#looper-tiles"),
+  looperEditLabel: document.querySelector("#looper-edit-label"),
+  looperRepeats: document.querySelector("#looper-repeats"),
+  looperRepeatsDown: document.querySelector("#looper-repeats-down"),
+  looperRepeatsUp: document.querySelector("#looper-repeats-up"),
+  looperMoveEarlier: document.querySelector("#looper-move-earlier"),
+  looperMoveLater: document.querySelector("#looper-move-later"),
+  looperUndo: document.querySelector("#looper-undo"),
+  looperDelete: document.querySelector("#looper-delete"),
+  looperInsertIntro: document.querySelector("#looper-insert-intro"),
+  looperInsertGroove: document.querySelector("#looper-insert-groove"),
+  looperInsertBridge: document.querySelector("#looper-insert-bridge"),
+  looperInsertOutro: document.querySelector("#looper-insert-outro"),
+  looperAnnouncer: document.querySelector("#looper-announcer"),
+  looperReadout: document.querySelector("#looper-readout"),
+  casioIntro: document.querySelector("#casio-intro"),
+  casioBridge: document.querySelector("#casio-bridge"),
+  casioOutro: document.querySelector("#casio-outro"),
+  keepTabExport: document.querySelector("#keep-tab-export"),
+  keepTabSession: document.querySelector("#keep-tab-session"),
+  keepTabStudio: document.querySelector("#keep-tab-studio"),
+  keepTabHerbarium: document.querySelector("#keep-tab-herbarium"),
+  exportEngine: document.querySelector("#export-engine"),
+  sessionEngine: document.querySelector("#session-engine"),
+  studioEngine: document.querySelector("#studio-engine"),
+  herbariumEngine: document.querySelector("#herbarium-engine"),
   status: document.querySelector("#status"),
 };
 
@@ -4077,10 +4088,10 @@ function writeKeepDeck(deckId) {
 
 function initKeepDeckTabs() {
   const tabs = [
-    { id: "export", tab: document.getElementById("keep-tab-export"), engine: document.getElementById("export-engine") },
-    { id: "session", tab: document.getElementById("keep-tab-session"), engine: document.getElementById("session-engine") },
-    { id: "studio", tab: document.getElementById("keep-tab-studio"), engine: document.getElementById("studio-engine") },
-    { id: "herbarium", tab: document.getElementById("keep-tab-herbarium"), engine: document.getElementById("herbarium-engine") },
+    { id: "export", tab: elements.keepTabExport, engine: elements.exportEngine },
+    { id: "session", tab: elements.keepTabSession, engine: elements.sessionEngine },
+    { id: "studio", tab: elements.keepTabStudio, engine: elements.studioEngine },
+    { id: "herbarium", tab: elements.keepTabHerbarium, engine: elements.herbariumEngine },
   ];
   let activeDeck = "export";
   const saved = readKeepDeck();
@@ -4404,13 +4415,13 @@ function buildDrawers() {
     host.append(bar, body);
     drawerElements[drawer.id] = { host, bar, body, toggle, line };
   }
-  const toggle = document.querySelector("#cabinet-mode-toggle");
+  const toggle = elements.cabinetModeToggle;
   toggle?.addEventListener("click", () => {
     const mode = cabinetState.mode === "cabinet" ? "discovery" : "cabinet";
     applyCabinet(cabinetReduce(cabinetState, { type: "mode", mode }));
     announceCabinet(mode === "cabinet" ? "THE WHOLE CABINET IS OPEN" : "BACK TO DISCOVERY · THE DRAWERS OPEN AS YOU PLAY");
   });
-  document.querySelector("#cabinet-switch")?.removeAttribute("hidden");
+  elements.cabinetSwitch?.removeAttribute("hidden");
 }
 
 function renderCabinet() {
@@ -4426,17 +4437,17 @@ function renderCabinet() {
     refs.toggle.textContent = open ? `CLOSE ${drawer.label}` : `OPEN ${drawer.label}`;
     refs.line.textContent = open ? " · OPEN" : ` · ${drawer.invite.toUpperCase()}`;
   }
-  const toggle = document.querySelector("#cabinet-mode-toggle");
+  const toggle = elements.cabinetModeToggle;
   if (toggle) {
     toggle.setAttribute("aria-pressed", String(whole));
     toggle.textContent = whole ? "RETURN TO DISCOVERY" : "OPEN THE WHOLE CABINET";
   }
-  const text = document.querySelector("#cabinet-switch-text");
+  const text = elements.cabinetSwitchText;
   if (text) text.textContent = whole ? "THE WHOLE CABINET · EVERY DRAWER LAID BARE" : "DISCOVERY · THE DRAWERS OPEN AS YOU PLAY";
 }
 
 function announceCabinet(message) {
-  const announcer = document.querySelector("#cabinet-announcer");
+  const announcer = elements.cabinetAnnouncer;
   if (announcer) announcer.textContent = message;
 }
 
@@ -4556,7 +4567,7 @@ function enterHarmonicPass(transport, pass) {
 }
 
 function announceLooper(message) {
-  const announcer = document.querySelector("#looper-announcer");
+  const announcer = elements.looperAnnouncer;
   if (announcer) announcer.textContent = message;
 }
 
@@ -4950,7 +4961,7 @@ function handleRestStep() {
 }
 
 function renderLooperSteps() {
-  const container = document.querySelector("#looper-steps");
+  const container = elements.looperSteps;
   if (!container) return;
   container.classList.toggle("is-16-steps", activeGridSteps === 16);
   if (container.children.length !== activeGridSteps) {
@@ -5024,7 +5035,7 @@ function renderLooperSteps() {
 // tile keeps focus while the loop plays; the playing mark is a class toggle.
 let renderedTiles = null;
 function renderLooperTiles() {
-  const list = document.querySelector("#looper-tiles");
+  const list = elements.looperTiles;
   if (!list) return;
   const signature = [song, selectedLoop];
   if (!renderedTiles || renderedTiles[0] !== signature[0] || renderedTiles[1] !== signature[1]) {
@@ -5049,6 +5060,7 @@ function renderLooperTiles() {
       number.textContent = `L${index + 1}`;
       const detail = document.createElement("span");
       if (role && (role !== "main" || showGrooveTag)) {
+        detail.className = "looper-role-tag";
         detail.textContent = `${roleName}${secPass !== null ? ` ${secPass + 1}/4` : ""}${loop.repeats > 1 ? ` · ×${loop.repeats}` : ""}`;
       } else {
         detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
@@ -5071,12 +5083,20 @@ function renderLooperTiles() {
 function renderLooperEdit() {
   const loop = selectedLoop !== null ? song.loops[selectedLoop] : null;
   const busy = recorder.mode !== "idle";
-  const label = document.querySelector("#looper-edit-label");
+  const label = elements.looperEditLabel;
   if (label) label.textContent = loop ? `LOOP ${selectedLoop + 1} · ${loop.layers.length} LAYER${loop.layers.length === 1 ? "" : "S"}` : "NO LOOP SELECTED";
-  const repeats = document.querySelector("#looper-repeats");
+  const repeats = elements.looperRepeats;
   if (repeats) repeats.value = loop ? `×${loop.repeats}` : "×1";
+  const looperButtons = {
+    "#looper-repeats-down": elements.looperRepeatsDown,
+    "#looper-repeats-up": elements.looperRepeatsUp,
+    "#looper-move-earlier": elements.looperMoveEarlier,
+    "#looper-move-later": elements.looperMoveLater,
+    "#looper-undo": elements.looperUndo,
+    "#looper-delete": elements.looperDelete,
+  };
   const enable = (id, on) => {
-    const button = document.querySelector(id);
+    const button = looperButtons[id] || document.querySelector(id);
     if (button) button.disabled = !on;
   };
   enable("#looper-repeats-down", loop && loop.repeats > 1);
@@ -5107,10 +5127,10 @@ function renderLooper() {
   renderLooperTiles();
   renderLooperEdit();
   renderLooperSteps();
-  const record = document.querySelector("#looper-record");
-  const overdub = document.querySelector("#looper-overdub");
-  const clear = document.querySelector("#looper-clear");
-  const readout = document.querySelector("#looper-readout");
+  const record = elements.looperRecord;
+  const overdub = elements.looperOverdub;
+  const clear = elements.looperClear;
+  const readout = elements.looperReadout;
   const active = (kind) => recorder.mode !== "idle" && recorder.kind === kind;
 
   if (record) {
@@ -5134,8 +5154,8 @@ function renderLooper() {
     overdub.disabled = !song.loops.length;
   }
 
-  const stepRec = document.querySelector("#looper-step-rec");
-  const rest = document.querySelector("#looper-rest");
+  const stepRec = elements.looperStepRec;
+  const rest = elements.looperRest;
 
   if (stepRec) {
     stepRec.setAttribute("aria-pressed", String(isStepRecActive));
@@ -5150,35 +5170,31 @@ function renderLooper() {
 
   if (clear) clear.disabled = !song.loops.length && recorder.mode === "idle";
   const canInsert = recorder.mode === "idle" && canInsertLoops(song, 4);
-  const enableBtn = (id, on) => {
-    const el = document.querySelector(id);
-    if (el) el.disabled = !on;
-  };
-  enableBtn("#looper-insert-intro", canInsert);
-  enableBtn("#looper-insert-groove", canInsert);
-  enableBtn("#looper-insert-bridge", canInsert);
-  enableBtn("#looper-insert-outro", canInsert);
+  if (elements.looperInsertIntro) elements.looperInsertIntro.disabled = !canInsert;
+  if (elements.looperInsertGroove) elements.looperInsertGroove.disabled = !canInsert;
+  if (elements.looperInsertBridge) elements.looperInsertBridge.disabled = !canInsert;
+  if (elements.looperInsertOutro) elements.looperInsertOutro.disabled = !canInsert;
   if (readout) readout.value = looperReadoutText();
   updateCasioUI();
 }
 
-document.querySelector("#looper-record")?.addEventListener("click", () => armRecorder("new"));
-document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
-document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
-document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
-document.querySelector("#looper-insert-intro")?.addEventListener("click", () => insertSectionLoops("intro"));
-document.querySelector("#looper-insert-groove")?.addEventListener("click", () => insertSectionLoops("main"));
-document.querySelector("#looper-insert-bridge")?.addEventListener("click", () => insertSectionLoops("bridge"));
-document.querySelector("#looper-insert-outro")?.addEventListener("click", () => insertSectionLoops("outro"));
-document.querySelector("#casio-intro")?.addEventListener("click", () => triggerCasioSection("intro"));
-document.querySelector("#casio-bridge")?.addEventListener("click", () => triggerCasioSection("bridge"));
-document.querySelector("#casio-outro")?.addEventListener("click", () => triggerCasioSection("outro"));
-document.querySelector("#looper-clear")?.addEventListener("click", clearSong);
-document.querySelector("#looper-repeats-down")?.addEventListener("click", () => {
+elements.looperRecord?.addEventListener("click", () => armRecorder("new"));
+elements.looperOverdub?.addEventListener("click", () => armRecorder("overdub"));
+elements.looperStepRec?.addEventListener("click", toggleStepRec);
+elements.looperRest?.addEventListener("click", handleRestStep);
+elements.looperInsertIntro?.addEventListener("click", () => insertSectionLoops("intro"));
+/* looper-insert-groove */ elements.looperInsertGroove?.addEventListener("click", () => insertSectionLoops("main"));
+elements.looperInsertBridge?.addEventListener("click", () => insertSectionLoops("bridge"));
+elements.looperInsertOutro?.addEventListener("click", () => insertSectionLoops("outro"));
+elements.casioIntro?.addEventListener("click", () => triggerCasioSection("intro"));
+elements.casioBridge?.addEventListener("click", () => triggerCasioSection("bridge"));
+elements.casioOutro?.addEventListener("click", () => triggerCasioSection("outro"));
+elements.looperClear?.addEventListener("click", clearSong);
+elements.looperRepeatsDown?.addEventListener("click", () => {
   const loop = song.loops[selectedLoop];
   if (loop) editSong(setRepeats(song, selectedLoop, loop.repeats - 1), { done: `LOOP ${selectedLoop + 1} PLAYS ${loop.repeats - 1} TIME${loop.repeats - 1 === 1 ? "" : "S"}` });
 });
-document.querySelector("#looper-repeats-up")?.addEventListener("click", () => {
+elements.looperRepeatsUp?.addEventListener("click", () => {
   const loop = song.loops[selectedLoop];
   if (!loop) return;
   const next = setRepeats(song, selectedLoop, loop.repeats + 1);
@@ -5187,18 +5203,18 @@ document.querySelector("#looper-repeats-up")?.addEventListener("click", () => {
     refused: loop.repeats >= MAX_REPEATS ? `A LOOP PLAYS AT MOST ${MAX_REPEATS} TIMES` : `THE SONG IS AT ITS ${MAX_SONG_PASSES}-PASS LIMIT`,
   });
 });
-document.querySelector("#looper-move-earlier")?.addEventListener("click", () => {
+elements.looperMoveEarlier?.addEventListener("click", () => {
   if (selectedLoop !== null) editSong(moveLoop(song, selectedLoop, -1), { selection: selectedLoop - 1, done: `LOOP MOVED TO POSITION ${selectedLoop}` });
 });
-document.querySelector("#looper-move-later")?.addEventListener("click", () => {
+elements.looperMoveLater?.addEventListener("click", () => {
   if (selectedLoop !== null) editSong(moveLoop(song, selectedLoop, 1), { selection: selectedLoop + 1, done: `LOOP MOVED TO POSITION ${selectedLoop + 2}` });
 });
-document.querySelector("#looper-undo")?.addEventListener("click", () => {
+elements.looperUndo?.addEventListener("click", () => {
   const loop = song.loops[selectedLoop];
   if (!loop) return;
   editSong(undoLayer(song, selectedLoop), { done: loop.layers.length > 1 ? `NEWEST LAYER OF LOOP ${selectedLoop + 1} REMOVED` : `LOOP ${selectedLoop + 1} REMOVED` });
 });
-document.querySelector("#looper-delete")?.addEventListener("click", () => {
+elements.looperDelete?.addEventListener("click", () => {
   if (selectedLoop !== null) editSong(deleteLoop(song, selectedLoop), { done: `LOOP ${selectedLoop + 1} DELETED` });
 });
 renderLooper();

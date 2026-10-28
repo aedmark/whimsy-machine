@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { buildPerformance, strikeLength } from "../src/accompaniment.mjs";
-import { buildGenreSpine, conductEnsemble, installRulebooks } from "../src/conductor.mjs";
+import { conductEnsemble, installRulebooks } from "../src/conductor.mjs";
 import { delayTimeFor } from "../src/ensemble.mjs";
 import { compileRulebooks } from "../src/inform.mjs";
 import { composeBeat } from "../src/malbolge.mjs";

@@ -68,12 +68,6 @@ function expressionParser(expression, variables) {
   const tokens = tokenize(expression);
   let index = 0;
 
-  function consume(expected) {
-    const actual = tokens[index]?.toUpperCase();
-    if (actual !== expected) throw new Error(`Expected ${expected}, received ${tokens[index] ?? "end of line"}`);
-    index += 1;
-  }
-
   function parse() {
     const token = tokens[index];
     if (token === undefined) throw new Error("Expression ended early");

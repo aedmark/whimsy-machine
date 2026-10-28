@@ -378,20 +378,43 @@ export function deJongAttractor(x, y, a, b, c, d) {
  * @param {{ a: number, b: number, c: number, d: number }} params
  * @param {number} iterations
  * @param {number} warmup
+ * @param {Float32Array|null} [targetBuffer] - Optional preallocated buffer to avoid GC churn
  * @returns {Float32Array} [x0, y0, x1, y1, ...]
  */
-export function generateAttractorPoints(attractorFn, params, iterations = 2000, warmup = 100) {
+export function generateAttractorPoints(attractorFn, params, iterations = 2000, warmup = 100, targetBuffer = null) {
   const { a, b, c, d } = params;
   let x = 0.1;
   let y = 0.1;
+  const isClifford = attractorFn === cliffordAttractor;
 
   for (let i = 0; i < warmup; i += 1) {
-    [x, y] = attractorFn(x, y, a, b, c, d);
+    if (isClifford) {
+      const nx = Math.sin(a * y) + c * Math.cos(a * x);
+      const ny = Math.sin(b * x) + d * Math.cos(b * y);
+      x = nx;
+      y = ny;
+    } else {
+      const next = attractorFn(x, y, a, b, c, d);
+      x = next[0];
+      y = next[1];
+    }
   }
 
-  const pts = new Float32Array(iterations * 2);
+  const pts = targetBuffer && targetBuffer.length >= iterations * 2
+    ? targetBuffer
+    : new Float32Array(iterations * 2);
+
   for (let i = 0; i < iterations; i += 1) {
-    [x, y] = attractorFn(x, y, a, b, c, d);
+    if (isClifford) {
+      const nx = Math.sin(a * y) + c * Math.cos(a * x);
+      const ny = Math.sin(b * x) + d * Math.cos(b * y);
+      x = nx;
+      y = ny;
+    } else {
+      const next = attractorFn(x, y, a, b, c, d);
+      x = next[0];
+      y = next[1];
+    }
     pts[i * 2] = x;
     pts[i * 2 + 1] = y;
   }

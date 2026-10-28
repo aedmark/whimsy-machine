@@ -2,13 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   isValidGraph,
-  buildGraph,
   createRingGraph,
   createTonnetzGraph,
   computeGraphLaplacian,
   computeGradientNorm,
   computeResidual,
-  stepAutopoiesis,
   solveAutopoieticSteadyState,
   checkSpectralViability,
   cliffordAttractor,

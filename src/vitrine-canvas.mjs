@@ -328,6 +328,8 @@ function drawCrystalNetwork(ctx, score, base, elapsed, colors) {
   }
 }
 
+const attractorBuffer = new Float32Array(420 * 2);
+
 export function drawStrangeAttractorDust(ctx, score, base, elapsed, colors) {
   const params = attractorParamsFromScore(score);
   const timeDrift = Math.sin(elapsed * 0.12) * 0.04;
@@ -338,17 +340,19 @@ export function drawStrangeAttractorDust(ctx, score, base, elapsed, colors) {
     c: params.c + agitationDrift,
     d: params.d - agitationDrift * 0.5,
   };
-  const pts = generateAttractorPoints(cliffordAttractor, effectiveParams, 420, 20);
+  const pts = generateAttractorPoints(cliffordAttractor, effectiveParams, 420, 20, attractorBuffer);
   const scale = base * 0.24;
   const alpha = 0.3 + interaction.hold * 0.25 + (interaction.agitation || 0) * 0.3;
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   ctx.fillStyle = `hsla(${colors[0]} 100% 82% / ${Math.min(0.85, alpha)})`;
+  ctx.beginPath();
   for (let i = 0; i < pts.length; i += 2) {
     const px = pts[i] * scale;
     const py = pts[i + 1] * scale;
-    ctx.fillRect(px, py, 1.25, 1.25);
+    ctx.rect(px, py, 1.25, 1.25);
   }
+  ctx.fill();
   ctx.restore();
 }
 
@@ -2128,10 +2132,12 @@ export class OracleVision {
   resize() {
     const ratio = Math.min(devicePixelRatio || 1, 2);
     const rect = this.canvas.getBoundingClientRect();
-    this.width = rect.width;
-    this.height = rect.height;
-    this.canvas.width = Math.round(rect.width * ratio);
-    this.canvas.height = Math.round(rect.height * ratio);
+    const w = Math.max(1, Math.round(rect.width));
+    const h = Math.max(1, Math.round(rect.height));
+    this.width = w;
+    this.height = h;
+    this.canvas.width = Math.round(w * ratio);
+    this.canvas.height = Math.round(h * ratio);
     this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
 
@@ -2245,7 +2251,7 @@ export class OracleVision {
 
     const glowFocusX = width * (0.5 + interaction.smoothX * 0.28);
     const glowFocusY = height * (0.48 + interaction.smoothY * 0.24);
-    const backdrop = ctx.createRadialGradient(glowFocusX, glowFocusY, 0, width * 0.5, height * 0.48, Math.max(width, height) * 0.78);
+    const backdrop = ctx.createRadialGradient(glowFocusX, glowFocusY, 0, width * 0.5, height * 0.48, Math.max(1, Math.max(width, height) * 0.78));
     backdrop.addColorStop(0, `hsl(${colors[0]} ${Math.max(30, score.saturation - 24)}% ${16 + interaction.hold * 7 + interaction.tap * 6}%)`);
     backdrop.addColorStop(0.48, `hsl(${colors[1]} ${Math.max(25, score.saturation - 35)}% ${8 + interaction.hold * 4}%)`);
     backdrop.addColorStop(1, `hsl(${colors[2]} 32% 3%)`);

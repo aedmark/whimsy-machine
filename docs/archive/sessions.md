@@ -1993,6 +1993,41 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
+### Session 77 (2026-10-24): Standalone Desktop Packaging with Tauri v2 (D-064)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Package *Edmark's Esoteric Fun Machine* into an isolated, zero-dependency standalone native desktop studio companion for DAW workflows with system Web MIDI and PipeWire/JACK routing (Stage 3 / P5-32, D-064).
+
+**Done:** All parts implemented and verified under D-064. 196/196 tests pass.
+
+**Changed:**
+1. Rust & Tauri Toolchain:
+   - Configured stable user-space Rust toolchain (Rust 1.99.1).
+   - Initialized isolated desktop application shell in `src-tauri/` without npm packages or root `package.json`.
+2. Tauri Configuration (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/src/main.rs`):
+   - Package identifier `com.edmark.esoteric-fun-machine`, title "Edmark's Esoteric Fun Machine".
+   - `frontendDist: "dist"` staged automatically by `build.rs` from root web assets (`index.html`, `styles.css`, `manual.html`, `src/`), completely self-contained with no dev server or localhost dependency.
+   - Default window dimensions 1200×900 (minimum 380×600), fully resizable.
+   - Built against standard system WebKitGTK 4.1 with `tauri-plugin-midi` (bridging WebKitGTK to system ALSA/PipeWire via `midir` and polyfilling `navigator.requestMIDIAccess`).
+3. Build Script (`tools/build_desktop.sh`):
+   - Created standalone build script compiling `src-tauri/target/release/esoteric-fun-machine` (11 MB standalone executable).
+4. Documentation & Roadmap:
+   - Marked P5-32 complete in `ROADMAP.md`.
+   - Recorded D-064 in `docs/DECISIONS.md`.
+   - Added `src-tauri/` and `tools/build_desktop.sh` to repository map in `AGENTS.md`.
+   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
+
+**Verified:**
+- Native release binary built and verified on CachyOS / Wayland with zero launch errors.
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+- Core zero-dependency web architecture remains 100% untouched.
+
+**Next session should start with:** P6-01 (choose public hosting and domain) or user hands-on DAW production with the standalone companion.
+
+
 
 
 

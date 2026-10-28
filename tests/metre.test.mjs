@@ -9,7 +9,7 @@ import { composeBass } from "../src/brainfuck.mjs";
 import { composeHarmony } from "../src/befunge.mjs";
 import { composeChimes } from "../src/fractran.mjs";
 import { composeChant } from "../src/shakespeare.mjs";
-import { buildTonnetzSpine, conductEnsemble, installRulebooks, passSpine } from "../src/conductor.mjs";
+import { buildTonnetzSpine, installRulebooks, passSpine } from "../src/conductor.mjs";
 import { compileRulebooks } from "../src/inform.mjs";
 import { arrangementSectionAt, composeArrangement } from "../src/intercal.mjs";
 import { emptyTake, makeSlot, songPosition, validateSong } from "../src/looper.mjs";

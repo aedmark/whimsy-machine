@@ -23,7 +23,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
-import { CURIOSA_CLASSES, FUNGAL_NAMES, ROMAN_NUMERALS, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+import { CURIOSA_CLASSES, FUNGAL_NAMES, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 import {

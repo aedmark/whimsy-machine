@@ -3,7 +3,6 @@ import test from "node:test";
 
 import {
   DEFAULT_LOOP_ROLE,
-  LOOP_ROLES,
   LOOP_STEPS,
   MAX_LAYERS,
   MAX_LOOPS,

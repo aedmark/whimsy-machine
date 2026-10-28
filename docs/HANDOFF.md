@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 88, on `main`._
+_Last updated: 2026-10-28, session 89, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
@@ -12,10 +12,11 @@ _Last updated: 2026-10-28, session 88, on `main`._
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
+- Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.3. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), and Polish Pass (D-088) are fully implemented, verified, and passing across all suites! Version 1.4.4. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 88, local Linux environment)
+**Verified** (2026-10-28, session 89, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -91,6 +92,44 @@ _Last updated: 2026-10-28, session 88, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 89 (2026-10-28): Codebase Polish, Dead Code Pruning, 60 FPS Attractor Drawing Optimization, and DOM Wiring Consolidation (D-088)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Conduct an exhaustive polish and bugfix pass across the repository before proposing the next roadmap phase: prune orphaned code blocks and dead CSS, eliminate per-frame 60 FPS garbage generation in Canvas attractor drawing, cache recurring DOM queries during playback, and align UI selectors (D-088).
+
+**Done:** All parts implemented and verified under D-088. 255/255 tests pass.
+
+**Changed:**
+1. Zero-Allocation Canvas Attractor Rendering (`src/autopoiesis.mjs`, `src/vitrine-canvas.mjs`):
+   - Inlined Clifford strange attractor recurrence in `generateAttractorPoints()`, eliminating array destructuring and 440 small array allocations per frame.
+   - Reused static `attractorBuffer` in `src/vitrine-canvas.mjs` to eliminate `Float32Array` heap allocations.
+   - Batched 420 particle drawing operations into a single `beginPath()` -> `rect()` -> `fill()` path call, eliminating 420 individual canvas fill operations per frame.
+   - Added `Math.max(1, ...)` zero-dimension guards to `resize()` and backdrop gradient in `OracleVision`.
+2. Looper & Keep Wing DOM Performance & Selector Alignment (`src/app.mjs`, `styles.css`):
+   - Cached looper, cabinet, and Keep Wing segmented deck controls in top-level `elements = { ... }` in `src/app.mjs`, replacing inline `document.querySelector` lookups during playback steps.
+   - Fixed Keep Wing panel CSS selector to `.wing-keep:not([hidden])` in `styles.css`.
+   - Connected `.looper-role-tag` to looper tile badges and aligned Herbarium comparison trait classes (`.herbarium-compare-label`, `.herbarium-compare-row.is-match`).
+3. Dead Code & Orphaned Block Removal (`src/app.mjs`, `src/lolcode.mjs`, `styles.css`, `tests/`):
+   - Removed orphaned `const RHYTHMS` table in `src/app.mjs`.
+   - Pruned 21 unused import symbols in `src/app.mjs` and unused imports across 7 test suites.
+   - Removed dead `consume()` helper in `src/lolcode.mjs`.
+   - Removed stale `#fun-machine-rec`, `.fun-machine-actions`, and `.transport-hint` selectors from `styles.css`.
+4. Documentation & Verification:
+   - Restamped `ASSET_VERSION` in `index.html` via `tools/stamp_assets.mjs`.
+   - Recorded D-088 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md` with version 1.4.4.
+   - Archived Session 77 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
+   - Updated `docs/HANDOFF.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 255/255 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Zero-dependency boundary and phrase determinism contracts fully preserved.
+
+**Next session should start with:** Proposing the next roadmap phase (e.g., public hosting P6-01, new esoteric engine or synthesis expansions) based on maintainer goals.
 
 ### Session 88 (2026-10-28): Restored 12-Step Triplet Metre Default for Natural Parlor Arrangements (D-087)
 
@@ -393,40 +432,6 @@ _Last updated: 2026-10-28, session 88, on `main`._
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
 **Next session should start with:** P6-01 Neocities public deployment and v1.0.0 release.
-
-### Session 77 (2026-10-24): Standalone Desktop Packaging with Tauri v2 (D-064)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Package *Edmark's Esoteric Fun Machine* into an isolated, zero-dependency standalone native desktop studio companion for DAW workflows with system Web MIDI and PipeWire/JACK routing (Stage 3 / P5-32, D-064).
-
-**Done:** All parts implemented and verified under D-064. 196/196 tests pass.
-
-**Changed:**
-1. Rust & Tauri Toolchain:
-   - Configured stable user-space Rust toolchain (Rust 1.99.1).
-   - Initialized isolated desktop application shell in `src-tauri/` without npm packages or root `package.json`.
-2. Tauri Configuration (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/src/main.rs`):
-   - Package identifier `com.edmark.esoteric-fun-machine`, title "Edmark's Esoteric Fun Machine".
-   - `frontendDist: "dist"` staged automatically by `build.rs` from root web assets (`index.html`, `styles.css`, `manual.html`, `src/`), completely self-contained with no dev server or localhost dependency.
-   - Default window dimensions 1200×900 (minimum 380×600), fully resizable.
-   - Built against standard system WebKitGTK 4.1 with `tauri-plugin-midi` (bridging WebKitGTK to system ALSA/PipeWire via `midir` and polyfilling `navigator.requestMIDIAccess`).
-3. Build Script (`tools/build_desktop.sh`):
-   - Created standalone build script compiling `src-tauri/target/release/esoteric-fun-machine` (11 MB standalone executable).
-4. Documentation & Roadmap:
-   - Marked P5-32 complete in `ROADMAP.md`.
-   - Recorded D-064 in `docs/DECISIONS.md`.
-   - Added `src-tauri/` and `tools/build_desktop.sh` to repository map in `AGENTS.md`.
-   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
-
-**Verified:**
-- Native release binary built and verified on CachyOS / Wayland with zero launch errors.
-- `node --test tests/*.test.mjs`: 196/196 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-- Core zero-dependency web architecture remains 100% untouched.
-
-**Next session should start with:** P6-01 (choose public hosting and domain) or user hands-on DAW production with the standalone companion.
 
 
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.4] - 2026-10-28
+
+### Enhanced
+
+- Zero-Allocation Canvas Attractor Rendering (`D-088`):
+  - Inlined Clifford strange attractor recurrence loop in `src/autopoiesis.mjs`, eliminating array destructuring and 440 small array allocations per frame.
+  - Added preallocated static `attractorBuffer` in `src/vitrine-canvas.mjs`, eliminating per-frame typed array heap churn.
+  - Batched 420 particle drawing operations into a single canvas sub-path `ctx.rect()` sequence closed by a single `ctx.fill()`, replacing 420 individual canvas fill operations per frame.
+  - Added zero-dimension guards (`Math.max(1, ...)`) to canvas resize and gradient backdrop creation, preventing potential `INDEX_SIZE_ERR` during early DOM layout.
+- Looper & Keep Wing DOM Performance & Selector Alignment (`D-088`):
+  - Cached looper, cabinet, and Keep Wing segmented deck controls in top-level `elements = { ... }` in `src/app.mjs`, eliminating repeated `document.querySelector` lookups during playback steps.
+  - Corrected `.wing-keep:not([hidden])` selector in `styles.css` to properly pad Keep Wing segmented deck panels across responsive viewports.
+  - Bound `.looper-role-tag` to looper tile badges and aligned Herbarium comparison trait classes (`.herbarium-compare-label`, `.herbarium-compare-row.is-match`).
+- Codebase Pruning & Dead Code Removal (`D-088`):
+  - Removed orphaned `const RHYTHMS` table in `src/app.mjs` (superseded by `src/tuning.mjs`).
+  - Pruned 21 unused import symbols in `src/app.mjs` and unused imports across 7 test suites.
+  - Removed dead `consume()` helper in `src/lolcode.mjs`.
+  - Removed stale `#fun-machine-rec`, `.fun-machine-actions`, and `.transport-hint` selectors from `styles.css`.
+
 ## [1.4.3] - 2026-10-28
 
 ### Changed

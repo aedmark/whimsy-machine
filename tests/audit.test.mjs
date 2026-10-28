@@ -6,9 +6,7 @@ import {
   FUNGAL_NAMES,
   composeScore,
   hashPhrase,
-  parseScore,
 } from "../src/score.mjs";
-import { runLolcode } from "../src/lolcode.mjs";
 import { composeBeat } from "../src/malbolge.mjs";
 import { composeBass } from "../src/brainfuck.mjs";
 import { composeHarmony } from "../src/befunge.mjs";
@@ -25,24 +23,18 @@ import {
 } from "../src/conductor.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { buildCreatureBook } from "../src/creature-rulebook.mjs";
-import { VARIATION_MOVES, varySpine } from "../src/variation.mjs";
+import { VARIATION_MOVES } from "../src/variation.mjs";
 import {
   DEFAULT_VOICE_ID,
   VOICE_PRESETS,
-  creatureVoice,
   validateVoice,
 } from "../src/voices.mjs";
 import {
-  LOOP_STEPS,
-  MAX_LAYERS,
-  MAX_LOOPS,
   emptySong,
-  emptyTake,
   idleRecorder,
   makeSlot,
   recorderReduce,
   setLoopSlot,
-  validateSong,
 } from "../src/looper.mjs";
 import {
   SESSION_FORMAT,
@@ -609,17 +601,20 @@ test("Audit Dimension 8 (Extended): URL fragment #omen=... encoding and specimen
 });
 
 test("Audit Dimension 9: Metric closure, tempo pocketing, and harmonic clash elimination (D-050)", async () => {
-  const appSource = await readFile(new URL("src/app.mjs", root), "utf8");
+  const [appSource, tuningSource] = await Promise.all([
+    readFile(new URL("src/app.mjs", root), "utf8"),
+    readFile(new URL("src/tuning.mjs", root), "utf8"),
+  ]);
 
-  // Verify RHYTHMS in src/app.mjs: every rhythm must divide 12 evenly
-  const rhythmMatch = appSource.match(/const RHYTHMS = Object\.freeze\(\[([\s\S]*?)\]\);/);
-  assert.ok(rhythmMatch, "RHYTHMS definition found in src/app.mjs");
+  // Verify PARLOR_RHYTHMS_12 in src/tuning.mjs: every rhythm must divide 12 evenly
+  const rhythmMatch = tuningSource.match(/export const PARLOR_RHYTHMS_12 = Object\.freeze\(\[([\s\S]*?)\]\);/);
+  assert.ok(rhythmMatch, "PARLOR_RHYTHMS_12 definition found in src/tuning.mjs");
   const parsedRhythms = rhythmMatch[1]
     .trim()
     .split("\n")
     .map((line) => line.replace(/\/\/.*$/, "").trim())
     .filter(Boolean)
-    .map((line) => JSON.parse(line.replace(/,$/, "")));
+    .map((line) => JSON.parse(line.replace(/Object\.freeze\(/g, "").replace(/\)/g, "").replace(/,$/, "")));
 
   assert.ok(parsedRhythms.length >= 6, "At least 6 rhythm templates defined");
   for (let i = 0; i < parsedRhythms.length; i += 1) {

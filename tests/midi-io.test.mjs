@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   MAX_MIDI_CLOCK_BPM,
-  MIDI_CHANNELS,
   MIDI_CLOCK_MODES,
   MIDI_CLOCK_PPQ,
   MIDI_REALTIME,
@@ -11,11 +10,9 @@ import {
   bindMidiInput,
   computeMasterClockWindow,
   createMidiClockSlave,
-  getAudioOutputDevices,
   getMidiPorts,
   isFm1Port,
   isSetSinkIdSupported,
-  isWebMidiSupported,
   makeAllNotesOff,
   makeClockTick,
   makeMidiContinue,
@@ -27,7 +24,6 @@ import {
   mapFm1NoteEvent,
   midiNoteToSemitone,
   parseMidiMessage,
-  requestMidiAccess,
   semitoneToMidiNote,
   sendMidiMessage,
   setAudioOutputSink,

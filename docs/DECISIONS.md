@@ -1850,3 +1850,27 @@ Investigation showed two root causes:
 - Fresh runs and newly summoned creatures immediately play in the natural 12-step parlor shuffle metre.
 - Toggling the transport button immediately recomposes all plates into 16-step straight time on demand.
 - All 255 behavioral and structural tests pass cleanly.
+
+## D-088 Codebase Polish, Dead Code Pruning, 60 FPS Attractor Drawing Optimization, and DOM Wiring Consolidation (2026-10-28, status: accepted)
+
+**Context:** Following feature expansions across Phases 1–9, the codebase accumulated orphaned blocks (unused `RHYTHMS` table and 21 unused imports in `src/app.mjs`, dead parser helper in `src/lolcode.mjs`, dead CSS selectors), high-frequency allocation churn in the 60 FPS Canvas rendering loop (440 array allocations and 420 individual `fillRect` calls per frame in `drawStrangeAttractorDust`), and uncoordinated DOM queries in the looper and keep wings.
+
+**Decision:**
+1. **Dead Code & Orphaned Block Removal:**
+   - Pruned orphaned `const RHYTHMS` table in `src/app.mjs` (superseded by `effectiveRhythmTemplate` in `src/tuning.mjs`).
+   - Pruned 21 unused import symbols from `src/app.mjs` and dead imports across 7 test suites.
+   - Removed dead `consume()` helper in `src/lolcode.mjs`.
+   - Removed stale CSS selectors `#fun-machine-rec`, `.fun-machine-actions`, and `.transport-hint` from `styles.css`.
+2. **Canvas 60 FPS Zero-Allocation Rendering:**
+   - Inlined Clifford recurrence arithmetic in `generateAttractorPoints()` in `src/autopoiesis.mjs`, eliminating array destructuring and 440 small array allocations per frame.
+   - Added preallocated static `attractorBuffer` in `src/vitrine-canvas.mjs` to eliminate `Float32Array` per-frame heap churn.
+   - Batched 420 particle drawing operations into a single `beginPath()` -> `rect()` -> `fill()` path call, eliminating 420 separate Canvas context fill calls per frame.
+   - Added `Math.max(1, ...)` zero-dimension guards to `resize()` and `draw()` in `src/vitrine-canvas.mjs` preventing `INDEX_SIZE_ERR` during early layout or hidden tabs.
+3. **DOM Wiring & Usability Polish:**
+   - Expanded top-level `elements = { ... }` in `src/app.mjs` to cache looper, cabinet, and Keep Wing segmented deck controls, replacing inline `document.querySelector` thrashing during playback.
+   - Corrected `#drawer-body-keep:not([hidden])` to `.wing-keep:not([hidden])` in `styles.css`, ensuring clean panel padding across Keep Wing decks.
+   - Connected `.looper-role-tag` to looper tile badges and aligned Herbarium comparison CSS selectors (`.herbarium-compare-label`, `.herbarium-compare-row.is-match`).
+
+**Consequences:**
+- Eliminates ~26,000–52,800 garbage collection allocations per second during visual attractor rendering, providing silky-smooth 60/120 FPS performance.
+- Eliminates dead CSS and module import bloat while maintaining all 255 regression tests, phrase determinism contracts, and zero-dependency boundaries.
