@@ -4,6 +4,13 @@
 
 ### Added
 
+- Ten-Channel Mixer Matrix & Rogue Audio Elimination (`D-094`):
+  - Expanded parlor mixing console from 8 to 10 channels with dedicated strips for `forge` (BONE FORGE percussion) and `harp` (SPORE HARP plucked strings).
+  - Enforced strict "no bus bypasses its strip" architectural routing: `forgeBus` and `sporeHarpBus` route through their respective faders, pans, mute/solo switches, and VU meters.
+  - Eliminated rogue background audio: muting all mixer channels silences clockwork escapement wood knocks and ducks parlor crackle to complete zero, guaranteeing total silence when the console is muted.
+  - Bidirectional UX binding: Plate I's `BONE FORGE: ACTIVE/MUTED` button and the Vitrine's `SPORE HARP: ACTIVE/MUTED` button sync seamlessly with their mixer channel mutes.
+  - Expanded stem bundle export from 9 to 11 discrete studio stems (`04-forge`, `10-harp`, `11-parlor-room`).
+  - Backward-compatible session migration: legacy .fun session files (schemas v1–v7) load without error and auto-upgrade with default unity levels for the new instruments.
 - The BioParasite Spore Harp (`P10-03`, `D-091`):
   - Physical acoustic plucked string harp modeling symbiotic hyphae and anastomoses across the mycelial network (`src/spore-harp.mjs`).
   - 8 tuned hyphal strings mapped across the creature's scale degrees in the concert harp register (C3–C5).

@@ -28,6 +28,7 @@ export const CHANNEL_VOICING_DB = Object.freeze({
   lead: 6,
   fun: 0,
   beat: 0,
+  forge: 0,
   bass: 0,
   // The organ and chimes were tuned under the creature filter; free of it
   // they still sat under the band, so they lift (D-042).
@@ -36,6 +37,7 @@ export const CHANNEL_VOICING_DB = Object.freeze({
   chant: 12,
   // The per-form mycelium voices sit at unity as subtle ambient bio-acoustics (D-093).
   fungal: 0,
+  harp: 0,
 });
 
 export function voicingGain(id) {
@@ -213,7 +215,7 @@ export function buildEnsembleGraph(context, score, {
   // pan so meters show what is heard. The fader upmixes mono voices to stereo
   // first, so a centered StereoPanner passes them at unity instead of applying
   // the -3 dB equal-power law it uses for mono input.
-  const buses = { mix, beatBus, bassBus, harmonyBus, chimeBus, chantBus, fungalBus, funBus };
+  const buses = { mix, beatBus, bassBus, harmonyBus, chimeBus, chantBus, fungalBus, funBus, forgeBus, sporeHarpBus };
   const strips = {};
   for (const { id, bus } of MIXER_CHANNELS) {
     const setting = channels[id] || { gain: 1, pan: 0 };
@@ -249,7 +251,7 @@ export function buildEnsembleGraph(context, score, {
   // the chimes and cut the mycelium's 3-4 kHz clicks. They still feed the
   // delay and, below, the parlor reverb.
   strips.lead.out.connect(filter);
-  for (const id of ["chant", "harmony", "chime", "fungal"]) {
+  for (const id of ["chant", "harmony", "chime", "fungal", "harp"]) {
     strips[id].out.connect(compressor);
     strips[id].out.connect(delay);
   }
@@ -259,6 +261,7 @@ export function buildEnsembleGraph(context, score, {
   leadDry.connect(compressor);
   leadDry.connect(delay);
   strips.beat.out.connect(compressor);
+  strips.forge.out.connect(compressor);
   strips.bass.out.connect(compressor);
   strips.fun.out.connect(output);
   strips.fun.out.connect(compressor);
@@ -310,16 +313,11 @@ export function buildEnsembleGraph(context, score, {
   }
   parlorReverbSend.gain.setValueAtTime(parlor.reverb, now);
   parlorReverbFilter.connect(parlorReverbSend).connect(parlorConvolver).connect(compressor);
-  for (const id of ["lead", "harmony", "chime", "chant", "fungal", "fun"]) strips[id].out.connect(parlorReverbFilter);
+  for (const id of ["lead", "harmony", "chime", "chant", "fungal", "fun", "harp"]) strips[id].out.connect(parlorReverbFilter);
   const parlorBeatSend = context.createGain();
   parlorBeatSend.gain.value = PARLOR_BEAT_SEND;
   strips.beat.out.connect(parlorBeatSend).connect(parlorReverbFilter);
-  // Somatic percussion and plucked string routing (D-093)
-  forgeBus.connect(compressor);
-  forgeBus.connect(parlorBeatSend);
-  sporeHarpBus.connect(compressor);
-  sporeHarpBus.connect(delay);
-  sporeHarpBus.connect(parlorReverbFilter);
+  strips.forge.out.connect(parlorBeatSend).connect(parlorReverbFilter);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;

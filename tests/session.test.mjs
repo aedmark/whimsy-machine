@@ -6,7 +6,7 @@ import { buildFunChord, buildFunProgression } from "../src/conductor.mjs";
 import { GENRES } from "./install-rulebooks.mjs";
 import { composeBeat, cycleBeatStep } from "../src/malbolge.mjs";
 import { composeChant, cycleChantCell } from "../src/shakespeare.mjs";
-import { createMixerState, mixerStateFromChannels, setFader, setPan, toggleMute, toggleSolo } from "../src/mixer.mjs";
+import { MIXER_CHANNEL_IDS, createMixerState, mixerStateFromChannels, setFader, setPan, toggleMute, toggleSolo } from "../src/mixer.mjs";
 import { composeScore } from "../src/score.mjs";
 import {
   MAX_PRESETS,
@@ -31,7 +31,7 @@ const root = new URL("../", import.meta.url);
 
 function sampleSession(overrides = {}) {
   const channels = {};
-  for (const id of ["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"]) {
+  for (const id of MIXER_CHANNEL_IDS) {
     channels[id] = { fader: 80, pan: 0, muted: false, soloed: false };
   }
   channels.chant = { fader: 92, pan: -35, muted: false, soloed: true };

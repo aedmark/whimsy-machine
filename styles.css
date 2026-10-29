@@ -1665,11 +1665,11 @@ h1 em {
   color: var(--brass-bright);
 }
 
-/* Parlor mixing console (P5-19): eight strips, VU column beside each fader. */
+/* Parlor mixing console (P5-19): ten strips, VU column beside each fader. */
 .mixer-strips {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 0.42rem;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 0.35rem;
 }
 
 .mixer-strip {
@@ -2964,7 +2964,7 @@ noscript {
   }
 
   .mixer-strips {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   footer {

@@ -3,22 +3,29 @@
 // the console. Mixer settings are a session control, like master volume
 // (D-009): they never alter the deterministic creature score.
 
-// Console order follows the page: lead and organ manual first, then Plates II-VI.
+// Console order follows the page: lead and organ manual first, then Plates I-VI
+// and somatic instruments (Bone Beat machine and Spore Harp).
 export const MIXER_CHANNELS = Object.freeze([
   Object.freeze({ id: "lead", bus: "mix", label: "LEAD", source: "LOLCODE" }),
   Object.freeze({ id: "fun", bus: "funBus", label: "MANUAL", source: "FUN MACHINE" }),
   Object.freeze({ id: "beat", bus: "beatBus", label: "PULSE", source: "MALBOLGE" }),
+  Object.freeze({ id: "forge", bus: "forgeBus", label: "FORGE", source: "BONE BEAT" }),
   Object.freeze({ id: "bass", bus: "bassBus", label: "BASS", source: "BRAINFUCK" }),
   Object.freeze({ id: "harmony", bus: "harmonyBus", label: "ORGAN", source: "BEFUNGE" }),
   Object.freeze({ id: "chime", bus: "chimeBus", label: "CHIMES", source: "PIET·FRACTRAN" }),
   Object.freeze({ id: "chant", bus: "chantBus", label: "CHOIR", source: "SHAKESPEARE" }),
   Object.freeze({ id: "fungal", bus: "fungalBus", label: "MYCELIUM", source: "BIO-ACOUSTIC" }),
+  Object.freeze({ id: "harp", bus: "sporeHarpBus", label: "HARP", source: "SPORE HARP" }),
 ]);
 
 export const MIXER_CHANNEL_IDS = Object.freeze(MIXER_CHANNELS.map((channel) => channel.id));
 
-// The five accompaniment plates the Bandstand engages or silences together.
-export const ACCOMPANIMENT_CHANNEL_IDS = Object.freeze(["beat", "bass", "harmony", "chime", "chant"]);
+export const LEGACY_MIXER_CHANNEL_IDS = Object.freeze([
+  "lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal",
+]);
+
+// Accompaniment channels the Bandstand engages or silences together.
+export const ACCOMPANIMENT_CHANNEL_IDS = Object.freeze(["beat", "forge", "bass", "harmony", "chime", "chant", "harp"]);
 
 export const FADER_UNITY = 80;
 export const FADER_MAX = 100;

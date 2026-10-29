@@ -1009,7 +1009,8 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
     logNote,
   });
   const activeModel = transport.boneBeatModel || boneBeatModel;
-  if (currentBoneBeat && activeModel?.enabled) {
+  const forgeEngaged = transportEngages(transport, "forge");
+  if (currentBoneBeat && activeModel?.enabled && forgeEngaged) {
     const stepData = currentBoneBeat.steps[stepIndex % currentBoneBeat.gridSteps];
     if (stepData) {
       stepBoneBeat(activeModel, stepData, { dt: stepDuration });
@@ -1059,7 +1060,8 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
     logNote,
   });
   const activeModel = transport.sporeHarpModel || sporeHarpModel;
-  if (activeModel?.enabled && activeModel.autoStrum) {
+  const harpEngaged = transportEngages(transport, "harp");
+  if (activeModel?.enabled && activeModel.autoStrum && harpEngaged) {
     const chord = transport.conductedSpine?.[stepIndex] || currentConductedSpine?.[stepIndex] || null;
     const dest = transport.sporeHarpBus || transport.fungalBus;
     scheduleSporeHarpStep(context, dest, activeModel, stepIndex, at, stepDuration, { chord });
@@ -1972,7 +1974,8 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
   if (bypassArrangement || mask.fungal) {
     scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
   }
-  if (transport.clockTicks ?? ((parlorAcousticsEnabled && parlorTickEnabled) || recorder.mode !== "idle")) {
+  const anyAudible = MIXER_CHANNEL_IDS.some((id) => isChannelAudible(mixerState, id));
+  if (transport.clockTicks ?? ((parlorAcousticsEnabled && parlorTickEnabled && anyAudible) || recorder.mode !== "idle")) {
     scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel, activeGridSteps);
   }
 }
@@ -2787,11 +2790,13 @@ const STEM_FILES = Object.freeze([
   ["lead", "01-lead", "LEAD · LOLCODE melody and drones"],
   ["fun", "02-manual", "MANUAL · Fun Machine sequenced chords"],
   ["beat", "03-pulse", "PULSE · Malbolge percussion"],
-  ["bass", "04-bass", "BASS · Brainfuck walking bass"],
-  ["harmony", "05-organ", "ORGAN · Befunge chord organ"],
-  ["chime", "06-chimes", "CHIMES · Piet/FRACTRAN bells and pads"],
-  ["chant", "07-choir", "CHOIR · Shakespeare formant voices"],
-  ["fungal", "08-mycelium", "MYCELIUM · bio-acoustic sonification"],
+  ["forge", "04-forge", "FORGE · Bone Forge & Crucible beat machine"],
+  ["bass", "05-bass", "BASS · Brainfuck walking bass"],
+  ["harmony", "06-organ", "ORGAN · Befunge chord organ"],
+  ["chime", "07-chimes", "CHIMES · Piet/FRACTRAN bells and pads"],
+  ["chant", "08-choir", "CHOIR · Shakespeare formant voices"],
+  ["fungal", "09-mycelium", "MYCELIUM · bio-acoustic sonification"],
+  ["harp", "10-harp", "HARP · BioParasite Spore Harp"],
 ]);
 
 function offlineAudioConstructor() {
@@ -3034,7 +3039,7 @@ async function exportSpecimenStems() {
     const stems = [];
     let render = null;
     for (const [index, [id, file]] of STEM_FILES.entries()) {
-      elements.status.textContent = `RENDERING STEM ${index + 1}/9 · ${file.slice(3).toUpperCase()}`;
+      elements.status.textContent = `RENDERING STEM ${index + 1}/${STEM_FILES.length + 1} · ${file.slice(3).toUpperCase()}`;
       render = await renderEnsembleLoop(score, {
         ...common,
         channels: stemSettings(mixerState, id),
@@ -3044,9 +3049,9 @@ async function exportSpecimenStems() {
       });
       stems.push({ file, channels: cut(render) });
     }
-    elements.status.textContent = "RENDERING STEM 9/9 · PARLOR ROOM";
+    elements.status.textContent = `RENDERING STEM ${STEM_FILES.length + 1}/${STEM_FILES.length + 1} · PARLOR ROOM`;
     const roomRender = await renderEnsembleLoop(score, { ...common, channels: silentSettings(mixerState), parlor: room });
-    stems.push({ file: "09-parlor-room", channels: cut(roomRender) });
+    stems.push({ file: `${String(STEM_FILES.length + 1).padStart(2, "0")}-parlor-room`, channels: cut(roomRender) });
     const { gain } = applyPeakCeiling(stems.map((stem) => stem.channels));
 
     const key = keyLabelFor(score.root, score.scale);
@@ -3751,11 +3756,7 @@ elements.thereminScaleSnap?.addEventListener("click", () => {
 
 // --- The Bone Forge & Crucible Controls (P10-02, D-090) ---------------------
 elements.boneBeatToggle?.addEventListener("click", () => {
-  boneBeatModel.enabled = !boneBeatModel.enabled;
-  elements.boneBeatToggle.setAttribute("aria-pressed", String(boneBeatModel.enabled));
-  elements.boneBeatToggle.textContent = boneBeatModel.enabled
-    ? "BONE FORGE: ACTIVE"
-    : "BONE FORGE: MUTED";
+  updateMixer(toggleMute(mixerState, "forge"));
   if (elements.boneBeatTelemetry) {
     elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
   }
@@ -3791,11 +3792,7 @@ elements.boneBeatQuench?.addEventListener("click", async () => {
 
 // --- The BioParasite Spore Harp Controls (P10-03, D-091) ---------------------
 elements.sporeHarpToggle?.addEventListener("click", () => {
-  sporeHarpModel.enabled = !sporeHarpModel.enabled;
-  elements.sporeHarpToggle.setAttribute("aria-pressed", String(sporeHarpModel.enabled));
-  elements.sporeHarpToggle.innerHTML = sporeHarpModel.enabled
-    ? '<span class="harp-glyph" aria-hidden="true">𝄢</span> SPORE HARP: ACTIVE'
-    : '<span class="harp-glyph" aria-hidden="true">○</span> SPORE HARP: MUTED';
+  updateMixer(toggleMute(mixerState, "harp"));
   if (elements.sporeHarpTelemetry) {
     elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
   }
@@ -3871,6 +3868,14 @@ function applyMixerToTransport() {
       strip.pan.pan.setTargetAtTime(settings[id].pan, now, 0.02);
     }
   }
+  const anyAudible = MIXER_CHANNEL_IDS.some((id) => isChannelAudible(mixerState, id));
+  if (currentTransport.parlorCrackleGain) {
+    const crackleTarget = parlorAcousticsEnabled && parlorCrackleEnabled && anyAudible
+      ? PARLOR_CRACKLE_PER_LEVEL * parlorAcousticsLevel
+      : 0.0001;
+    currentTransport.parlorCrackleGain.gain.cancelScheduledValues(now);
+    currentTransport.parlorCrackleGain.gain.setTargetAtTime(crackleTarget, now, 0.02);
+  }
 }
 
 function syncPlateToggles() {
@@ -3886,6 +3891,20 @@ function syncPlateToggles() {
     const engaged = channelEngaged(id);
     toggle.setAttribute("aria-pressed", String(engaged));
     toggle.textContent = `${PLATE_TOGGLE_LABELS[id]}: ${engaged ? "ENGAGED" : "SILENCED"}`;
+  }
+  if (elements.boneBeatToggle) {
+    const engaged = channelEngaged("forge");
+    elements.boneBeatToggle.setAttribute("aria-pressed", String(engaged));
+    elements.boneBeatToggle.textContent = engaged ? "BONE FORGE: ACTIVE" : "BONE FORGE: MUTED";
+    boneBeatModel.enabled = engaged;
+  }
+  if (elements.sporeHarpToggle) {
+    const engaged = channelEngaged("harp");
+    elements.sporeHarpToggle.setAttribute("aria-pressed", String(engaged));
+    elements.sporeHarpToggle.innerHTML = engaged
+      ? '<span class="harp-glyph" aria-hidden="true">𝄢</span> SPORE HARP: ACTIVE'
+      : '<span class="harp-glyph" aria-hidden="true">○</span> SPORE HARP: MUTED';
+    sporeHarpModel.enabled = engaged;
   }
 }
 

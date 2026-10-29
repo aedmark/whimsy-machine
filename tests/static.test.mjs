@@ -590,7 +590,7 @@ test("stem ZIP and MIDI exports are wired through the shared offline renderer", 
     readAppBundle(),
   ]);
   assert.match(html, /id="export-stems"[^>]*disabled/);
-  assert.match(html, /EXPORT 9 STEMS \(ZIP\)/);
+  assert.match(html, /EXPORT 11 STEMS \(ZIP\)/);
   assert.match(html, /id="export-midi"[^>]*disabled/);
   assert.match(html, /WRITE MIDI SCORE/);
   assert.match(app, /async function renderEnsembleLoop\(score/);

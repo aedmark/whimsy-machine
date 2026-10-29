@@ -25,11 +25,11 @@ import {
   toggleSolo,
 } from "../src/mixer.mjs";
 
-test("the console has eight channels, one per ensemble bus, in page order", () => {
-  assert.deepEqual(MIXER_CHANNEL_IDS, ["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"]);
+test("the console has ten channels, one per ensemble bus, in page order", () => {
+  assert.deepEqual(MIXER_CHANNEL_IDS, ["lead", "fun", "beat", "forge", "bass", "harmony", "chime", "chant", "fungal", "harp"]);
   assert.deepEqual(
     MIXER_CHANNELS.map((channel) => channel.bus),
-    ["mix", "funBus", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus"],
+    ["mix", "funBus", "beatBus", "forgeBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "sporeHarpBus"],
   );
   assert.ok(ACCOMPANIMENT_CHANNEL_IDS.every((id) => MIXER_CHANNEL_IDS.includes(id)));
 });

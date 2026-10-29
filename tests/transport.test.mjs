@@ -84,21 +84,19 @@ test("every ensemble bus reaches the destination with its documented routing", (
   const context = fakeContext();
   const graph = build(context);
   const { edges } = context;
-  for (const bus of ["mix", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "funBus"]) {
+  for (const bus of ["mix", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "funBus", "forgeBus", "sporeHarpBus"]) {
     assert.ok(reaches(edges, graph[bus].id, "destination"), `${bus} is connected to the output`);
   }
-  assert.ok(reaches(edges, graph.forgeBus.id, "destination"), "forgeBus is connected to the output");
-  assert.ok(reaches(edges, graph.sporeHarpBus.id, "destination"), "sporeHarpBus is connected to the output");
   // Only the LOLCODE lead wears the creature filter (D-042).
   assert.ok(reaches(edges, graph.mix.id, graph.filter.id), "the lead passes through the creature filter");
-  for (const bus of ["beatBus", "bassBus", "funBus", "chantBus", "harmonyBus", "chimeBus", "fungalBus"]) {
+  for (const bus of ["beatBus", "bassBus", "funBus", "chantBus", "harmonyBus", "chimeBus", "fungalBus", "forgeBus", "sporeHarpBus"]) {
     assert.equal(reaches(edges, graph[bus].id, graph.filter.id), false, `${bus} bypasses the creature filter`);
   }
-  for (const bus of ["harmonyBus", "chimeBus", "fungalBus"]) {
+  for (const bus of ["harmonyBus", "chimeBus", "fungalBus", "sporeHarpBus"]) {
     assert.ok(reaches(edges, graph[bus].id, graph.compressor.id), `${bus} reaches the compressor directly`);
     assert.ok(reaches(edges, graph[bus].id, graph.delay.id), `${bus} still feeds the delay`);
   }
-  for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus", "beatBus"]) {
+  for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus", "beatBus", "forgeBus", "sporeHarpBus"]) {
     assert.ok(reaches(edges, graph[bus].id, graph.parlorReverbSend.id), `${bus} is heard in the chamber`);
   }
   assert.ok(!reaches(edges, graph.bassBus.id, graph.parlorReverbSend.id), "the bass stays out of the chamber");
@@ -140,7 +138,7 @@ test("each bus passes through its own stereo mixer strip before the shared graph
     channels: { beat: { gain: 0, pan: -0.5 }, chime: { gain: 1.2, pan: 0.25 } },
   });
   const { edges } = context;
-  for (const id of ["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"]) {
+  for (const id of ["lead", "fun", "beat", "forge", "bass", "harmony", "chime", "chant", "fungal", "harp"]) {
     const strip = graph.strips[id];
     assert.equal(strip.fader.channelCount, 2, `${id} upmixes to stereo before panning`);
     assert.equal(strip.fader.channelCountMode, "explicit");
@@ -156,6 +154,8 @@ test("each bus passes through its own stereo mixer strip before the shared graph
   assert.ok(edges.some(([a, b]) => a === graph.strips.chime.pan.id && b === graph.compressor.id));
   assert.ok(edges.some(([a, b]) => a === graph.strips.beat.pan.id && b === graph.compressor.id));
   assert.equal(edges.some(([a, b]) => a === graph.beatBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
+  assert.equal(edges.some(([a, b]) => a === graph.forgeBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
+  assert.equal(edges.some(([a, b]) => a === graph.sporeHarpBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
   assert.equal(graph.strips.beat.fader.gain.value, 0);
   assert.equal(graph.strips.beat.pan.pan.value, -0.5);
   assert.equal(graph.strips.chime.fader.gain.value, 1.2);
@@ -169,7 +169,7 @@ test("live meters only add analyser taps and never change what is heard", () => 
   const graph = build(metered, { meters: true });
   build(plain, { meters: false });
   const analyserIds = new Set(metered.nodes.filter((n) => n.kind === "analyser").map((n) => n.id));
-  assert.equal(analyserIds.size, 8);
+  assert.equal(analyserIds.size, 10);
   for (const strip of Object.values(graph.strips)) {
     assert.ok(metered.edges.some(([a, b]) => a === strip.pan.id && b === strip.analyser.id), "meter taps post-pan");
     assert.equal(metered.edges.some(([a]) => a === strip.analyser.id), false, "analysers are sinks");

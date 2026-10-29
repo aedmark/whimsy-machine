@@ -4,20 +4,16 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 94, on `main`._
+_Last updated: 2026-10-28, session 95, on `main`._
 
-- P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
-- D-045–D-071: Console UX (D-056), Studio Companion (P5-32), Neocities release (D-065), v1.0.0, CI (P4-04), MIDI Clock (P5-33), Step Inspector (P5-34), Herbarium (P5-35), Manuscript (P5-36) in v1.1.0.
-- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087).
-- Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083).
-- Polish & Bugfix Pass (D-088): Inlined Clifford recurrence, 60 FPS Canvas batching, and DOM cache.
-- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01, P10-02, P10-03 complete, D-089, D-090, D-091).
-- Harmonic Closure & Somatic Audio Decoupling (D-092, D-093): Eliminated a-tonal variation drift across Befunge organ / chimes (D-092); decoupled Bone Forge and Spore Harp into dedicated somatic buses (`forgeBus`, `sporeHarpBus`), restored Mycelium plate voicing to unity (0 dB), snapped mycelial events to creature scale (0% out-of-scale tones), and implemented chord-aware Spore Harp auto-strumming (D-093).
+- Phases 1–9 Complete: Esoteric engines (Plates I–VI), 22 Inform 7 rulebooks, FM-1 hardware firmware, studio WAV and stem exports, autopoietic dynamics (D-001–D-088).
+- Phase 10: BoneAmanita Resonances (P10-01–P10-03, D-089–D-091) complete: Aetheric Bone Theremin, Bone Forge Beat Machine, and BioParasite Spore Harp.
+- Harmonic Closure & Somatic Decoupling (D-092, D-093): 100% modal consonance for mycelium and chord-aware spore harp strumming.
+- Ten-Channel Mixer Matrix & Rogue Audio Elimination (D-094): Dedicated `forge` and `harp` strips, strict "no bus bypasses its strip" routing, total silence on console mute (clockwork tick and crackle ducking), bidirectional UX binding, 11-stem ZIP exports, and legacy session migration.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10, Modal Scale Closure (D-092), and Somatic Bus Decoupling & Consonance (D-093) are fully implemented and verified! Version 1.5.0. 280/280 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10, Modal Scale Closure (D-092), Somatic Bus Decoupling & Consonance (D-093), and Ten-Channel Console Integration & Rogue Audio Elimination (D-094) are fully implemented and verified! Version 1.5.0. 280/280 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 94, local Linux environment)
+**Verified** (2026-10-28, session 95, local Linux environment)
 
 | Suite | Result |
 | --- | --- |

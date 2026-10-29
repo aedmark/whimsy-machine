@@ -2028,4 +2028,26 @@ Investigation revealed three distinct acoustic and architectural root causes:
 - The Bone Forge and Spore Harp have their own dedicated routing without muddling Plates I and VI.
 - All 280 automated tests pass.
 
+## D-094 Ten-Channel Mixing Matrix, Somatic Strip Integration, and Rogue Audio Elimination (2026-10-28, status: accepted)
+
+**Context:**
+Following D-093's bus decoupling, the Bone Forge & Crucible Beat Machine (`forgeBus`) and BioParasite Spore Harp (`sporeHarpBus`) routed directly into the master compressor and sends, bypassing the mixer channel strips entirely. Consequently, the mixing console had no fader, pan pot, mute/solo switches, or VU metering for the new percussive track or harp. Furthermore, when a player muted every channel on the mixer console, the Bone Forge beat machine continued hammering at full volume, the Spore Harp continued strumming, the parlor escapement clockwork continued striking wood knocks directly into the output on every beat, and the wax crackle hissed, violating the core architectural contract that the mixer controls all sound.
+
+**Decision:**
+1. **Ten-Channel Mixer State (`src/mixer.mjs`):** Expanded `MIXER_CHANNELS` from 8 to 10 channels by adding `forge` (label: `"FORGE"`, source: `"BONE BEAT"`, bus: `"forgeBus"`) and `harp` (label: `"HARP"`, source: `"SPORE HARP"`, bus: `"sporeHarpBus"`). `ACCOMPANIMENT_CHANNEL_IDS` now includes `forge` and `harp`, allowing Bandstand's "SOLO LOLCODE LEAD" to cleanly isolate the lead voice while "ENGAGE FULL BAND" engages all accompaniment.
+2. **Strict Channel Strip Invariant ("No Bus Bypasses Its Strip") (`src/ensemble.mjs`):** In `buildEnsembleGraph()`, mapped `forgeBus` and `sporeHarpBus` into the stereo mixer strip array (`strips.forge` and `strips.harp`). `strips.forge.out` routes to `compressor` and `parlorBeatSend`; `strips.harp.out` routes to `compressor`, `delay`, and `parlorReverbFilter`. Removed all direct bypass connections from `forgeBus` and `sporeHarpBus`.
+3. **Total Silence on Console Mute (`src/app.mjs`):**
+   - In `scheduleEnsembleStep()`, `scheduleClockworkTick()` checks `anyAudible = MIXER_CHANNEL_IDS.some(id => isChannelAudible(mixerState, id))`. When all mixer channels are muted, escapement pallet strikes and wood knock ticks are silenced (unless looper recording is active, preserving metronome count-in).
+   - In `applyMixerToTransport()`, `parlorCrackleGain` is ducked to zero (0.0001) when all console channels are muted, restoring smoothly when any voice is unmuted.
+4. **Bidirectional UX Binding (`src/app.mjs`):** In `syncPlateToggles()`, Plate I's `#bone-beat-toggle` ("BONE FORGE: ACTIVE/MUTED") and the Vitrine's `#spore-harp-toggle` ("SPORE HARP: ACTIVE/MUTED") are bound directly to `channelEngaged("forge")` and `channelEngaged("harp")`, and their click handlers toggle mixer mutes.
+5. **Stem Bundle Expansion to 11 Stems (`src/app.mjs`):** Updated `STEM_FILES` to export `04-forge` (Bone Beat) and `10-harp` (Spore Harp), with parlor room as `11-parlor-room`. Updated `index.html` to display `EXPORT 11 STEMS (ZIP)`.
+6. **Session Backward Compatibility (`src/session.mjs`):** Exported `LEGACY_MIXER_CHANNEL_IDS`. In `validateSession()`, legacy sessions from schemas v1–v7 containing only 8 channels are detected and seamlessly upgraded with default unity/unmuted settings for `forge` and `harp`.
+
+**Consequences:**
+- The mixer console now provides full tactile control (fader, pan, mute, solo, VU meter) over the percussive Bone Forge beat machine and the Spore Harp.
+- When all mixer channels are muted, the machine is 100% silent: no rogue beat machine, no rogue harp, no mechanical clockwork knocking, and no crackle hiss.
+- Responsive CSS supports 10 columns on desktop and 5 columns on tablet, while retaining the hardware scrolling rail on mobile.
+- All 280 automated tests pass cleanly with zero regressions.
+
+
 

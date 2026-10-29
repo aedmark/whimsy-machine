@@ -983,7 +983,7 @@
             "metering",
             "accessibility"
           ],
-          "what": "A console (`#mixer-engine`) in the Mix wing, between the Bandstand and the parlor room, with eight strips: LEAD (LOLCODE), MANUAL (Fun Machine), PULSE (Malbolge), BASS (Brainfuck), ORGAN (Befunge), CHIMES (Piet/FRACTRAN), CHOIR (Shakespeare), and MYCELIUM (bio-acoustics). Each strip has a vertical fader with a dB readout, a pan slider, M and S switches, and a post-fader VU column with peak hold and clip warning. Plate ENGAGE/SILENCE switches are the same mutes, and WAV exports follow the mix.",
+          "what": "A console (`#mixer-engine`) in the Mix wing, between the Bandstand and the parlor room, with ten strips: LEAD (LOLCODE), MANUAL (Fun Machine), PULSE (Malbolge), FORGE (Bone Beat), BASS (Brainfuck), ORGAN (Befunge), CHIMES (Piet/FRACTRAN), CHOIR (Shakespeare), MYCELIUM (bio-acoustics), and HARP (Spore Harp). Each strip has a vertical fader with a dB readout, a pan slider, M and S switches, and a post-fader VU column with peak hold and clip warning. Plate and somatic ENGAGE/SILENCE switches are the same mutes, and WAV exports follow the mix.",
           "how": {
             "lead": "`src/mixer.mjs` holds the pure console state; `buildEnsembleGraph()` in `src/ensemble.mjs` builds the strips; `updateMixer()` in `src/app.mjs` applies changes:",
             "points": [
@@ -1704,7 +1704,7 @@
             "midi",
             "daw"
           ],
-          "what": "`EXPORT 9 STEMS (ZIP)` downloads `…-stems.zip` holding eight channel stems (lead, manual, pulse, bass, organ, chimes, choir, mycelium), a parlor-room stem of crackle and clockwork, and a README with tempo and loop length. `WRITE MIDI SCORE` downloads a Standard MIDI File (Type 1) with a tempo track and seven named instrument tracks, ready to drop into any DAW.",
+          "what": "`EXPORT 11 STEMS (ZIP)` downloads `…-stems.zip` holding ten channel stems (lead, manual, pulse, forge, bass, organ, chimes, choir, mycelium, harp), a parlor-room stem of crackle and clockwork, and a README with tempo and loop length. `WRITE MIDI SCORE` downloads a Standard MIDI File (Type 1) with a tempo track and seven named instrument tracks, ready to drop into any DAW.",
           "how": {
             "lead": "`renderEnsembleLoop()` in `src/app.mjs` drives both exports through the shared graph; `src/zip.mjs` and `src/midi.mjs` write the files:",
             "points": [

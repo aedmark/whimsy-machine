@@ -13,7 +13,7 @@ import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
 import { CREATURE_GENRE, genreCodes } from "./conductor.mjs";
 import { SLOT_VOICES, SongError, emptySong, validateSong } from "./looper.mjs";
 import { DEFAULT_VOICE_ID } from "./voices.mjs";
-import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
+import { MIXER_CHANNEL_IDS, LEGACY_MIXER_CHANNEL_IDS } from "./mixer.mjs";
 import { DEFAULT_REFERENCE_PITCH, MAX_REFERENCE_PITCH, MIN_REFERENCE_PITCH } from "./tuning.mjs";
 import { ENGINE_VERSION } from "./version.mjs";
 
@@ -193,9 +193,15 @@ export function validateSession(raw) {
     });
   }
 
-  expectKeys(raw.mixer, "session.mixer", MIXER_CHANNEL_IDS);
+  const isLegacyMixer = !("forge" in raw.mixer) || !("harp" in raw.mixer);
+  const expectedMixerKeys = isLegacyMixer ? LEGACY_MIXER_CHANNEL_IDS : MIXER_CHANNEL_IDS;
+  expectKeys(raw.mixer, "session.mixer", expectedMixerKeys);
   const mixer = {};
   for (const id of MIXER_CHANNEL_IDS) {
+    if (isLegacyMixer && !raw.mixer[id]) {
+      mixer[id] = Object.freeze({ fader: 80, pan: 0, muted: false, soloed: false });
+      continue;
+    }
     const path = `session.mixer.${id}`;
     expectKeys(raw.mixer[id], path, ["fader", "pan", "muted", "soloed"]);
     mixer[id] = Object.freeze({
