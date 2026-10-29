@@ -34,8 +34,8 @@ export const CHANNEL_VOICING_DB = Object.freeze({
   harmony: 4,
   chime: 6,
   chant: 12,
-  // The per-form mycelium voices measured about 3 dB under the old one (D-042).
-  fungal: 4,
+  // The per-form mycelium voices sit at unity as subtle ambient bio-acoustics (D-093).
+  fungal: 0,
 });
 
 export function voicingGain(id) {
@@ -170,6 +170,10 @@ export function buildEnsembleGraph(context, score, {
   const chantBus = context.createGain();
   const fungalBus = context.createGain();
   const funBus = context.createGain();
+  // Dedicated somatic buses for Bone Forge percussion and Spore Harp (D-093).
+  // These decouple tactile physical modeling from Plates I & VI accompaniment.
+  const forgeBus = context.createGain();
+  const sporeHarpBus = context.createGain();
   const filter = context.createBiquadFilter();
   const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
   const compressor = masterDynamics ? context.createDynamicsCompressor() : context.createGain();
@@ -190,6 +194,8 @@ export function buildEnsembleGraph(context, score, {
   chantBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.chant, now);
   fungalBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fungal, now);
   funBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fun, now);
+  forgeBus.gain.setValueAtTime(0.70, now);
+  sporeHarpBus.gain.setValueAtTime(0.62, now);
   const creature = creatureFilter(score);
   filter.type = creature.type;
   filter.frequency.value = creature.cutoff;
@@ -308,6 +314,12 @@ export function buildEnsembleGraph(context, score, {
   const parlorBeatSend = context.createGain();
   parlorBeatSend.gain.value = PARLOR_BEAT_SEND;
   strips.beat.out.connect(parlorBeatSend).connect(parlorReverbFilter);
+  // Somatic percussion and plucked string routing (D-093)
+  forgeBus.connect(compressor);
+  forgeBus.connect(parlorBeatSend);
+  sporeHarpBus.connect(compressor);
+  sporeHarpBus.connect(delay);
+  sporeHarpBus.connect(parlorReverbFilter);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;
@@ -359,6 +371,8 @@ export function buildEnsembleGraph(context, score, {
     chantBus,
     fungalBus,
     funBus,
+    forgeBus,
+    sporeHarpBus,
     strips,
     leadDry,
     filter,

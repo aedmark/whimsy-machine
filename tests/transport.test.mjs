@@ -87,6 +87,8 @@ test("every ensemble bus reaches the destination with its documented routing", (
   for (const bus of ["mix", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "funBus"]) {
     assert.ok(reaches(edges, graph[bus].id, "destination"), `${bus} is connected to the output`);
   }
+  assert.ok(reaches(edges, graph.forgeBus.id, "destination"), "forgeBus is connected to the output");
+  assert.ok(reaches(edges, graph.sporeHarpBus.id, "destination"), "sporeHarpBus is connected to the output");
   // Only the LOLCODE lead wears the creature filter (D-042).
   assert.ok(reaches(edges, graph.mix.id, graph.filter.id), "the lead passes through the creature filter");
   for (const bus of ["beatBus", "bassBus", "funBus", "chantBus", "harmonyBus", "chimeBus", "fungalBus"]) {
@@ -280,13 +282,13 @@ test("Escape stops from anywhere and other keys are ignored", () => {
   assert.equal(transportCommandForKey(null), null);
 });
 
-test("default voicing lifts the lead, choir, organ, chimes, and mycelium while every other channel stays at unity", () => {
+test("default voicing lifts the lead, choir, organ, and chimes while every other channel stays at unity", () => {
   assert.equal(CHANNEL_VOICING_DB.lead, 6);
   assert.equal(CHANNEL_VOICING_DB.chant, 12);
   assert.equal(CHANNEL_VOICING_DB.harmony, 4);
   assert.equal(CHANNEL_VOICING_DB.chime, 6);
-  assert.equal(CHANNEL_VOICING_DB.fungal, 4);
-  for (const id of ["fun", "beat", "bass"]) assert.equal(voicingGain(id), 1);
+  assert.equal(CHANNEL_VOICING_DB.fungal, 0);
+  for (const id of ["fun", "beat", "bass", "fungal"]) assert.equal(voicingGain(id), 1);
   assert.ok(Math.abs(voicingGain("lead") - 1.9953) < 1e-4);
   assert.ok(Math.abs(voicingGain("chant") - 3.9811) < 1e-4);
 });

@@ -10,6 +10,8 @@
 // bandpassed) or a noise burst (bandpassed noise). Times are fractions of the
 // step, so the pattern breathes with the tempo.
 
+import { SCALES } from "./music.mjs";
+
 const voice = (pattern, sound) => Object.freeze({ pattern, ...sound });
 
 // Patterns are 12 characters, one per step: "x" fires, "." rests.
@@ -78,6 +80,35 @@ const fires = (pattern, step, rotation, stepsCount = 12) => {
 };
 
 /**
+ * Snaps a frequency to the nearest pitch class in the creature's scale (D-093).
+ */
+export function snapToScale(freq, score) {
+  if (!score || score.scale === undefined || !Number.isFinite(freq) || freq <= 0) return freq;
+  const root = score.root ?? 60;
+  const scale = SCALES[score.scale] ?? SCALES[0];
+  const rootPc = ((root % 12) + 12) % 12;
+  const scalePcs = scale.map((step) => (rootPc + step) % 12);
+
+  const midi = 12 * Math.log2(freq / 440) + 69;
+  const oct = Math.floor(midi / 12);
+  let bestMidi = midi;
+  let minDiff = Infinity;
+
+  for (let o = oct - 1; o <= oct + 1; o += 1) {
+    for (const pc of scalePcs) {
+      const candMidi = o * 12 + pc;
+      if (candMidi < 51 || candMidi > 126) continue;
+      const diff = Math.abs(candMidi - midi);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestMidi = candMidi;
+      }
+    }
+  }
+  return 440 * (2 ** ((bestMidi - 69) / 12));
+}
+
+/**
  * The mycelium's events for one loop step. `hold` is the vitrine press (0..1),
  * which brightens and lifts everything a little, as before.
  */
@@ -88,9 +119,9 @@ export function myceliumEvents(score, stepIndex, hold = 0, stepsCount = 12) {
   const rotation = score.fungalHyphae % 12;
   const tilt = 2 ** ((score.fungalBloom - 55) / 90);
   // Harmonic pitch anchor: scales fundamental frequencies with score.root
-  // pitch class so different utterances possess distinct acoustic registers,
-  // while preserving bloom tilt invariants (D-085).
-  const rootAnchor = score?.root ? (2 ** (((score.root % 12) - 6) / 24)) : 1;
+  // pitch class across integer 12-TET semitones so different utterances possess
+  // distinct acoustic registers without microtonal detuning (D-085, D-093).
+  const rootAnchor = score?.root ? (2 ** (((score.root % 12) - 6) / 12)) : 1;
   const lift = 1 + hold * 0.2;
   const events = [];
 
@@ -99,14 +130,16 @@ export function myceliumEvents(score, stepIndex, hold = 0, stepsCount = 12) {
     const [fewest, most] = spikes.count;
     const count = fewest + Math.round(((score.fungalHyphae - 10) / 90) * (most - fewest));
     for (let p = 0; p < count; p += 1) {
-      const freq = (spikes.freq + (spikes.step ?? 0) * p) * tilt * rootAnchor * (spikes.ratios ? spikes.ratios[p % spikes.ratios.length] : 1);
+      const rawFreq = (spikes.freq + (spikes.step ?? 0) * p) * tilt * rootAnchor * (spikes.ratios ? spikes.ratios[p % spikes.ratios.length] : 1);
+      const freq = snapToScale(rawFreq, score);
+      const to = spikes.to ? snapToScale(rawFreq * spikes.to, score) : freq;
       events.push({
         kind: "tone",
         at: p * spikes.spacing,
         wave: spikes.wave,
         freq,
-        to: freq * (spikes.to ?? 1),
-        band: spikes.band ? [spikes.band[0] * tilt * rootAnchor, spikes.band[1]] : null,
+        to,
+        band: spikes.band ? [snapToScale(spikes.band[0] * tilt * rootAnchor, score), spikes.band[1]] : null,
         decay: spikes.decay,
         peak: Math.min(0.098, spikes.peak * (0.75 + score.fungalHyphae / 400) * lift),
         pan: ((p % 3) - 1) * 0.35,
@@ -115,13 +148,15 @@ export function myceliumEvents(score, stepIndex, hold = 0, stepsCount = 12) {
     }
   }
   if (fires(drops.pattern, step, rotation, steps)) {
-    const freq = drops.freq * tilt * rootAnchor;
+    const rawFreq = drops.freq * tilt * rootAnchor;
+    const freq = snapToScale(rawFreq, score);
+    const to = drops.to ? snapToScale(rawFreq * drops.to, score) : freq;
     events.push({
       kind: "tone",
       at: 0.28,
       wave: drops.wave,
       freq,
-      to: freq * drops.to,
+      to,
       band: null,
       decay: drops.decay,
       peak: Math.min(0.098, drops.peak * (0.75 + score.fungalBloom / 400) * lift),

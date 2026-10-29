@@ -4,24 +4,24 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 93, on `main`._
+_Last updated: 2026-10-28, session 94, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-071: Console UX (D-056), Studio Companion (P5-32), Neocities release (D-065), v1.0.0, CI (P4-04), MIDI Clock (P5-33), Step Inspector (P5-34), Herbarium (P5-35), Manuscript (P5-36) in v1.1.0.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
-- Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
-- Polish & Bugfix Pass (D-088): Inlined Clifford recurrence in `src/autopoiesis.mjs` and batched `ctx.rect()` pathing in `src/vitrine-canvas.mjs`, eliminating ~26,000–52,800 garbage collection array allocations per second at 60/120 FPS; pruned orphaned `const RHYTHMS`, dead LOLCODE `consume()` helper, and 21 unused module imports; consolidated looper, cabinet, and Keep Wing DOM lookups into cached `elements = { ... }`; fixed Keep Wing CSS selector (`.wing-keep:not([hidden])`) and connected `.looper-role-tag`.
-- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01, P10-02, P10-03 complete, D-089, D-090, D-091). P10-01: The Aetheric Bone Theremin (*The Thereminist / GLASS*), an expressive gesture-played electrophone with dual virtual antennas, vacuum-tube heterodyne synth voice, and BoneAmanita physics transitions (resin flow, calcification slag, melt, shatter, trapped in amber, collapse). P10-02: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), a physical acoustic percussion machine modeling struck bone, resonant mineral plates, tempered brass, and quenching steam, driven by physical impact counts, heat, and voltage alongside the Malbolge beat machine. P10-03: The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*), an acoustic string-plucked harp where growing mycelium hyphae and anastomoses act as resonant strings under bio-acoustic tension, struck by flying ballistospores, strummed via direct vitrine swiping, and scheduled on loop steps with four symbiosis timbres (Silk, Lichen, Cordyceps, Mutual).
-- Modal Scale Closure & Consonant Chime Overtones (D-092): Eliminated a-tonal harmonic drift occurring every few measures (harmonic passes 1..3) across the Befunge-93 chord organ and Piet/FRACTRAN chimes by constraining chord variation moves to the creature's native modal scale and filtering out microtonal quarter-tone overtone ratios.
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087).
+- Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083).
+- Polish & Bugfix Pass (D-088): Inlined Clifford recurrence, 60 FPS Canvas batching, and DOM cache.
+- Phase 10: BoneAmanita Resonances & Somatic Machines (P10-01, P10-02, P10-03 complete, D-089, D-090, D-091).
+- Harmonic Closure & Somatic Audio Decoupling (D-092, D-093): Eliminated a-tonal variation drift across Befunge organ / chimes (D-092); decoupled Bone Forge and Spore Harp into dedicated somatic buses (`forgeBus`, `sporeHarpBus`), restored Mycelium plate voicing to unity (0 dB), snapped mycelial events to creature scale (0% out-of-scale tones), and implemented chord-aware Spore Harp auto-strumming (D-093).
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), Phase 9 (P9-01 through P9-03), Polish Pass (D-088), Phase 10 (P10-01, P10-02, P10-03), and Modal Scale Closure (D-092) are fully implemented, verified, and passing across all suites! Version 1.5.0. 278/278 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10, Modal Scale Closure (D-092), and Somatic Bus Decoupling & Consonance (D-093) are fully implemented and verified! Version 1.5.0. 280/280 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 93, local Linux environment)
+**Verified** (2026-10-28, session 94, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **278/278 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **280/280 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +93,33 @@ _Last updated: 2026-10-28, session 93, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 94 (2026-10-28): Somatic Audio Bus Decoupling, Mycelium Modal Consonance, and Channel Voicing Rebalance (D-093)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address user feedback that the Mycelium plate is way too loud by default, its generations clash with the rest of the ensemble, and that the new beat machine and harp do not need to be lumped into those channels (D-093).
+
+**Done:** Decoupled Bone Beat and Spore Harp into dedicated somatic buses, rebalanced Mycelium channel voicing to unity (0 dB), snapped mycelial events to creature scale (0% out-of-scale tones), and implemented chord-aware Spore Harp auto-strumming. 280/280 automated tests pass.
+
+**Changed:**
+1. Somatic Audio Bus Decoupling (`src/ensemble.mjs`, `src/app.mjs`):
+   - Added `forgeBus` (gain 0.70) and `sporeHarpBus` (gain 0.62) to `buildEnsembleGraph()`. Both connect to master compressor and chamber reverb send (`parlorReverbFilter`); `sporeHarpBus` also feeds tempo delay.
+   - Decoupled Bone Forge percussion from Plate I (`beatBus`) and Spore Harp plucks from Plate VI (`fungalBus`), freeing Plate I for pure Malbolge drums and Plate VI for pure bio-acoustic environmental sonification.
+2. Mycelium Plate Voicing & Balance:
+   - In `src/ensemble.mjs`, reset `CHANNEL_VOICING_DB.fungal` from +4 dB to 0 dB (unity gain).
+   - In `src/schedulers.mjs`, scaled Bracket Conk woody shelf resonance from 0.7 to 0.35 and droplet pings from 0.45 to 0.22.
+3. Modal Scale Closure for Mycelium Events (`src/mycelium.mjs`):
+   - Replaced quarter-tone `rootAnchor` exponent (`/ 24`) with 12-TET semitone intervals (`/ 12`).
+   - Implemented `snapToScale(freq, score)`, clamping and quantizing tone event frequencies (`spikes`, `drops`, bandpass filters) to the nearest scale pitch class of the creature. Out-of-scale tone events dropped from 72.7% to 0.0%.
+4. Chord-Aware Spore Harp Auto-Strumming (`src/spore-harp.mjs`):
+   - In `scheduleSporeHarpStep`, passed active chord and filtered string selection to chord pitch classes (`chord.pitchClasses`), eliminating semitone rubs.
+   - Scaled auto-strum velocity to a gentle background arpeggio (0.35), click transient to 0.09 * vel, and string bus gain to 0.55. Full velocity (0.85) preserved for direct vitrine swiping.
+5. Verification & Tests:
+   - Added test in `tests/mycelium.test.mjs` verifying 100% modal scale closure for mycelium tone events.
+   - Added test in `tests/spore-harp.test.mjs` verifying chord-aware consonant string selection in `scheduleSporeHarpStep`.
+   - Updated `tests/transport.test.mjs` asserting `forgeBus` and `sporeHarpBus` destination routing and 0 dB fungal voicing.
+   - Re-stamped asset version via `tools/stamp_assets.mjs`.
 
 ### Session 93 (2026-10-28): Modal Scale Closure & Consonant Chimes for Creature Variations (D-092)
 
@@ -400,37 +427,5 @@ _Last updated: 2026-10-28, session 93, on `main`._
 - `node --test tests/*.test.mjs`: 252/252 checks passed.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-
-### Session 84 (2026-10-27): Phase 8 Studio Credibility: Utterance Metre Synchronization & Keep Wing Ergonomic Polish (P8-15, P8-16, D-081, D-082)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Conduct a deep-level audit across the full ensemble to ensure all instruments and elements speak the same musical language per utterance without metric drift or harmonic collision across 12-step and 16-step metres (P8-15, D-081), and perform an ergonomic UX pass over the Keep Wing (segmented telegraph decks) and Kapellmeister console (fluid flex grouping) to resolve visual bloat and whitespace glitches (P8-16, D-082).
-
-**Done:** All parts implemented and verified. 244/244 automated tests pass.
-
-**Changed:**
-1. Aural Coherence & Metre Synchronization (P8-15, D-081):
-   - `src/tuning.mjs`: `stepUnitSeconds` accepts `stepsCount = 12` with 16-step bar-aligned calculation.
-   - `src/ensemble.mjs`: `delayTimeFor` accepts `unitOverride`, synchronizing echo taps to active step duration.
-   - `src/mycelium.mjs`: `myceliumEvents` scales biological spore puffs and hyphal triggers to `stepsCount` without 12-step wrapping.
-   - `src/schedulers.mjs`: parameterized `scheduleClockworkTick` to true quarter notes and half-bars; dynamically scaled filter sweeps, detune cycles, and region damping to active measure stride ($S/4$).
-   - `src/accompaniment.mjs`: `buildPerformance` generates 4-chord progression regions in 16-step mode.
-   - `src/app.mjs`: passed `melodyFor(currentScore, activeGridSteps)` and `stepsCount: activeGridSteps` to `conductEnsemble()`, fixing the 16-step runtime out-of-bounds exception.
-   - `tests/utterance-coherence.test.mjs`: added comprehensive regression test suite (4/4 passing).
-2. UX & Ergonomic Polish (P8-16, D-082):
-   - `index.html`: added `.keep-deck-nav` tab selector in `#drawer-body-keep` (`#keep-tab-export`, `#keep-tab-session`, `#keep-tab-studio`, `#keep-tab-herbarium`); grouped Kapellmeister controls into `.kapellmeister-group-rulebook` and `.kapellmeister-group-tuning`; formatted export parameters into $2 \times 2$ grid (`.export-format-grid`) with Victorian sublabels.
-   - `styles.css`: added styles for telegraph deck navigation, panel isolation (`.wing-keep .beat-engine[hidden] { display: none !important; }`), Kapellmeister flex wrapping, and export format grid cells.
-   - `src/app.mjs`: implemented `readKeepDeck()`, `writeKeepDeck()`, and `initKeepDeckTabs()` with guarded `window.localStorage` persistence under `whimsy-machine.keep-deck`.
-3. 3x Documentation & Engine Integrity:
-   - Added entries `utterance-metre-synchronizer`, `kapellmeister-fluid-layout`, and `keep-segmented-decks` to `docs/manual.json` (43 entries, 0 warnings) and built `manual.html`.
-   - Logged D-081 and D-082 in `docs/DECISIONS.md`.
-   - Updated `ROADMAP.md` (P8-15, P8-16), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, and archived Session 72 in `docs/archive/sessions.md`.
-   - Re-stamped asset version via `tools/stamp_assets.mjs`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 244/244 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 43 entries, 0 errors, 0 warnings.
 
 

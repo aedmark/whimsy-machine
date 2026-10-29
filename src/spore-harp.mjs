@@ -221,14 +221,29 @@ export function checkStringIntersection(p1, p2, str, threshold = 0.045) {
 /**
  * Schedules auto-strum harp plucks on a playback loop step.
  */
-export function scheduleSporeHarpStep(context, destination, model, stepIndex, atTime, stepDuration) {
+export function scheduleSporeHarpStep(context, destination, model, stepIndex, atTime, stepDuration, options = {}) {
   if (!context || !destination || !model?.enabled || !model.autoStrum || !model.strings?.length) return;
 
-  // Deterministic arpeggio pattern: pluck 1 or 2 strings on active eighth-note steps
   const count = model.strings.length;
-  // Step-to-string mapping: creates organic walking counter-melody
-  const primaryIdx = (stepIndex * 3 + (stepIndex % 2 === 0 ? 0 : 4)) % count;
-  const pluck = pluckHyphalString(model, primaryIdx, 0.72);
+  const chord = options.chord;
+  let candidates = [];
+  if (chord?.pitchClasses?.length) {
+    const chordPcs = new Set(chord.pitchClasses);
+    candidates = model.strings.filter((str) => chordPcs.has(str.midi % 12));
+    if (!candidates.length) {
+      candidates = model.strings.filter((str) => {
+        const pc = str.midi % 12;
+        return !chord.pitchClasses.some((cpc) => Math.min((pc - cpc + 12) % 12, (cpc - pc + 12) % 12) === 1);
+      });
+    }
+  }
+  if (!candidates.length) {
+    candidates = model.strings;
+  }
+
+  // Deterministic arpeggio pattern: pluck consonant chord/scale string with gentle background velocity (D-093)
+  const primaryIdx = candidates[stepIndex % candidates.length].index;
+  const pluck = pluckHyphalString(model, primaryIdx, 0.35);
 
   if (pluck) {
     triggerHyphalPluck(context, destination, pluck.frequency, pluck.velocity, {
@@ -239,9 +254,9 @@ export function scheduleSporeHarpStep(context, destination, model, stepIndex, at
   }
 
   // Periodic secondary shimmer pluck on quarter-beats
-  if (stepIndex % 3 === 0 && Math.random() < 0.45) {
-    const secondaryIdx = (primaryIdx + 4) % count;
-    const secPluck = pluckHyphalString(model, secondaryIdx, 0.55);
+  if (stepIndex % 4 === 0 && candidates.length > 1) {
+    const secondaryIdx = candidates[(stepIndex + 1) % candidates.length].index;
+    const secPluck = pluckHyphalString(model, secondaryIdx, 0.24);
     if (secPluck) {
       triggerHyphalPluck(context, destination, secPluck.frequency, secPluck.velocity, {
         symbiosis: model.symbiosis,
@@ -274,7 +289,7 @@ export function triggerHyphalPluck(context, destination, frequency, velocity = 0
   clickOsc.frequency.exponentialRampToValueAtTime(750, time + 0.005);
 
   clickGain.gain.setValueAtTime(0.0001, time);
-  clickGain.gain.linearRampToValueAtTime(0.28 * vel, time + 0.001);
+  clickGain.gain.linearRampToValueAtTime(0.09 * vel, time + 0.001);
   clickGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.012);
 
   clickOsc.connect(clickGain).connect(destination);
@@ -296,7 +311,7 @@ export function triggerHyphalPluck(context, destination, frequency, velocity = 0
   dampingFilter.Q.setValueAtTime(1.8, time);
 
   const stringBus = context.createGain();
-  stringBus.gain.setValueAtTime(1.0, time);
+  stringBus.gain.setValueAtTime(0.55, time);
   dampingFilter.connect(stringBus).connect(destination);
 
   // Partial modes: fundamental (1x), octave (2x), fifth (3x), double-octave (4x)

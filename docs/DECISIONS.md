@@ -1991,3 +1991,41 @@ Analysis revealed two root causes:
 - No sour a-tonal clashes occur against the Spore Harp, Bone Theremin, Lead, or Drones.
 - All 278 automated tests pass.
 
+## D-093 Somatic Audio Bus Decoupling, Mycelium Modal Consonance, and Channel Voicing Rebalance (2026-10-28, status: accepted)
+
+**Context:** Following the introduction of The Bone Forge & Crucible Beat Machine (P10-02, D-090) and The BioParasite Spore Harp (P10-03, D-091), the maintainer reported:
+1. "the mycelium plate seems to be way too loud by default, and the generations tend to clash with the rest of the ensemble more than creating consonance."
+2. "the new beat machine and harp don't necessarily need to be lumped into those channels, by the way"
+
+Investigation revealed three distinct acoustic and architectural root causes:
+1. *Audio Channel Bundling:* Bone Beat was bundled into `beatBus` (Plate I, Malbolge drums) and Spore Harp into `fungalBus` (Plate VI, bio-acoustic sonification). Consequently, the Spore Harp's full-velocity string plucks (chitin transient clicks, Karplus-Strong multi-mode decaying partials, photobiont bloom) and step auto-strums flooded the Mycelium channel strip, compounding its volume and muddling its delicate bio-acoustic identity.
+2. *Mycelium Channel Voicing & Acoustic Levels:* In D-042, `CHANNEL_VOICING_DB.fungal` was set to +4 dB because legacy micro-clicks were quiet. In D-085, resonant woody shelf thumps (85 Hz) and droplet pings were added at high gains (0.7 and 0.45). Combined with the +4 dB strip lift and Spore Harp summing, the Mycelium plate overpowered the rest of the band.
+3. *Microtonal & Harmonic Clashes in Generated Events:*
+   - In `src/mycelium.mjs`, tone frequencies for `spikes` and `drops` were computed using fixed frequencies multiplied by `rootAnchor = 2 ** (((root % 12) - 6) / 24)` and `tilt = 2 ** ((bloom - 55) / 90)`. The quarter-tone exponent (`/ 24`) and fractional bloom exponent shifted pitches into microtonal cracks between semitones. Simulation revealed **72.7% of mycelium tone events were out-of-scale or microtonally detuned**.
+   - In `src/spore-harp.mjs`, auto-strumming on playback loop steps selected strings via raw step modulo `(stepIndex * 3 + ...) % 8` without inspecting the active chord. Simulation showed **48.9% of auto-strum plucks formed harsh semitone (minor-second) clashes against the active chord**.
+
+**Decision:**
+1. **Somatic Audio Bus Decoupling (`src/ensemble.mjs`, `src/app.mjs`):**
+   - Decoupled The Bone Forge and The BioParasite Spore Harp from Plates I and VI by introducing dedicated somatic buses: `forgeBus` (gain 0.70) and `sporeHarpBus` (gain 0.62) in `buildEnsembleGraph()`.
+   - `forgeBus` routes to master compressor and parlor reverb send.
+   - `sporeHarpBus` routes to master compressor, tempo delay, and parlor reverb send.
+   - The eight canonical mixer channels and stem files remain 100% backward-compatible, but Plate I (`beatBus`) now carries solely the Malbolge drums, and Plate VI (`fungalBus`) carries solely the pure bio-acoustic mycelium sonification.
+2. **Mycelium Plate Voicing & Balance:**
+   - In `src/ensemble.mjs`, restored `CHANNEL_VOICING_DB.fungal = 0` dB (unity gain, down 4 dB).
+   - In `src/schedulers.mjs`, scaled Bracket Conk shelf resonance from 0.7 to 0.35 and droplet pings from 0.45 to 0.22.
+   - The Mycelium channel now sits comfortably as an intimate, atmospheric bio-acoustic background texture.
+3. **Modal Consonance for Mycelium Generations (`src/mycelium.mjs`):**
+   - Replaced quarter-tone `rootAnchor` exponent (`/ 24`) with integer 12-TET semitones (`/ 12`).
+   - Implemented `snapToScale(freq, score)`, snapping all generated tone frequencies (`spikes`, `drops`, bandpass filters) to the nearest scale pitch class of the creature.
+   - Out-of-scale / microtonal tone events dropped from **72.7% down to 0.0%**.
+4. **Chord-Aware Auto-Strum for Spore Harp (`src/spore-harp.mjs`):**
+   - In `scheduleSporeHarpStep`, passed `{ chord }`. Strings are filtered to active chord tones (`chord.pitchClasses`), eliminating semitone rubs.
+   - Scaled auto-strum velocity to a gentle background arpeggio (0.35), click transient to 0.09 * vel, and string bus gain to 0.55. Full velocity (0.85) remains available for direct interactive visitor swiping on the vitrine glass.
+
+**Consequences:**
+- The Mycelium plate sits in the mix with authentic atmospheric headroom, perfectly balanced at unity gain without harsh thumps or clashing tones.
+- All mycelial bio-acoustic events resonate with 100% modal consonance in the creature's native scale.
+- The Bone Forge and Spore Harp have their own dedicated routing without muddling Plates I and VI.
+- All 280 automated tests pass.
+
+

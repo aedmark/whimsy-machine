@@ -1075,7 +1075,7 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
       shelfWoodOsc.frequency.setValueAtTime(85, start);
       shelfWoodOsc.frequency.exponentialRampToValueAtTime(45, start + 0.06);
       shelfWoodGain.gain.setValueAtTime(0.0001, start);
-      shelfWoodGain.gain.exponentialRampToValueAtTime(event.peak * 0.7, start + 0.005);
+      shelfWoodGain.gain.exponentialRampToValueAtTime(event.peak * 0.35, start + 0.005);
       shelfWoodGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
       shelfWoodOsc.connect(shelfWoodGain).connect(bus);
       shelfWoodOsc.start(start);
@@ -1089,7 +1089,7 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
       pingOsc.frequency.setValueAtTime(event.freq * 1.5, start);
       pingOsc.frequency.exponentialRampToValueAtTime(event.to * 1.2, start + Math.min(0.04, event.decay * 0.35));
       pingGain.gain.setValueAtTime(0.0001, start);
-      pingGain.gain.exponentialRampToValueAtTime(event.peak * 0.45, start + 0.003);
+      pingGain.gain.exponentialRampToValueAtTime(event.peak * 0.22, start + 0.003);
       pingGain.gain.exponentialRampToValueAtTime(0.0001, start + Math.min(0.05, event.decay * 0.4));
       pingOsc.connect(pingGain).connect(bus);
       pingOsc.start(start);

@@ -2170,6 +2170,39 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
    - Added `tests/metre.test.mjs` testing step durations, 16-step generation across all 5 esoteric band generators, Tonnetz + INTERCAL 16-step orchestration, and looper + session serialization.
    - Updated `tests/session.test.mjs`, `tests/static.test.mjs`, `tests/audit.test.mjs`.
 
+### Session 84 (2026-10-27): Phase 8 Studio Credibility: Utterance Metre Synchronization & Keep Wing Ergonomic Polish (P8-15, P8-16, D-081, D-082)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Conduct a deep-level audit across the full ensemble to ensure all instruments and elements speak the same musical language per utterance without metric drift or harmonic collision across 12-step and 16-step metres (P8-15, D-081), and perform an ergonomic UX pass over the Keep Wing (segmented telegraph decks) and Kapellmeister console (fluid flex grouping) to resolve visual bloat and whitespace glitches (P8-16, D-082).
+
+**Done:** All parts implemented and verified. 244/244 automated tests pass.
+
+**Changed:**
+1. Aural Coherence & Metre Synchronization (P8-15, D-081):
+   - `src/tuning.mjs`: `stepUnitSeconds` accepts `stepsCount = 12` with 16-step bar-aligned calculation.
+   - `src/ensemble.mjs`: `delayTimeFor` accepts `unitOverride`, synchronizing echo taps to active step duration.
+   - `src/mycelium.mjs`: `myceliumEvents` scales biological spore puffs and hyphal triggers to `stepsCount` without 12-step wrapping.
+   - `src/schedulers.mjs`: parameterized `scheduleClockworkTick` to true quarter notes and half-bars; dynamically scaled filter sweeps, detune cycles, and region damping to active measure stride ($S/4$).
+   - `src/accompaniment.mjs`: `buildPerformance` generates 4-chord progression regions in 16-step mode.
+   - `src/app.mjs`: passed `melodyFor(currentScore, activeGridSteps)` and `stepsCount: activeGridSteps` to `conductEnsemble()`, fixing the 16-step runtime out-of-bounds exception.
+   - `tests/utterance-coherence.test.mjs`: added comprehensive regression test suite (4/4 passing).
+2. UX & Ergonomic Polish (P8-16, D-082):
+   - `index.html`: added `.keep-deck-nav` tab selector in `#drawer-body-keep` (`#keep-tab-export`, `#keep-tab-session`, `#keep-tab-studio`, `#keep-tab-herbarium`); grouped Kapellmeister controls into `.kapellmeister-group-rulebook` and `.kapellmeister-group-tuning`; formatted export parameters into $2 \times 2$ grid (`.export-format-grid`) with Victorian sublabels.
+   - `styles.css`: added styles for telegraph deck navigation, panel isolation (`.wing-keep .beat-engine[hidden] { display: none !important; }`), Kapellmeister flex wrapping, and export format grid cells.
+   - `src/app.mjs`: implemented `readKeepDeck()`, `writeKeepDeck()`, and `initKeepDeckTabs()` with guarded `window.localStorage` persistence under `whimsy-machine.keep-deck`.
+3. 3x Documentation & Engine Integrity:
+   - Added entries `utterance-metre-synchronizer`, `kapellmeister-fluid-layout`, and `keep-segmented-decks` to `docs/manual.json` (43 entries, 0 warnings) and built `manual.html`.
+   - Logged D-081 and D-082 in `docs/DECISIONS.md`.
+   - Updated `ROADMAP.md` (P8-15, P8-16), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, and archived Session 72 in `docs/archive/sessions.md`.
+   - Re-stamped asset version via `tools/stamp_assets.mjs`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 244/244 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 43 entries, 0 errors, 0 warnings.
+
+
 
 
 

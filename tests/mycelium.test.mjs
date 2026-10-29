@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { FUNGAL_SOUNDS, myceliumEvents } from "../src/mycelium.mjs";
+import { SCALES } from "../src/music.mjs";
 import { FUNGAL_NAMES, composeScore } from "../src/score.mjs";
 
 const oracle = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
@@ -41,3 +42,27 @@ test("events stay in bounds for every form and every extreme", () => {
     assert.ok(events.length <= 12 * 8, "a bounded number of events per loop");
   }
 });
+
+test("mycelium tone events preserve 100% modal scale closure without microtonal drift (D-093)", () => {
+  for (let i = 0; i < 30; i += 1) {
+    const score = composeScore(oracle, `mycelium consonance test ${i}`);
+    const scale = SCALES[score.scale];
+    const rootPc = score.root % 12;
+    const scalePcs = new Set(scale.map((s) => (rootPc + s) % 12));
+
+    for (let step = 0; step < 12; step += 1) {
+      const events = myceliumEvents(score, step);
+      for (const ev of events) {
+        if (ev.kind === "tone" && ev.freq) {
+          const exactMidi = 12 * Math.log2(ev.freq / 440) + 69;
+          const midi = Math.round(exactMidi);
+          const centsOff = Math.abs(exactMidi - midi) * 100;
+          const pc = ((midi % 12) + 12) % 12;
+          assert.ok(scalePcs.has(pc), `tone freq ${ev.freq.toFixed(1)} pc ${pc} must be in scale [${[...scalePcs]}]`);
+          assert.ok(centsOff < 1e-4, `tone freq ${ev.freq.toFixed(1)} must be exact 12-TET scale note (off by ${centsOff})`);
+        }
+      }
+    }
+  }
+});
+

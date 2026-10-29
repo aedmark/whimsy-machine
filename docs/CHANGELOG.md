@@ -48,6 +48,11 @@
 
 ### Fixed
 
+- Somatic Audio Bus Decoupling, Mycelium Modal Consonance, and Channel Voicing Rebalance (`D-093`):
+  - Decoupled The Bone Forge (P10-02) and BioParasite Spore Harp (P10-03) from Plates I (`beatBus`) and VI (`fungalBus`) into dedicated somatic buses (`forgeBus`, `sporeHarpBus`) in `src/ensemble.mjs`, preserving clean plate identities.
+  - Rebalanced Mycelium plate voicing in `src/ensemble.mjs` (`CHANNEL_VOICING_DB.fungal: 0` dB, down 4 dB) and scaled physical modeling acoustic resonances in `src/schedulers.mjs`, eliminating excessive default volume.
+  - Implemented `snapToScale` in `src/mycelium.mjs` and replaced quarter-tone root anchors with 12-TET semitone intervals, eliminating 72.7% out-of-scale / microtonal clashes across mycelial bio-acoustic tone events.
+  - Implemented chord-aware auto-strumming in `src/spore-harp.mjs`, filtering plucks to active chord tones and eliminating semitone clashing rubs against the ensemble.
 - Modal Scale Closure & Consonant Chimes for Creature Variations (`D-092`):
   - Fixed a-tonal drift where the Befunge-93 chord organ and Piet/FRACTRAN chimes voiced foreign notes on harmonic passes 1, 2, and 3 by enforcing modal scale closure (`fitsScale`) on all variation substitutions, secondary dominants, borrowed chords, and cadences in `src/variation.mjs`.
   - Filtered inharmonic microtonal overtone ratios (> 25 cents deviation from 12-TET) out of `CREATURE_GENRE` chime tables in `src/conductor.mjs`, eliminating sour quarter-tone clashes while preserving consonant Just Intonation intervals.

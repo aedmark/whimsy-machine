@@ -867,7 +867,7 @@ function triggerSporePuff(strength = 1, atTime = null) {
     const hitIdx = Math.floor(Math.random() * sporeHarpModel.strings.length);
     const pluck = pluckHyphalString(sporeHarpModel, hitIdx, 0.45 * Math.min(1.5, strength));
     if (pluck && audioContext) {
-      const dest = currentTransport?.fungalBus || audioContext.destination;
+      const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
       triggerHyphalPluck(audioContext, dest, pluck.frequency, pluck.velocity, {
         symbiosis: sporeHarpModel.symbiosis,
         sporeDensity: pluck.sporeDensity,
@@ -1009,11 +1009,12 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
     logNote,
   });
   const activeModel = transport.boneBeatModel || boneBeatModel;
-  if (currentBoneBeat && activeModel?.enabled && transportEngages(transport, "beat")) {
+  if (currentBoneBeat && activeModel?.enabled) {
     const stepData = currentBoneBeat.steps[stepIndex % currentBoneBeat.gridSteps];
     if (stepData) {
       stepBoneBeat(activeModel, stepData, { dt: stepDuration });
-      scheduleBoneBeatStep(context, transport.beatBus, activeModel, stepData, at, stepDuration);
+      const dest = transport.forgeBus || transport.beatBus;
+      scheduleBoneBeatStep(context, dest, activeModel, stepData, at, stepDuration);
       if (!transport.isOffline && elements.boneBeatTelemetry) {
         elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(activeModel);
       }
@@ -1058,8 +1059,10 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
     logNote,
   });
   const activeModel = transport.sporeHarpModel || sporeHarpModel;
-  if (activeModel?.enabled && activeModel.autoStrum && transportEngages(transport, "fungal")) {
-    scheduleSporeHarpStep(context, transport.fungalBus, activeModel, stepIndex, at, stepDuration);
+  if (activeModel?.enabled && activeModel.autoStrum) {
+    const chord = transport.conductedSpine?.[stepIndex] || currentConductedSpine?.[stepIndex] || null;
+    const dest = transport.sporeHarpBus || transport.fungalBus;
+    scheduleSporeHarpStep(context, dest, activeModel, stepIndex, at, stepDuration, { chord });
     if (!transport.isOffline && elements.sporeHarpTelemetry) {
       elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(activeModel);
     }
@@ -3489,7 +3492,8 @@ function triggerRetaliation(normX, normY) {
   triggerPercussion("retaliation", normX, normY, 1.0);
   strikeBoneForge(boneBeatModel, { type: "mineral", force: 2.0 });
   if (audioContext && currentTransport) {
-    triggerBoneStrike(audioContext, currentTransport.beatBus, "mineral", audioContext.currentTime, 1.0);
+    const dest = currentTransport.forgeBus || currentTransport.beatBus;
+    triggerBoneStrike(audioContext, dest, "mineral", audioContext.currentTime, 1.0);
   }
   if (elements.boneBeatTelemetry) {
     elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
@@ -3673,7 +3677,7 @@ elements.canvas.addEventListener("pointermove", (event) => {
         const vel = Math.max(0.2, Math.min(1.0, 0.4 + delta * 4.5));
         const pluck = pluckHyphalString(sporeHarpModel, str.index, vel);
         if (pluck && audioContext) {
-          const dest = currentTransport?.fungalBus || audioContext.destination;
+          const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
           triggerHyphalPluck(audioContext, dest, pluck.frequency, pluck.velocity, {
             symbiosis: sporeHarpModel.symbiosis,
             sporeDensity: pluck.sporeDensity,
@@ -3763,7 +3767,7 @@ elements.boneBeatStrike?.addEventListener("click", async () => {
   }
   strikeBoneForge(boneBeatModel, { type: "brass", force: 1.2 });
   if (audioContext) {
-    const dest = currentTransport?.beatBus || audioContext.destination;
+    const dest = currentTransport?.forgeBus || currentTransport?.beatBus || audioContext.destination;
     triggerBoneStrike(audioContext, dest, "brass", audioContext.currentTime, 0.95);
   }
   if (elements.boneBeatTelemetry) {
@@ -3777,7 +3781,7 @@ elements.boneBeatQuench?.addEventListener("click", async () => {
   }
   quenchBoneForge(boneBeatModel);
   if (audioContext) {
-    const dest = currentTransport?.beatBus || audioContext.destination;
+    const dest = currentTransport?.forgeBus || currentTransport?.beatBus || audioContext.destination;
     triggerQuenchSteam(audioContext, dest, audioContext.currentTime, 1.0);
   }
   if (elements.boneBeatTelemetry) {
@@ -3803,7 +3807,7 @@ elements.sporeHarpStrum?.addEventListener("click", async () => {
   }
   const plucks = strumHarp(sporeHarpModel, { direction: 1, velocity: 0.88, staggerMs: 36 });
   if (audioContext) {
-    const dest = currentTransport?.fungalBus || audioContext.destination;
+    const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
     for (const p of plucks) {
       const at = audioContext.currentTime + (p.delayMs / 1000);
       triggerHyphalPluck(audioContext, dest, p.frequency, p.velocity, {

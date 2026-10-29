@@ -10,6 +10,7 @@ import {
   cycleSymbiosis,
   formatSporeHarpTelemetry,
   pluckHyphalString,
+  scheduleSporeHarpStep,
   strumHarp,
 } from "../src/spore-harp.mjs";
 
@@ -138,3 +139,48 @@ test("formatSporeHarpTelemetry reflects active and muted states", () => {
   model.lastPluckedAt = Date.now();
   assert.match(formatSporeHarpTelemetry(model), /PLUCK \[C3\]/);
 });
+
+test("scheduleSporeHarpStep selects consonant chord tones when chord is provided (D-093)", () => {
+  const score = { root: 60, scale: 0 };
+  const strings = buildHyphalStrings(score);
+  const model = createSporeHarpModel({ strings, autoStrum: true });
+
+  const fakeContext = {
+    currentTime: 0,
+    createOscillator: () => ({
+      type: "sine",
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      connect: (n) => n,
+      start: () => {},
+      stop: () => {},
+    }),
+    createGain: () => ({
+      gain: { setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      connect: (n) => n,
+    }),
+    createBiquadFilter: () => ({
+      type: "lowpass",
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      Q: { setValueAtTime: () => {} },
+      connect: (n) => n,
+    }),
+  };
+  const destination = fakeContext.createGain();
+
+  const testChords = [
+    { pitchClasses: [0, 4, 7] }, // C major
+    { pitchClasses: [2, 5, 9] }, // D minor
+    { pitchClasses: [7, 11, 2] }, // G major
+  ];
+
+  for (const chord of testChords) {
+    for (let step = 0; step < 12; step += 1) {
+      scheduleSporeHarpStep(fakeContext, destination, model, step, 0, 0.25, { chord });
+      const pluckedStr = model.strings[model.lastPluckedIndex];
+      assert.ok(pluckedStr, "string was plucked");
+      const pc = pluckedStr.midi % 12;
+      assert.ok(chord.pitchClasses.includes(pc), `plucked string pc ${pc} must be chord tone in [${chord.pitchClasses}]`);
+    }
+  }
+});
+
