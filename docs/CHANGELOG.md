@@ -4,6 +4,15 @@
 
 ### Added
 
+- Native CLAP Instrument Plugin (`P8-13`, `D-080`):
+  - Isolated CLAP workspace (`plugin-clap/`): built strictly in standard C (C11) adhering to CLAP 1.2+ specification with zero runtime or build dependencies added to the browser web core.
+  - Native DAW hosting & MIDI routing: supports Bitwig Studio, Cockos REAPER, FL Studio, Renoise, and universal VST3/AU via `clap-wrapper`. Routes MIDI Channel 1 to split-manual Fun Machine playing, Channel 2 to LOLCODE lead soloing, Channel 3 to Pad manual, and Channel 4 to Brainfuck walking bass.
+  - Sample-accurate beat synchronization & transport: locks 12-step triplet shuffle and 16-step straight grid metres to host song beat timeline and tempo without timer jitter.
+  - 23 Automatable DAW parameters: exposes Master Volume, SVF Filter Cutoff, Filter Resonance, Euler Gradus Suavitatis strictness, Step Metre, Creature Seed hash, 8 channel mixer faders, 8 channel mutes, and Host Tempo Lock.
+  - Multi-Out stem audio routing: provides 1 main stereo master pair + 8 discrete stereo stem outputs for multi-track DAW mixing.
+  - Session Schema v9 binary serialization: persists and restores exact apparatus state across DAW project save and reload cycles (`.bwproject`, `.rpp`, `.flp`).
+  - Headless test verification (`plugin-clap/test_clap.c`, `tests/clap.test.mjs`): exercises dynamic DSO loading, factory descriptors, audio/note ports, parameter formatting/parsing, state round-trips, and Float32 PCM audio rendering.
+
 - Ten-Channel Mixer Matrix & Rogue Audio Elimination (`D-094`):
   - Expanded parlor mixing console from 8 to 10 channels with dedicated strips for `forge` (BONE FORGE percussion) and `harp` (SPORE HARP plucked strings).
   - Enforced strict "no bus bypasses its strip" architectural routing: `forgeBus` and `sporeHarpBus` route through their respective faders, pans, mute/solo switches, and VU meters.

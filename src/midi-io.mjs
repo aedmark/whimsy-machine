@@ -216,6 +216,16 @@ export function makeAllNotesOff(channel) {
 }
 
 /**
+ * Creates a standard 3-byte Control Change message. Channel is 1..16.
+ */
+export function makeControlChange(channel, controller, value = 0) {
+  const ch = Math.max(0, Math.min(15, (channel || 1) - 1));
+  const c = Math.max(0, Math.min(127, Math.round(controller || 0)));
+  const v = Math.max(0, Math.min(127, Math.round(value || 0)));
+  return new Uint8Array([0xb0 | ch, c, v]);
+}
+
+/**
  * System Realtime 1-byte message builders (24-PPQ MIDI Clock & Transport).
  */
 export function makeClockTick() {

@@ -248,6 +248,46 @@ test("the manual climbs like a keyboard: every voice rises with the key, and C' 
   }
 });
 
+test("P11-01 25-key manual and octave transposition (-2..+2) scale pitches and maintain chord identity", () => {
+  for (const style of ACCOMPANIMENT_STYLES) {
+    const baseC = buildPerformance(0, style, "smoky_jazz", 52);
+    const midC = buildPerformance(12, style, "smoky_jazz", 52);
+    const highC = buildPerformance(24, style, "smoky_jazz", 52);
+    assert.equal(baseC.lift, 0);
+    assert.equal(midC.lift, 12);
+    assert.equal(highC.lift, 24);
+    assert.equal(baseC.key, 0);
+    assert.equal(midC.key, 0);
+    assert.equal(highC.key, 0);
+    assert.deepEqual(highC.chords, baseC.chords);
+
+    // Negative octave transposition (-1 octave = -12, -2 octaves = -24)
+    const lowOct1 = buildPerformance(-12, style, "smoky_jazz", 52);
+    const lowOct2 = buildPerformance(-24, style, "smoky_jazz", 52);
+    assert.equal(lowOct1.lift, -12);
+    assert.equal(lowOct2.lift, -24);
+    assert.equal(lowOct1.key, 0);
+    assert.equal(lowOct2.key, 0);
+
+    // High octave transposition (+1 octave = +36 from key 24, +2 octaves = +48)
+    const highOct1 = buildPerformance(36, style, "smoky_jazz", 52);
+    const highOct2 = buildPerformance(48, style, "smoky_jazz", 52);
+    assert.equal(highOct1.lift, 36);
+    assert.equal(highOct2.lift, 48);
+    assert.equal(highOct1.key, 0);
+    assert.equal(highOct2.key, 0);
+  }
+
+  // All 25 positions on the manual have valid voicings and monotonic lift
+  for (let pos = 0; pos <= 24; pos += 1) {
+    const perf = buildPerformance(pos, "progression", "victorian_tonnetz", 52);
+    assert.equal(perf.lift, pos);
+    assert.equal(perf.key, pos % 12);
+    const voicing = padVoicing(perf.chords[0], null, pos);
+    assert.ok(voicing.length >= 3);
+  }
+});
+
 test("on the harmonic clock a progression holds one chord per pass, with lead notes held four steps (D-044)", () => {
   const written = buildPerformance(7, "progression", "victorian_tonnetz", 0);
   for (let pass = 0; pass < 4; pass += 1) {

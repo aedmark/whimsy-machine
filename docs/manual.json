@@ -1242,7 +1242,50 @@
           ],
           "related": [
             "kapellmeister-genre-console",
-            "inform-rulebooks"
+            "inform-rulebooks",
+            "parlor-salon-console"
+          ]
+        },
+        {
+          "id": "parlor-salon-console",
+          "title": "The Parlor Salon & Beginner Focus Mode",
+          "summary": "A distraction-free, single-screen stage console consolidating the vitrine, master transport, 10-channel mixer, and play manual without vertical scrolling.",
+          "tags": [
+            "presentation",
+            "salon",
+            "production-view",
+            "stage",
+            "accessibility",
+            "focus-mode"
+          ],
+          "what": "A dedicated two-column parlor console fitting standard viewports (height: 100vh) without vertical scrolling. Fresh visitors land directly in the friendly Salon view, presenting the dancing specimen, calling slip, master transport, compact 10-channel mixer with Part Locks [M], and 1-octave keyboard manual. Clicking UNFOLD GRAND WORKBENCH or pressing [V] seamlessly expands the full 4-wing studio workstation.",
+          "how": {
+            "lead": "`src/view-mode.mjs` manages pure state and validation; `src/app.mjs` binds the masthead switcher, console unfold bar, and [V] hotkey:",
+            "points": [
+              "`parseViewMode()` defaults fresh visitors to 'salon', eliminating overwhelming technical clutter and multi-thousand-pixel scrolling on arrival.",
+              "In Salon mode, CSS Grid arranges the vitrine stage on the left and the master transport, compact mixer, and play manual on the right.",
+              "Deep technical engines (esoteric bytecode tables, Looper sequencer, Inform 7 compiler) are hidden and marked aria-hidden='true' for clean keyboard and screen-reader navigation.",
+              "The chosen view mode is remembered in `localStorage` (`whimsy-machine.view-mode.v1`) so returning producers remain in their preferred view."
+            ]
+          },
+          "why": "A newcomer was easily overwhelmed by dozens of simultaneous faders, esoteric bytecode tables, and compiler textareas across a deeply scrolling page. The Parlor Salon delivers immediate delight and tactile performance command in a single viewport, keeping the deep workstation just one click or hotkey away (D-103).",
+          "evidence": [
+            {
+              "label": "View mode state model",
+              "target": "src/view-mode.mjs"
+            },
+            {
+              "label": "View mode unit tests",
+              "target": "tests/view-mode.test.mjs"
+            },
+            {
+              "label": "Architecture Record D-103",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "discovery-cabinet",
+            "whimsy-machine-accompanist"
           ]
         },
         {
@@ -1356,7 +1399,7 @@
             "arpeggio",
             "fun-machine"
           ],
-          "what": "A 13-key manual (`C..C'`) and computer keys (`[A..K]`) drive a one-finger accompanist inspired by Baldwin home organs and vintage Casio keyboards. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, and PROGRESSION walks the genre's four-chord progression with a singing lead line. Dedicated Casio section buttons trigger live 1-pass movements from the active rulebook: INTRO plays an opening prelude and rolls directly into the groove, BRIDGE plays a 1-pass contrasting departure and automatically returns to the groove, and OUTRO plays the closing cadence and automatically stops the omen. The band is re-conducted onto the chord while the LOLCODE lead steps back. The streamlined Loop Machine (`#looper`, D-039, P5-26, D-045, D-046, D-052) records held keys into chained loops with up to four stacked layers, with audible-clock latching that preserves sustained arpeggios and swells without truncation, armed downbeat sync with anticipation latching, an interactive 12-step tracker ribbon, auto-advancing STEP REC note sequencing, and mechanical metronome ticks.",
+          "what": "A 2-octave 25-key manual (`C3..C5`) with `[-2..+2]` octave transposition and computer keys (`[A..K]`, `[Z]`/`[X]` octave shifts) drive a one-finger accompanist inspired by Baldwin home organs and vintage Casio keyboards. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, and PROGRESSION walks the genre's four-chord progression with a singing lead line. Dedicated Casio section buttons trigger live 1-pass movements from the active rulebook: INTRO plays an opening prelude and rolls directly into the groove, BRIDGE plays a 1-pass contrasting departure and automatically returns to the groove, and OUTRO plays the closing cadence and automatically stops the omen. The band is re-conducted onto the chord while the LOLCODE lead steps back. The streamlined Loop Machine (`#looper`, D-039, P5-26, D-045, D-046, D-052) records held keys into chained loops with up to four stacked layers, with audible-clock latching that preserves sustained arpeggios and swells without truncation, armed downbeat sync with anticipation latching, an interactive 12-step tracker ribbon, auto-advancing STEP REC note sequencing, and mechanical metronome ticks.",
           "how": {
             "lead": "`src/accompaniment.mjs` turns a key into a performance; `src/app.mjs` voices and schedules it on the band's grid:",
             "points": [
@@ -2082,6 +2125,105 @@
             "deterministic-wav-export",
             "naturalists-herbarium",
             "studio-deck-and-daw-routing"
+          ]
+        },
+        {
+          "id": "web-midi-learn",
+          "title": "Web MIDI Learn & Hardware Controller CC Mapping",
+          "summary": "Maps hardware controller encoders, faders, and buttons to mixer channels, master controls, and somatic instruments with bidirectional feedback.",
+          "tags": [
+            "midi",
+            "midi-learn",
+            "cc-mapping",
+            "hardware-controller",
+            "bidirectional-feedback"
+          ],
+          "what": "The Web MIDI Learn engine empowers musicians to bind physical MIDI knobs, motorized faders, and buttons directly to 10 mixer channel faders, 10 channel mutes, Master Volume, Tempo BPM, Creature Filter Cutoff, Euler Strictness, and somatic parameters (Bone Forge, Spore Harp, Muscaria, Theremin). Learned mappings overlay the built-in factory profile with immediate priority, persist across sessions in local storage, and optionally transmit outbound CC updates to motorized hardware and LED rings with echo suppression.",
+          "how": {
+            "lead": "src/midi-learn.mjs and src/app.mjs provide pure mapping state and UI orchestration:",
+            "points": [
+              "Toggling MIDI Learn via [L] hotkey, Mixer header, or Studio Deck highlights all mappable targets with an amber border.",
+              "Clicking any parameter arms it with an animated golden pulse, binding it immediately to the next incoming MIDI CC controller message.",
+              "resolveMidiCC() enforces priority overlay: user mappings take precedence, while unmapped CCs fall back to standard FM-1 profile controls (CC 70–75, CC 1/2/7/11/64).",
+              "computeOutboundCC() and makeControlChange() send outbound CC feedback on parameter adjustments from mouse, keyboard, or presets when feedback is enabled, suppressing feedback loops on incoming MIDI messages.",
+              "Persists user mappings in localStorage under whimsy-machine.midi-map.v1 with instant unmap, clear all, and reset to defaults."
+            ]
+          },
+          "why": "Tactile control surfaces and motorized faders allow fluid real-time jam sessions and expressive live DAW performance without requiring manual MIDI scripting or fixed vendor mappings (roadmap P12-02, ADR D-104).",
+          "evidence": [
+            {
+              "label": "MIDI Learn Pure State Model",
+              "target": "src/midi-learn.mjs"
+            },
+            {
+              "label": "Web MIDI Message Builders",
+              "target": "src/midi-io.mjs"
+            },
+            {
+              "label": "Host Application Controller & Event Wiring",
+              "target": "src/app.mjs"
+            },
+            {
+              "label": "MIDI Learn Unit Tests",
+              "target": "tests/midi-learn.test.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-104",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "studio-deck-and-daw-routing",
+            "parlor-mixing-console",
+            "fm1-hardware-and-firmware"
+          ]
+        },
+        {
+          "id": "global-action-history",
+          "title": "Global Action History & Transactional Undo/Redo",
+          "summary": "Multi-level transactional undo/redo across score, plates, mixer faders, Kapellmeister rulebooks, and looper edits.",
+          "tags": [
+            "history",
+            "undo",
+            "redo",
+            "transaction",
+            "session",
+            "snapshots"
+          ],
+          "what": "A pure, multi-level transactional action history engine that captures snapshots of the entire apparatus (score, motif, plates, mixer faders/pans/mutes, rulebooks, strictness, looper takes, and somatics). Musicians can undo (Ctrl+Z) or redo (Ctrl+Y or Ctrl+Shift+Z) any action up to 50 levels deep, with seamless continuous live audio playback hot-swapping.",
+          "how": {
+            "lead": "src/history.mjs and src/app.mjs provide pure history state and host orchestration:",
+            "points": [
+              "Captures clean immutable snapshots using the validated session serialization schema with zero external dependencies.",
+              "Coalesces rapid continuous adjustments (faders, tempo, volume, strictness, and incoming MIDI CC) with a 400ms debounce window and mouseup commit.",
+              "Discrete actions (creature summons, plate mutations, cell cyclers, mute toggles, rulebook changes, and looper takes) commit to history immediately.",
+              "Dual-access UI controls in both Master Transport (.transport-keys) and Studio Deck (#studio-engine), with a live breadcrumb trail and status readout.",
+              "Executes undo and redo transactions without pausing live audio playback, cleanly hot-swapping parameters and restarting the loop on-the-fly."
+            ]
+          },
+          "why": "Exploratory live performance and deep sound design require fear-free experimentation where accidental tweaks, aggressive mutations, or wild rulebook shifts can be reversed instantly without losing the musical groove (roadmap P12-03, ADR D-105).",
+          "evidence": [
+            {
+              "label": "Action History Pure State Model",
+              "target": "src/history.mjs"
+            },
+            {
+              "label": "Host Application Integration",
+              "target": "src/app.mjs"
+            },
+            {
+              "label": "Action History Unit Tests",
+              "target": "tests/history.test.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-105",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "lookahead-scheduler",
+            "master-transport",
+            "session-ledger"
           ]
         }
       ]

@@ -663,6 +663,15 @@ export function scheduleVoicePad(context, destination, voice, notes, { start, so
     modulator.start(start);
     modulator.stop(stopAt);
   }
+  lfo.onended = () => {
+    try {
+      env?.disconnect?.();
+      filter?.disconnect?.();
+      left?.disconnect?.();
+      right?.disconnect?.();
+      lfoDepth?.disconnect?.();
+    } catch {}
+  };
   return { env, oscillators, stopAt, peak, start };
 }
 
@@ -700,6 +709,14 @@ export function scheduleVoicePluck(context, destination, voice, midi, { start, d
     osc.connect(gain).connect(filter);
     osc.start(start);
     osc.stop(start + decay + pluck.tail);
+    osc.onended = () => {
+      try {
+        env?.disconnect?.();
+        filter?.disconnect?.();
+        panner?.disconnect?.();
+        gain?.disconnect?.();
+      } catch {}
+    };
   }
   return { decay, peak };
 }
@@ -747,6 +764,14 @@ export function scheduleVoiceLead(context, destination, voice, midi, { start, du
     osc.connect(level).connect(filter);
     osc.start(start);
     osc.stop(stopAt);
+    osc.onended = () => {
+      try {
+        env?.disconnect?.();
+        filter?.disconnect?.();
+        level?.disconnect?.();
+        vibratoDepth?.disconnect?.();
+      } catch {}
+    };
   }
   for (const modulator of tremolo ? [vibrato, tremolo] : [vibrato]) {
     modulator.start(start);

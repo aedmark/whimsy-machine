@@ -16,6 +16,13 @@ import { midiToFrequency } from "./tuning.mjs";
 export const HARP_STRING_COUNT = 8;
 export const HARP_SYMBIOSIS_MODES = Object.freeze(["LICHEN", "CORDYCEPS", "SILK", "MUTUAL"]);
 
+export const HARP_TENSION_PRESETS = Object.freeze([
+  Object.freeze({ value: 1.0, label: "1.0× CONCERT" }),
+  Object.freeze({ value: 1.25, label: "1.25× TIGHT" }),
+  Object.freeze({ value: 1.5, label: "1.5× BRILLIANT" }),
+  Object.freeze({ value: 0.75, label: "0.75× WARM" }),
+]);
+
 const NOTE_NAMES = Object.freeze(["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]);
 
 function noteNameForMidi(midi) {
@@ -29,7 +36,7 @@ function noteNameForMidi(midi) {
  */
 export function createSporeHarpModel(initial = {}) {
   return {
-    enabled: initial.enabled !== undefined ? Boolean(initial.enabled) : true,
+    enabled: initial.enabled !== undefined ? Boolean(initial.enabled) : false,
     symbiosis: HARP_SYMBIOSIS_MODES.includes(initial.symbiosis) ? initial.symbiosis : "LICHEN",
     tension: Number.isFinite(initial.tension) ? Math.max(0.5, Math.min(2.0, initial.tension)) : 1.0,
     autoStrum: initial.autoStrum !== undefined ? Boolean(initial.autoStrum) : true,
@@ -42,6 +49,7 @@ export function createSporeHarpModel(initial = {}) {
 
 /**
  * Deterministically constructs 8 tuned hyphal strings across the mycelial network.
+ * Strings are octave-aligned to the sparkling concert harp register (C4-C6, MIDI 60-84).
  */
 export function buildHyphalStrings(score, options = {}) {
   const root = Number.isFinite(score?.root) ? score.root : 60;
@@ -49,8 +57,10 @@ export function buildHyphalStrings(score, options = {}) {
   const scale = SCALES[scaleIndex] || SCALES[0];
   const refPitch = options.referencePitch || 440;
 
-  // Derive strings across 8 scale degrees starting an octave below score root
-  const baseMidi = root >= 48 ? root - 12 : root;
+  // Concert parlor harp register: octave-shifted up so strings sing sparklingly across C4-C6 (MIDI 60-84)
+  let baseMidi = root;
+  while (baseMidi < 60) baseMidi += 12;
+  while (baseMidi > 72) baseMidi -= 12;
   const strings = [];
 
   // Radial angles spread around the bell jar perimeter for string endpoints
@@ -169,6 +179,27 @@ export function cycleSymbiosis(model) {
 }
 
 /**
+ * Cycles through the 4 string tension presets (CONCERT, TIGHT, BRILLIANT, WARM).
+ */
+export function cycleTension(model) {
+  if (!model) return 1.0;
+  const current = Number(model.tension) || 1.0;
+  const currentIndex = HARP_TENSION_PRESETS.findIndex((p) => Math.abs(p.value - current) < 0.05);
+  const nextIndex = (currentIndex + 1) % HARP_TENSION_PRESETS.length;
+  model.tension = HARP_TENSION_PRESETS[nextIndex].value;
+  return model.tension;
+}
+
+/**
+ * Formats user-facing tension button label.
+ */
+export function formatTensionLabel(tension) {
+  const current = Number(tension) || 1.0;
+  const preset = HARP_TENSION_PRESETS.find((p) => Math.abs(p.value - current) < 0.05);
+  return preset ? preset.label : `${current.toFixed(2)}×`;
+}
+
+/**
  * Formats telemetry line for the stage display.
  */
 export function formatSporeHarpTelemetry(model) {
@@ -224,26 +255,38 @@ export function checkStringIntersection(p1, p2, str, threshold = 0.045) {
 export function scheduleSporeHarpStep(context, destination, model, stepIndex, atTime, stepDuration, options = {}) {
   if (!context || !destination || !model?.enabled || !model.autoStrum || !model.strings?.length) return;
 
-  const count = model.strings.length;
   const chord = options.chord;
   let candidates = [];
   if (chord?.pitchClasses?.length) {
     const chordPcs = new Set(chord.pitchClasses);
     candidates = model.strings.filter((str) => chordPcs.has(str.midi % 12));
     if (!candidates.length) {
-      candidates = model.strings.filter((str) => {
-        const pc = str.midi % 12;
-        return !chord.pitchClasses.some((cpc) => Math.min((pc - cpc + 12) % 12, (cpc - pc + 12) % 12) === 1);
-      });
+      // Score strings by harmonic consonance with chord tones: reject semitone (1) and tritone (6) clashes
+      candidates = model.strings
+        .map((str) => {
+          const pc = str.midi % 12;
+          let minDiff = 12;
+          let hasClash = false;
+          for (const cpc of chord.pitchClasses) {
+            const diff = Math.min((pc - cpc + 12) % 12, (cpc - pc + 12) % 12);
+            if (diff === 1 || diff === 6) hasClash = true;
+            if (diff < minDiff) minDiff = diff;
+          }
+          const score = hasClash ? -10 : (minDiff === 0 ? 10 : (minDiff === 5 ? 8 : (minDiff === 3 || minDiff === 4 ? 7 : (minDiff === 2 ? 5 : 1))));
+          return { str, score };
+        })
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map((item) => item.str);
     }
   }
   if (!candidates.length) {
     candidates = model.strings;
   }
 
-  // Deterministic arpeggio pattern: pluck consonant chord/scale string with gentle background velocity (D-093)
+  // Deterministic arpeggio contour: pluck consonant chord/scale string with clear parlor acoustic velocity
   const primaryIdx = candidates[stepIndex % candidates.length].index;
-  const pluck = pluckHyphalString(model, primaryIdx, 0.35);
+  const pluck = pluckHyphalString(model, primaryIdx, 0.38);
 
   if (pluck) {
     triggerHyphalPluck(context, destination, pluck.frequency, pluck.velocity, {
@@ -251,18 +294,27 @@ export function scheduleSporeHarpStep(context, destination, model, stepIndex, at
       sporeDensity: pluck.sporeDensity,
       atTime,
     });
+    if (typeof options.logNote === "function") {
+      const soundedMidi = Math.round(pluck.midi + 12 * Math.log2(model.tension || 1.0));
+      options.logNote(soundedMidi, atTime, Math.min(stepDuration * 1.5, 0.65), pluck.velocity);
+    }
   }
 
-  // Periodic secondary shimmer pluck on quarter-beats
-  if (stepIndex % 4 === 0 && candidates.length > 1) {
+  // Subtle periodic secondary shimmer pluck on half-bar boundaries (steps 0 and 6)
+  if (stepIndex % 6 === 0 && candidates.length > 1) {
     const secondaryIdx = candidates[(stepIndex + 1) % candidates.length].index;
-    const secPluck = pluckHyphalString(model, secondaryIdx, 0.24);
+    const secPluck = pluckHyphalString(model, secondaryIdx, 0.20);
     if (secPluck) {
+      const secTime = atTime + stepDuration * 0.5;
       triggerHyphalPluck(context, destination, secPluck.frequency, secPluck.velocity, {
         symbiosis: model.symbiosis,
         sporeDensity: secPluck.sporeDensity,
-        atTime: atTime + stepDuration * 0.5,
+        atTime: secTime,
       });
+      if (typeof options.logNote === "function") {
+        const soundedMidi = Math.round(secPluck.midi + 12 * Math.log2(model.tension || 1.0));
+        options.logNote(soundedMidi, secTime, Math.min(stepDuration * 1.2, 0.45), secPluck.velocity);
+      }
     }
   }
 }
@@ -281,56 +333,125 @@ export function triggerHyphalPluck(context, destination, frequency, velocity = 0
   const f0 = Math.max(40, Math.min(2200, frequency));
   const vel = Math.max(0.1, Math.min(1.0, velocity));
 
-  // 1. Chitin Plectrum / Spore Click Transient (narrow high impulse, 3 ms)
+  // 1. Chitin Plectrum / Spore Click Transient
   const clickOsc = context.createOscillator();
   const clickGain = context.createGain();
   clickOsc.type = "sine";
-  clickOsc.frequency.setValueAtTime(3200, time);
-  clickOsc.frequency.exponentialRampToValueAtTime(750, time + 0.005);
+
+  let clickStartFreq = 2200;
+  let clickEndFreq = 650;
+  let clickLevel = 0.045 * vel;
+
+  if (symbiosis === "CORDYCEPS") {
+    clickStartFreq = 5400;
+    clickEndFreq = 1400;
+    clickLevel = 0.085 * vel;
+  } else if (symbiosis === "MUTUAL") {
+    clickStartFreq = f0 * 3.2;
+    clickEndFreq = f0 * 1.8;
+    clickLevel = 0.075 * vel;
+  } else if (symbiosis === "LICHEN") {
+    clickStartFreq = 3400;
+    clickEndFreq = 1200;
+    clickLevel = 0.040 * vel;
+  }
+
+  clickOsc.frequency.setValueAtTime(clickStartFreq, time);
+  clickOsc.frequency.exponentialRampToValueAtTime(Math.max(120, clickEndFreq), time + 0.005);
 
   clickGain.gain.setValueAtTime(0.0001, time);
-  clickGain.gain.linearRampToValueAtTime(0.09 * vel, time + 0.001);
+  clickGain.gain.linearRampToValueAtTime(clickLevel, time + 0.001);
   clickGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.012);
 
   clickOsc.connect(clickGain).connect(destination);
   clickOsc.start(time);
   clickOsc.stop(time + 0.015);
+  clickOsc.onended = () => { try { clickGain?.disconnect?.(); } catch {} };
 
   // 2. Physical Resonant String Partials (Karplus-Strong / Damped Modes)
-  // Higher register decays faster; lower register resonates with long wooden body
-  const baseDecay = Math.max(0.4, Math.min(2.8, 1.8 * ((220 / f0) ** 0.45)));
-
-  // Inharmonicity stiffness coefficient: increases with parasitic cordyceps tension
-  const inharmonicity = symbiosis === "CORDYCEPS" ? 0.014 : (symbiosis === "MUTUAL" ? 0.004 : 0.0008);
+  let baseDecay = 0.85;
+  if (symbiosis === "SILK") {
+    baseDecay = Math.max(0.55, Math.min(1.9, 1.15 * ((330 / f0) ** 0.35)));
+  } else if (symbiosis === "LICHEN") {
+    baseDecay = Math.max(0.75, Math.min(2.4, 1.35 * ((330 / f0) ** 0.35)));
+  } else if (symbiosis === "CORDYCEPS") {
+    baseDecay = Math.max(0.35, Math.min(0.95, 0.65 * ((330 / f0) ** 0.35)));
+  } else if (symbiosis === "MUTUAL") {
+    baseDecay = Math.max(0.45, Math.min(1.4, 0.85 * ((330 / f0) ** 0.35)));
+  }
 
   // Damping filter simulating organic hyphal viscosity: drops treble during ringing decay
   const dampingFilter = context.createBiquadFilter();
   dampingFilter.type = "lowpass";
-  dampingFilter.frequency.setValueAtTime(Math.min(12000, f0 * 7), time);
-  dampingFilter.frequency.exponentialRampToValueAtTime(Math.max(180, f0 * 1.5), time + baseDecay * 0.65);
-  dampingFilter.Q.setValueAtTime(1.8, time);
+
+  let startCutoff = Math.min(15000, f0 * 8);
+  let endCutoff = Math.max(220, f0 * 2.8);
+  let filterQ = 1.0;
+
+  if (symbiosis === "LICHEN") {
+    startCutoff = Math.min(16000, f0 * 9);
+    endCutoff = Math.max(260, f0 * 3.0);
+    filterQ = 2.2;
+  } else if (symbiosis === "CORDYCEPS") {
+    startCutoff = Math.min(18000, f0 * 10);
+    endCutoff = Math.max(300, f0 * 3.6);
+    filterQ = 1.8;
+  } else if (symbiosis === "MUTUAL") {
+    startCutoff = Math.min(12000, f0 * 6);
+    endCutoff = Math.max(180, f0 * 2.2);
+    filterQ = 1.2;
+  }
+
+  dampingFilter.frequency.setValueAtTime(startCutoff, time);
+  dampingFilter.frequency.exponentialRampToValueAtTime(endCutoff, time + baseDecay * 0.65);
+  dampingFilter.Q.setValueAtTime(filterQ, time);
 
   const stringBus = context.createGain();
-  stringBus.gain.setValueAtTime(0.55, time);
+  stringBus.gain.setValueAtTime(0.58, time);
   dampingFilter.connect(stringBus).connect(destination);
 
-  // Partial modes: fundamental (1x), octave (2x), fifth (3x), double-octave (4x)
-  const partials = [
-    { mult: 1.0, gain: 0.62, decayMult: 1.0 },
-    { mult: 2.0 * (1 + inharmonicity), gain: 0.28, decayMult: 0.65 },
-    { mult: 3.0 * (1 + inharmonicity * 2.5), gain: 0.14, decayMult: 0.42 },
-  ];
-
-  if (symbiosis === "CORDYCEPS" || symbiosis === "SILK") {
-    partials.push({ mult: 4.0 * (1 + inharmonicity * 4.2), gain: 0.08, decayMult: 0.28 });
+  // Partial modes sculpted per symbiosis personality
+  let partials = [];
+  if (symbiosis === "CORDYCEPS") {
+    // Stiff kalimba / metallic harpsichord bar modes
+    partials = [
+      { mult: 1.0, gain: 0.52, decayMult: 1.0, oscType: "triangle", pitchChirp: -15 },
+      { mult: 2.756, gain: 0.28, decayMult: 0.55, oscType: "sine" },
+      { mult: 5.404, gain: 0.12, decayMult: 0.30, oscType: "sine" },
+      { mult: 8.933, gain: 0.05, decayMult: 0.18, oscType: "sine" },
+    ];
+  } else if (symbiosis === "MUTUAL") {
+    // Liquid dual-detuned oscillators with watery chorus wobble
+    partials = [
+      { mult: 1.0, gain: 0.36, decayMult: 1.0, oscType: "triangle", detuneCents: -7 },
+      { mult: 1.0, gain: 0.36, decayMult: 1.0, oscType: "triangle", detuneCents: +7 },
+      { mult: 2.0, gain: 0.18, decayMult: 0.60, oscType: "sine" },
+      { mult: 3.0, gain: 0.08, decayMult: 0.35, oscType: "sine" },
+    ];
+  } else {
+    // Pure concert / parlor harp harmonic modes (SILK and LICHEN)
+    partials = [
+      { mult: 1.0, gain: 0.55, decayMult: 1.0, oscType: "triangle" },
+      { mult: 2.0, gain: 0.24, decayMult: 0.70, oscType: "sine" },
+      { mult: 3.0, gain: 0.10, decayMult: 0.45, oscType: "sine" },
+      { mult: 4.0, gain: 0.04, decayMult: 0.28, oscType: "sine" },
+    ];
   }
 
   for (const part of partials) {
     const osc = context.createOscillator();
     const gain = context.createGain();
 
-    osc.type = part.mult === 1.0 ? "triangle" : "sine";
-    osc.frequency.setValueAtTime(f0 * part.mult, time);
+    osc.type = part.oscType || "sine";
+    const baseP = f0 * part.mult;
+    osc.frequency.setValueAtTime(baseP, time);
+    if (part.pitchChirp) {
+      osc.frequency.setValueAtTime(baseP * (2 ** (part.pitchChirp / 1200)), time);
+      osc.frequency.exponentialRampToValueAtTime(baseP, time + 0.018);
+    }
+    if (part.detuneCents && osc.detune) {
+      osc.detune.setValueAtTime(part.detuneCents, time);
+    }
 
     const partDecay = baseDecay * part.decayMult;
     gain.gain.setValueAtTime(0.0001, time);
@@ -339,38 +460,49 @@ export function triggerHyphalPluck(context, destination, frequency, velocity = 0
 
     osc.connect(gain).connect(dampingFilter);
     osc.start(time);
-    osc.stop(time + partDecay + 0.01);
+    osc.stop(time + partDecay + 0.02);
+    osc.onended = () => {
+      try {
+        gain?.disconnect?.();
+        if (part === partials[0]) {
+          dampingFilter?.disconnect?.();
+          stringBus?.disconnect?.();
+        }
+      } catch {}
+    };
   }
 
-  // 3. Symbiosis Special Sonic Character:
+  // 3. Symbiosis Special Sonic Character
   if (symbiosis === "LICHEN") {
-    // Photobiont Bloom: warm swelling octave fifth that blooms after initial strike
+    // Photobiont Bloom: pure harmonic octave shimmer (2.0x f0) with gentle choral swell
     const bloomOsc = context.createOscillator();
     const bloomGain = context.createGain();
     bloomOsc.type = "sine";
-    bloomOsc.frequency.setValueAtTime(f0 * 1.5, time); // warm fifth
+    bloomOsc.frequency.setValueAtTime(f0 * 2.0, time);
 
     bloomGain.gain.setValueAtTime(0.0001, time);
-    bloomGain.gain.linearRampToValueAtTime(0.18 * vel, time + 0.045);
+    bloomGain.gain.linearRampToValueAtTime(0.08 * vel, time + 0.045);
     bloomGain.gain.exponentialRampToValueAtTime(0.0001, time + baseDecay * 1.15);
 
-    bloomOsc.connect(bloomGain).connect(destination);
+    bloomOsc.connect(bloomGain).connect(dampingFilter);
     bloomOsc.start(time);
     bloomOsc.stop(time + baseDecay * 1.2);
+    bloomOsc.onended = () => { try { bloomGain?.disconnect?.(); } catch {} };
   } else if (symbiosis === "MUTUAL") {
     // Guttation Meniscus Pip: water droplet surface-tension chirp on string release
     const dropOsc = context.createOscillator();
     const dropGain = context.createGain();
     dropOsc.type = "sine";
-    dropOsc.frequency.setValueAtTime(f0 * 3.2, time);
-    dropOsc.frequency.exponentialRampToValueAtTime(f0 * 1.8, time + 0.04);
+    dropOsc.frequency.setValueAtTime(f0 * 3.0, time);
+    dropOsc.frequency.exponentialRampToValueAtTime(f0 * 2.0, time + 0.035);
 
     dropGain.gain.setValueAtTime(0.0001, time);
-    dropGain.gain.linearRampToValueAtTime(0.22 * vel, time + 0.004);
+    dropGain.gain.linearRampToValueAtTime(0.09 * vel, time + 0.004);
     dropGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.055);
 
-    dropOsc.connect(dropGain).connect(destination);
+    dropOsc.connect(dropGain).connect(dampingFilter);
     dropOsc.start(time);
     dropOsc.stop(time + 0.06);
+    dropOsc.onended = () => { try { dropGain?.disconnect?.(); } catch {} };
   }
 }

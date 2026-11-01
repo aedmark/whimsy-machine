@@ -3,11 +3,21 @@ import { myceliumEvents } from "./mycelium.mjs";
 import { foldIntoRange, leadOctaveShift } from "./ensemble.mjs";
 import { interaction, mulberry32 } from "./vitrine-canvas.mjs";
 import { midiToFrequency } from "./tuning.mjs";
+import { creatureVoice } from "./voices.mjs";
 
 export const LEAD_DUCK_GAIN = 10 ** (-10 / 20);
 
 // Concert pitch lives in tuning.mjs (P8-04), shared by every synth path.
 export { midiToFrequency };
+
+export function cleanupOnEnded(source, ...nodes) {
+  if (!source) return;
+  source.onended = () => {
+    for (let i = 0; i < nodes.length; i += 1) {
+      try { nodes[i]?.disconnect?.(); } catch {}
+    }
+  };
+}
 
 export function harmonicField() {
   const radius = Math.min(1, Math.hypot(interaction.smoothX, interaction.smoothY)) * interaction.hold;
@@ -255,6 +265,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
       partialOsc.connect(partialGain).connect(currentTransport.mix);
       partialOsc.start(now);
       partialOsc.stop(now + duration + 0.04);
+      cleanupOnEnded(partialOsc, partialGain);
     }
     // High resonant sizzle if organism is irritated
     if (interaction.agitation > 0.3) {
@@ -270,6 +281,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
       dissOsc.connect(dissGain).connect(currentTransport.mix);
       dissOsc.start(now);
       dissOsc.stop(now + dissDur + 0.02);
+      cleanupOnEnded(dissOsc, dissGain);
     }
   } else if (kind === "ratchet") {
     for (const [partialIndex, ratio] of [1, 2].entries()) {
@@ -285,6 +297,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
       harmonicOsc.connect(harmonicGain).connect(currentTransport.mix);
       harmonicOsc.start(now);
       harmonicOsc.stop(now + duration + 0.03);
+      cleanupOnEnded(harmonicOsc, harmonicGain);
     }
   } else if (kind === "retaliation") {
     // 1. Sub-bass kinetic cabinet boom (mass slamming against bell jar)
@@ -299,6 +312,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     subOsc.connect(subGain).connect(currentTransport.mix);
     subOsc.start(now);
     subOsc.stop(now + 0.46);
+    cleanupOnEnded(subOsc, subGain);
 
     // 2. High-tension glass snap transient
     const snapOsc = audioContext.createOscillator();
@@ -312,6 +326,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     snapOsc.connect(snapGain).connect(currentTransport.mix);
     snapOsc.start(now);
     snapOsc.stop(now + 0.15);
+    cleanupOnEnded(snapOsc, snapGain);
 
     // 3. Bio-acoustic snarl & air hiss
     const snarlSource = audioContext.createBufferSource();
@@ -328,6 +343,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     snarlSource.connect(snarlFilter).connect(snarlGain).connect(currentTransport.mix);
     snarlSource.start(now);
     snarlSource.stop(now + 0.42);
+    cleanupOnEnded(snarlSource, snarlFilter, snarlGain);
 
     // 4. Electric discharge / static spark crackle
     const sparkSource = audioContext.createBufferSource();
@@ -343,6 +359,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     sparkSource.connect(sparkFilter).connect(sparkGain).connect(currentTransport.mix);
     sparkSource.start(now);
     sparkSource.stop(now + 0.2);
+    cleanupOnEnded(sparkSource, sparkFilter, sparkGain);
 
     // 5. Parlor reverberation if active
     if (currentTransport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
@@ -363,6 +380,7 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     thudOsc.connect(thudGain).connect(currentTransport.mix);
     thudOsc.start(now);
     thudOsc.stop(now + 0.11);
+    cleanupOnEnded(thudOsc, thudGain);
   }
 }
 
@@ -404,6 +422,8 @@ export function triggerSporePuff(strength = 1, atTime = null, {
   noise.stop(now + 0.055);
   pip.start(now);
   pip.stop(now + 0.055);
+  cleanupOnEnded(noise, filter, gain);
+  cleanupOnEnded(pip, pipGain);
 }
 
 // The escapement sits on the master output, under nothing but the master
@@ -438,6 +458,7 @@ export function scheduleClockworkTick(context, destination, at, stepIndex, level
     strikeOsc.connect(strikeGain).connect(destination);
     strikeOsc.start(at);
     strikeOsc.stop(at + 0.02);
+    cleanupOnEnded(strikeOsc, strikeGain);
 
     // 2. Resonant Wood Clock Case Body Knock
     const bodyOsc = context.createOscillator();
@@ -454,6 +475,7 @@ export function scheduleClockworkTick(context, destination, at, stepIndex, level
     bodyOsc.connect(bodyGain).connect(destination);
     bodyOsc.start(at);
     bodyOsc.stop(at + 0.032);
+    cleanupOnEnded(bodyOsc, bodyGain);
   } else {
     // Intervening mechanical brass gear ratchet tick
     const ratchetOsc = context.createOscillator();
@@ -474,6 +496,7 @@ export function scheduleClockworkTick(context, destination, at, stepIndex, level
     ratchetOsc.connect(ratchetFilter).connect(ratchetGain).connect(destination);
     ratchetOsc.start(at);
     ratchetOsc.stop(at + 0.012);
+    cleanupOnEnded(ratchetOsc, ratchetFilter, ratchetGain);
   }
 }
 
@@ -481,7 +504,11 @@ export function scheduleNote(context, transport, score, step, at, duration, {
   currentTransport = null,
   activeHeldFunKey = null,
   logNote = () => {},
+  tripWarpCents = 0,
 } = {}) {
+  const voice = score ? creatureVoice(score) : null;
+  const leadPatch = voice?.lead;
+
   const field = harmonicField();
   const leadRoot = score.root + leadOctaveShift(score);
   const rawNote = leadRoot + transport.melody[step % transport.melody.length];
@@ -491,19 +518,68 @@ export function scheduleNote(context, transport, score, step, at, duration, {
   const primaryNote = rawNote + singingLift;
   const consonantInterval = interaction.pitchBend > 0.48 ? 12 : (interaction.pitchBend > 0.2 ? 7 : (interaction.pitchBend < -0.45 ? -12 : (interaction.pitchBend < -0.2 ? -5 : 0)));
   const shiftedNote = leadRoot + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval + singingLift;
+
   const envelope = context.createGain();
   const gateNorm = ((score.gate ?? 60) - 28) / (95 - 28);
-  const attack = Math.max(0.005, Math.min(0.045, duration * (0.04 + gateNorm * 0.16 + field.radius * 0.05)));
+  const baseAttack = leadPatch?.attack ?? 0.035;
+  const attack = Math.max(0.003, Math.min(0.08, baseAttack * (0.6 + gateNorm * 0.4 + field.radius * 0.05)));
   const duck = (transport === currentTransport && activeHeldFunKey !== null) || transport.songLeading ? LEAD_DUCK_GAIN : 1;
   const sulkDuck = transport === currentTransport ? (1 - ((interaction.sulk || 0) * 0.45)) : 1;
-  const peakGain = 0.32 * (1 + interaction.hold * 0.16) * duck * sulkDuck;
-  const soundingDuration = Math.max(0.08, duration * (0.6 + gateNorm * 0.4));
+  const levelMult = leadPatch?.level ? (leadPatch.level / 0.28) : 1;
+  const peakGain = 0.32 * levelMult * (1 + interaction.hold * 0.16) * duck * sulkDuck;
+  const soundingDuration = Math.max(leadPatch?.minLength ?? 0.08, duration * (0.6 + gateNorm * 0.4));
+  const sustainRatio = leadPatch?.sustain ?? 0.45;
+  const sustainTau = leadPatch?.sustainTau ?? 0.45;
+
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + attack);
-  envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain * 0.45), at + attack + (soundingDuration - attack) * 0.45);
+  envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain * sustainRatio), at + attack + (soundingDuration - attack) * sustainTau);
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + soundingDuration);
   envelope.connect(transport.mix);
   logNote(transport, "lead", primaryNote, at, duration, peakGain);
+
+  let noteDestination = envelope;
+  if (context.createBiquadFilter && leadPatch?.filter) {
+    const filter = context.createBiquadFilter();
+    filter.type = leadPatch.filter.type || "lowpass";
+    filter.frequency.setValueAtTime(leadPatch.filter.base || 3200, at);
+    filter.Q.setValueAtTime(leadPatch.filter.q || 0.7, at);
+    if (leadPatch.formants && leadPatch.formants.length > 0) {
+      for (const formant of leadPatch.formants) {
+        const band = context.createBiquadFilter();
+        const bandGain = context.createGain();
+        band.type = "bandpass";
+        band.frequency.setValueAtTime(formant.freq, at);
+        band.Q.setValueAtTime(formant.q, at);
+        bandGain.gain.setValueAtTime(formant.gain, at);
+        filter.connect(band).connect(bandGain).connect(envelope);
+      }
+    } else {
+      filter.connect(envelope);
+    }
+    noteDestination = filter;
+  }
+
+  // Expression: delayed vocal vibrato when the creature voice features vibrato
+  let vibratoDepth = null;
+  if (leadPatch?.vibrato && leadPatch.vibrato.depth > 0 && context.createOscillator) {
+    const vib = context.createOscillator();
+    const vibGain = context.createGain();
+    vib.frequency.setValueAtTime(leadPatch.vibrato.rate || 5.2, at);
+    vibGain.gain.setValueAtTime(0, at);
+    const delayTime = Math.min(leadPatch.vibrato.delayMax || 0.4, soundingDuration * (leadPatch.vibrato.delayShare || 0.5));
+    const targetDepth = leadPatch.vibrato.depth || 8;
+    if (vibGain.gain.linearRampToValueAtTime) {
+      vibGain.gain.linearRampToValueAtTime(targetDepth, at + delayTime);
+    } else {
+      vibGain.gain.setValueAtTime(targetDepth, at + delayTime);
+    }
+    vib.connect(vibGain);
+    vib.start(at);
+    vib.stop(at + soundingDuration + 0.06);
+    cleanupOnEnded(vib, vibGain);
+    vibratoDepth = vibGain;
+  }
 
   const chorusPhaseCents = Math.sin(field.angle + step * 0.52) * (6 + 14 * field.radius);
   const layers = field.shiftedWeight > 0.04
@@ -514,7 +590,7 @@ export function scheduleNote(context, transport, score, step, at, duration, {
     : [{ note: primaryNote, weight: 1, detuneOffset: 0 }];
 
   for (const layer of layers) {
-    for (const [voiceIndex, voice] of voiceStack(score, step).entries()) {
+    for (const [voiceIndex, voiceItem] of voiceStack(score, step).entries()) {
       const oscillator = context.createOscillator();
       // The creature's own waveform leads, and the stacked voices mix in a
       // saw or square so the line keeps overtones for the creature filter to
@@ -522,18 +598,23 @@ export function scheduleNote(context, transport, score, step, at, duration, {
       oscillator.type = voiceIndex === 0
         ? score.waveform
         : ["triangle", "sawtooth", "sine", "square"][(score.wave + voiceIndex + score.voice) % 4];
-      oscillator.frequency.value = midiToFrequency(layer.note + voice.interval);
+      oscillator.frequency.value = midiToFrequency(layer.note + voiceItem.interval);
       const liveDetuneMod = transport === currentTransport
         ? (Math.sin(at * 32) * ((interaction.agitation || 0) * 45)) - ((interaction.retaliationPitchDrop || 0) * 360) + ((interaction.sulk || 0) * -25)
         : 0;
       const totalSteps = transport.melody?.length || 12;
       const cycle = totalSteps === 16 ? 4 : 3;
-      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + ((step % cycle) - Math.floor(cycle / 2)) * score.twist * 0.14 + liveDetuneMod;
+      const spreadScale = 0.7 + (score.funSpread ?? 2) * 0.15;
+      oscillator.detune.value = (voiceItem.detune * spreadScale * 0.45) + layer.detuneOffset + ((step % cycle) - Math.floor(cycle / 2)) * score.twist * 0.14 + liveDetuneMod + (tripWarpCents || 0);
+      if (vibratoDepth) {
+        try { vibratoDepth.connect(oscillator.detune); } catch {}
+      }
       const level = context.createGain();
-      level.gain.value = voice.gain * layer.weight;
-      oscillator.connect(level).connect(envelope);
+      level.gain.value = voiceItem.gain * layer.weight;
+      oscillator.connect(level).connect(noteDestination);
       oscillator.start(at);
       oscillator.stop(at + soundingDuration + 0.06);
+      cleanupOnEnded(oscillator, level, envelope, noteDestination);
     }
   }
 }
@@ -590,6 +671,7 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
     kickOsc.connect(kickGain).connect(transport.beatBus);
     kickOsc.start(at);
     kickOsc.stop(at + decay + 0.04);
+    cleanupOnEnded(kickOsc, kickGain);
 
     if (beatMode === 0 || beatMode === 3 || beatMode === 4) {
       const clickOsc = context.createOscillator();
@@ -603,6 +685,7 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
       clickOsc.connect(clickGain).connect(transport.beatBus);
       clickOsc.start(at);
       clickOsc.stop(at + 0.02);
+      cleanupOnEnded(clickOsc, clickGain);
     }
   }
 
@@ -646,6 +729,7 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
     noise.connect(snareFilter).connect(snareGain).connect(transport.beatBus);
     noise.start(at);
     noise.stop(at + snareDecay + 0.02);
+    cleanupOnEnded(noise, snareFilter, snareGain);
 
     const bodyOsc = context.createOscillator();
     const bodyGain = context.createGain();
@@ -660,6 +744,7 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
     bodyOsc.connect(bodyGain).connect(transport.beatBus);
     bodyOsc.start(at);
     bodyOsc.stop(at + 0.08);
+    cleanupOnEnded(bodyOsc, bodyGain);
   }
 
   if (step.hat > 0) {
@@ -679,6 +764,7 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
       hatOsc.connect(hatGain).connect(transport.beatBus);
       hatOsc.start(at);
       hatOsc.stop(at + decay + 0.02);
+      cleanupOnEnded(hatOsc, hatGain);
     }
   }
 }
@@ -761,6 +847,8 @@ export function scheduleBassStep(context, transport, score, stepIndex, at, stepD
   upperOsc.start(at);
   subOsc.stop(at + duration + 0.04);
   upperOsc.stop(at + duration + 0.04);
+  cleanupOnEnded(subOsc, upperGain, bassFilter, amp);
+  cleanupOnEnded(upperOsc, upperGain);
 
   // Upright double bass fingerboard pluck transient (WALKING CELLAR: mode 0)
   if (bassMode === 0) {
@@ -775,6 +863,7 @@ export function scheduleBassStep(context, transport, score, stepIndex, at, stepD
     pluckOsc.connect(pluckGain).connect(transport.bassBus);
     pluckOsc.start(at);
     pluckOsc.stop(at + 0.03);
+    cleanupOnEnded(pluckOsc, pluckGain);
   }
 }
 
@@ -833,6 +922,7 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
     osc.connect(voiceGain).connect(transport.harmonyBus);
     osc.start(noteStart);
     osc.stop(noteStart + voiceDuration + 0.04);
+    cleanupOnEnded(osc, voiceGain);
 
     if ((harmonyMode === 2 || harmonyMode === 3) && voiceIndex === 0) {
       const stopOsc = context.createOscillator();
@@ -845,6 +935,7 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
       stopOsc.connect(stopGain).connect(transport.harmonyBus);
       stopOsc.start(noteStart);
       stopOsc.stop(noteStart + voiceDuration * 0.7 + 0.03);
+      cleanupOnEnded(stopOsc, stopGain);
     }
   }
 }
@@ -886,6 +977,7 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
   bellOsc.connect(bellGain).connect(transport.chimeBus);
   bellOsc.start(at);
   bellOsc.stop(at + bellDuration + 0.04);
+  cleanupOnEnded(bellOsc, bellGain);
 
   if (isAccented || chimeMode === 5 || chimeMode === 0) {
     const overtoneOsc = context.createOscillator();
@@ -899,6 +991,7 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
     overtoneOsc.connect(overtoneGain).connect(transport.chimeBus);
     overtoneOsc.start(at);
     overtoneOsc.stop(at + bellDuration * 0.65 + 0.03);
+    cleanupOnEnded(overtoneOsc, overtoneGain);
   }
 
   // 2. Piet Codel Synesthetic Spectral Pad
@@ -929,6 +1022,7 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
     padOsc.connect(padFilter);
     padOsc.start(at);
     padOsc.stop(at + padDuration + 0.04);
+    cleanupOnEnded(padOsc, padFilter, padGain);
   }
   padFilter.connect(padGain).connect(transport.chimeBus);
 }
@@ -937,6 +1031,7 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   currentChant = null,
   engaged = true,
   logNote = () => {},
+  formantMultiplier = 1.0,
 } = {}) {
   if (!engaged || !currentChant || !transport.chantBus) return;
   const step = currentChant.steps[stepIndex % currentChant.steps.length];
@@ -986,6 +1081,7 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
     breathSource.connect(breathGain).connect(glottalMix);
     breathSource.start(at);
     breathSource.stop(at + duration + 0.02);
+    cleanupOnEnded(breathSource, breathGain);
   }
 
   const voiceAmp = context.createGain();
@@ -994,7 +1090,8 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.045);
   voiceAmp.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
-  const formantShift = (1 + interaction.pitchBend * 0.22 + interaction.hold * 0.08) * (chantMode === 2 ? 1.25 : 1.0);
+  const tripShift = Number.isFinite(formantMultiplier) ? formantMultiplier : 1.0;
+  const formantShift = (1 + interaction.pitchBend * 0.22 + interaction.hold * 0.08) * (chantMode === 2 ? 1.25 : 1.0) * tripShift;
   const resonanceBoost = ((score.chantFormant ?? 55) - 25) * 0.04;
   const formants = [
     { freq: step.f1 * formantShift, q: 4.5 + resonanceBoost, weight: 1.0 },
@@ -1019,6 +1116,9 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   oscA.stop(at + duration + 0.04);
   oscB.stop(at + duration + 0.04);
   lfo.stop(at + duration + 0.04);
+  cleanupOnEnded(oscA, glottalMix, oscBGain, lfoGain, voiceAmp);
+  cleanupOnEnded(oscB, oscBGain);
+  cleanupOnEnded(lfo, lfoGain);
 }
 
 // The mycelium's spikes, drops, and spore puffs, from its sporophore form's
@@ -1065,6 +1165,7 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
     }
     source.start(start);
     source.stop(end + 0.01);
+    cleanupOnEnded(source, gain, panner);
 
     // Bio-acoustic sporophore physical modeling (D-085):
     // 1. Bracket Conk (form 1): hollow woody shelf resonance thump
@@ -1080,6 +1181,7 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
       shelfWoodOsc.connect(shelfWoodGain).connect(bus);
       shelfWoodOsc.start(start);
       shelfWoodOsc.stop(start + 0.08);
+      cleanupOnEnded(shelfWoodOsc, shelfWoodGain);
     }
     // 2. Liquid Guttation Droplet Ping (for falling drops): surface-tension meniscus chirp
     if (event.isDrop && event.to < event.freq) {
@@ -1094,6 +1196,7 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
       pingOsc.connect(pingGain).connect(bus);
       pingOsc.start(start);
       pingOsc.stop(start + 0.06);
+      cleanupOnEnded(pingOsc, pingGain);
     }
   }
 }

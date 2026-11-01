@@ -14,11 +14,17 @@ import {
   SESSION_FORMAT,
   SESSION_VERSION,
   SessionError,
+  BANK_FORMAT,
+  BANK_VERSION,
+  duplicatePreset,
   emptyPresetStore,
+  parsePresetBank,
   parsePresetStore,
   parseSession,
   readPresetStoreFrom,
   removePreset,
+  renamePreset,
+  serializePresetBank,
   serializePresetStore,
   serializeSession,
   upsertPreset,
@@ -54,18 +60,53 @@ function sampleSession(overrides = {}) {
     barLock: false,
     gridSteps: 12,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
-    funMachine: { style: "arpeggio", voice: "glass_harmonica" },
+    funMachine: { style: "arpeggio", voice: "glass_harmonica", octave: 0 },
     plates,
     mixer: channels,
-    song: { loops: [{ repeats: 2, layers: [[{ key: 7, style: "progression", voice: "creature" }, ...Array(11).fill(null)], [null, null, { key: 12, style: "arpeggio", voice: "music_box" }, ...Array(9).fill(null)]] }] },
+    song: { loops: [{ repeats: 2, layers: [[{ key: 7, style: "progression", voice: "creature", octave: 0 }, ...Array(11).fill(null)], [null, null, { key: 12, style: "arpeggio", voice: "music_box", octave: 0 }, ...Array(9).fill(null)]] }] },
+    somatic: {
+      sporeHarp: { symbiosis: "silk", tension: 1.0 },
+      muscaria: { targetMode: "dormant", tripDepth: "deep" },
+      theremin: { scaleSnap: true },
+    },
+    recorder: { wavBitDepth: 16, autoMidi: true },
+    herbarium: { pinned: false, specimen: null },
+    locks: {},
     ...overrides,
   };
 }
 
-// An older-format sample: versions before 7 carry no engineVersion/overrides,
+// An older-format sample: versions before 9 carry no somatic/recorder/herbarium,
+// versions before 8 carry no octave, versions before 7 carry no engineVersion/overrides,
 // versions before 5 carry no voices, and versions before 4 no song.
 function olderSession(version, overrides = {}) {
+  const stripV9 = (s) => {
+    delete s.somatic;
+    delete s.recorder;
+    delete s.herbarium;
+    delete s.locks;
+    return s;
+  };
+  const stripV8 = (s) => {
+    stripV9(s);
+    if (s.funMachine && "octave" in s.funMachine) delete s.funMachine.octave;
+    if (s.song?.loops) {
+      s.song = {
+        loops: s.song.loops.map((loop) => ({
+          ...loop,
+          layers: loop.layers.map((take) => take.map((slot) => {
+            if (!slot) return null;
+            const copy = { ...slot };
+            delete copy.octave;
+            return copy;
+          })),
+        })),
+      };
+    }
+    return s;
+  };
   const stripV7 = (s) => {
+    stripV8(s);
     delete s.engineVersion;
     delete s.rootOverride;
     delete s.scaleOverride;
@@ -74,6 +115,12 @@ function olderSession(version, overrides = {}) {
     delete s.gridSteps;
     return s;
   };
+  if (version === 8) {
+    return stripV9(sampleSession({ version, ...overrides }));
+  }
+  if (version === 7) {
+    return stripV8(sampleSession({ version, ...overrides }));
+  }
   if (version === 6) {
     return stripV7(sampleSession({ version, ...overrides }));
   }
@@ -110,7 +157,7 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 8 }), "session.version");
+  rejectsAt(sampleSession({ version: 10 }), "session.version");
   rejectsAt(sampleSession({ rootOverride: 12 }), "session.rootOverride");
   rejectsAt(sampleSession({ scaleOverride: 8 }), "session.scaleOverride");
   rejectsAt(sampleSession({ referencePitch: 400 }), "session.referencePitch");
@@ -200,7 +247,7 @@ test("version 2 files still open: their punched progression is checked, then dro
   const punched = [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null];
   const opened = validateSession(v2(punched));
   assert.equal(opened.version, SESSION_VERSION);
-  assert.deepEqual(opened.funMachine, { style: "swell", voice: "velvet_pad" }, "only the style survives, in the voice it was made in");
+  assert.deepEqual(opened.funMachine, { style: "swell", voice: "velvet_pad", octave: 0 }, "only the style survives, in the voice it was made in");
   assert.equal(JSON.parse(serializeSession(opened)).funMachine.progression, undefined, "a re-save writes v3 without it");
   for (const genre of GENRES) {
     for (let root = 0; root < 12; root += 1) {
@@ -255,7 +302,7 @@ test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an
   assert.equal(upgraded.version, SESSION_VERSION);
   assert.equal(upgraded.funMachine.style, "progression");
   assert.equal(validateSession(v1("lead")).funMachine.style, "arpeggio");
-  assert.deepEqual(upgraded.funMachine, { style: "progression", voice: "velvet_pad" }, "the old progression is dropped");
+  assert.deepEqual(upgraded.funMachine, { style: "progression", voice: "velvet_pad", octave: 0 }, "the old progression is dropped");
   assert.equal(JSON.parse(serializeSession(upgraded)).version, SESSION_VERSION, "an upgraded session saves as the current version");
   const badMode = v1("theremin");
   assert.throws(() => validateSession(badMode), (error) => error.path === "session.funMachine.mode");
@@ -402,5 +449,168 @@ test("P8-03 and P8-04 v7 sessions record engineVersion, rootOverride, scaleOverr
   assert.equal(midiToFrequency(69), 432);
   setReferencePitch(440);
   assert.equal(midiToFrequency(69), 440);
+});
+
+test("P11-01 v8 sessions record funMachine.octave and 25-key manual slots; v7 upgrades cleanly", () => {
+  const v7 = olderSession(7);
+  const upgraded = validateSession(v7);
+  assert.equal(upgraded.version, SESSION_VERSION);
+  assert.equal(upgraded.funMachine.octave, 0);
+  assert.equal(upgraded.engineVersion, 1);
+  assert.equal(upgraded.referencePitch, 440);
+  assert.equal(upgraded.barLock, false);
+
+  const custom = validateSession(sampleSession({
+    funMachine: { style: "progression", voice: "music_box", octave: 1 },
+    song: { loops: [{ repeats: 1, layers: [[{ key: 16, style: "progression", voice: "music_box", octave: 1 }, ...Array(11).fill(null)]] }] },
+  }));
+  assert.equal(custom.funMachine.octave, 1);
+  assert.equal(custom.song.loops[0].layers[0][0].key, 16);
+  assert.equal(custom.song.loops[0].layers[0][0].octave, 1);
+
+  rejectsAt(sampleSession({ funMachine: { style: "swell", voice: "velvet_pad", octave: 3 } }), "session.funMachine.octave");
+  rejectsAt(sampleSession({ funMachine: { style: "swell", voice: "velvet_pad", octave: -3 } }), "session.funMachine.octave");
+});
+
+test("D-101 Schema v9 records bio-somatic, recorder, and herbarium state; v8 upgrades cleanly", () => {
+  const v8 = olderSession(8);
+  const upgraded = validateSession(v8);
+  assert.equal(upgraded.version, SESSION_VERSION);
+  assert.equal(upgraded.funMachine.octave, 0);
+  assert.deepEqual(upgraded.somatic, {
+    sporeHarp: { symbiosis: "silk", tension: 1.0 },
+    muscaria: { targetMode: "dormant", tripDepth: "deep" },
+    theremin: { scaleSnap: true },
+  });
+  assert.deepEqual(upgraded.recorder, { wavBitDepth: 16, autoMidi: true });
+  assert.deepEqual(upgraded.herbarium, { pinned: false, specimen: null });
+
+  // Custom valid somatic & recorder values
+  const custom = validateSession(sampleSession({
+    somatic: {
+      sporeHarp: { symbiosis: "cordyceps", tension: 1.25 },
+      muscaria: { targetMode: "hallucinating", tripDepth: "transcendent" },
+      theremin: { scaleSnap: false },
+    },
+    recorder: { wavBitDepth: 24, autoMidi: false },
+    herbarium: {
+      pinned: true,
+      specimen: {
+        phrase: "the moon owes me five dollars",
+        seed: 284192015,
+        name: "THE CELESTIAL CREDITOR",
+        folioId: "FOLIO-2841",
+        curiosaClass: "ASTRONOMICAL PARLOR HOMUNCULUS",
+        bellJar: "BELL JAR III · LEAD GLASS",
+        pulse: 96,
+        wave: 2,
+        shape: 4,
+        shapeName: "STELLATE POLYP",
+        melodyMode: 1,
+        fungalForm: 3,
+        fungalName: "BIOLUMINESCENT BONNET",
+        hue: 215,
+        accent: 45,
+        pinnedAt: "2026-10-30T08:00:00.000Z",
+      },
+    },
+  }));
+
+  assert.equal(custom.somatic.sporeHarp.symbiosis, "cordyceps");
+  assert.equal(custom.somatic.sporeHarp.tension, 1.25);
+  assert.equal(custom.somatic.muscaria.targetMode, "hallucinating");
+  assert.equal(custom.somatic.muscaria.tripDepth, "transcendent");
+  assert.equal(custom.somatic.theremin.scaleSnap, false);
+  assert.equal(custom.recorder.wavBitDepth, 24);
+  assert.equal(custom.recorder.autoMidi, false);
+  assert.equal(custom.herbarium.pinned, true);
+  assert.equal(custom.herbarium.specimen.name, "THE CELESTIAL CREDITOR");
+
+  // Somatic validation errors
+  rejectsAt(sampleSession({ somatic: { sporeHarp: { symbiosis: "neon", tension: 1.0 }, muscaria: { targetMode: "dormant", tripDepth: "deep" }, theremin: { scaleSnap: true } } }), "session.somatic.sporeHarp.symbiosis");
+  rejectsAt(sampleSession({ somatic: { sporeHarp: { symbiosis: "silk", tension: 3.5 }, muscaria: { targetMode: "dormant", tripDepth: "deep" }, theremin: { scaleSnap: true } } }), "session.somatic.sporeHarp.tension");
+  rejectsAt(sampleSession({ somatic: { sporeHarp: { symbiosis: "silk", tension: 1.0 }, muscaria: { targetMode: "disco", tripDepth: "deep" }, theremin: { scaleSnap: true } } }), "session.somatic.muscaria.targetMode");
+  rejectsAt(sampleSession({ somatic: { sporeHarp: { symbiosis: "silk", tension: 1.0 }, muscaria: { targetMode: "dormant", tripDepth: "maximum" }, theremin: { scaleSnap: true } } }), "session.somatic.muscaria.tripDepth");
+  rejectsAt(sampleSession({ somatic: { sporeHarp: { symbiosis: "silk", tension: 1.0 }, muscaria: { targetMode: "dormant", tripDepth: "deep" }, theremin: { scaleSnap: "yes" } } }), "session.somatic.theremin.scaleSnap");
+
+  // Recorder validation errors
+  rejectsAt(sampleSession({ recorder: { wavBitDepth: 48, autoMidi: true } }), "session.recorder.wavBitDepth");
+  rejectsAt(sampleSession({ recorder: { wavBitDepth: 16, autoMidi: "true" } }), "session.recorder.autoMidi");
+
+  // Herbarium validation errors
+  rejectsAt(sampleSession({ herbarium: { pinned: "yes", specimen: null } }), "session.herbarium.pinned");
+  rejectsAt(sampleSession({ herbarium: { pinned: true, specimen: { bad: 1 } } }), "session.herbarium.specimen.bad");
+  rejectsAt(sampleSession({ herbarium: { pinned: true, specimen: {} } }), "session.herbarium.specimen.phrase");
+
+  // Part lock validation errors
+  rejectsAt(sampleSession({ locks: "all" }), "session.locks");
+  rejectsAt(sampleSession({ locks: { non_existent_part: true } }), "session.locks.non_existent_part");
+  rejectsAt(sampleSession({ locks: { beat: "locked" } }), "session.locks.beat");
+
+  // Valid locks roundtrip
+  const lockedSession = validateSession(sampleSession({ locks: { beat: true, bass: true } }));
+  assert.equal(lockedSession.locks.beat, true);
+  assert.equal(lockedSession.locks.bass, true);
+  assert.equal(lockedSession.locks.harmony, undefined);
+});
+
+test("D-101 Preset management: quick overwrite, duplicate, and rename primitives", () => {
+  let store = emptyPresetStore();
+  const sessionA = sampleSession({ phrase: "first phrase" });
+  const sessionB = sampleSession({ phrase: "second phrase" });
+
+  // Upsert initial presets
+  store = upsertPreset(store, "Alpha", sessionA, "2026-10-30T01:00:00Z");
+  store = upsertPreset(store, "Beta", sessionB, "2026-10-30T02:00:00Z");
+  assert.deepEqual(store.presets.map((p) => p.name), ["Beta", "Alpha"]);
+
+  // Quick overwrite in place (overwrite: true) preserves index position
+  const sessionAUpdated = sampleSession({ phrase: "first phrase updated", tempo: 140 });
+  store = upsertPreset(store, "Alpha", sessionAUpdated, "2026-10-30T03:00:00Z", { overwrite: true });
+  assert.deepEqual(store.presets.map((p) => p.name), ["Beta", "Alpha"], "position preserved on overwrite");
+  assert.equal(store.presets[1].session.tempo, 140);
+
+  // Duplicate preset
+  store = duplicatePreset(store, "Alpha", "Alpha Copy", "2026-10-30T04:00:00Z");
+  assert.deepEqual(store.presets.map((p) => p.name), ["Alpha Copy", "Beta", "Alpha"]);
+  assert.equal(store.presets[0].session.tempo, 140);
+  assert.throws(() => duplicatePreset(store, "NonExistent", "New"), (err) => err instanceof SessionError);
+  assert.throws(() => duplicatePreset(store, "Alpha", "Beta"), (err) => err instanceof SessionError);
+
+  // Rename preset in place
+  store = renamePreset(store, "Beta", "Beta Prime");
+  assert.deepEqual(store.presets.map((p) => p.name), ["Alpha Copy", "Beta Prime", "Alpha"], "renamed in-place");
+  assert.throws(() => renamePreset(store, "NonExistent", "Foo"), (err) => err instanceof SessionError);
+  assert.throws(() => renamePreset(store, "Alpha Copy", "Alpha"), (err) => err instanceof SessionError);
+});
+
+test("D-101 Preset bank bundles: serialize and parse with merge and replace modes", () => {
+  let store = emptyPresetStore();
+  store = upsertPreset(store, "Harp Bell", sampleSession({ phrase: "harp bell phrase" }), "2026-10-30T01:00:00Z");
+  store = upsertPreset(store, "Muscaria Trip", sampleSession({ phrase: "trip phrase" }), "2026-10-30T02:00:00Z");
+
+  const bankText = serializePresetBank(store);
+  assert.ok(bankText.includes(BANK_FORMAT));
+  assert.ok(bankText.includes("Muscaria Trip"));
+
+  // Parse in replace mode
+  const replaced = parsePresetBank(bankText, { mergeMode: "replace" });
+  assert.equal(replaced.presets.length, 2);
+  assert.deepEqual(replaced.presets.map((p) => p.name), ["Muscaria Trip", "Harp Bell"]);
+
+  // Parse in merge mode with overlapping existing store
+  let localStore = emptyPresetStore();
+  localStore = upsertPreset(localStore, "Local Unique", sampleSession({ phrase: "local phrase" }), "2026-10-30T00:00:00Z");
+  localStore = upsertPreset(localStore, "Harp Bell", sampleSession({ phrase: "local version of harp bell" }), "2026-10-30T00:30:00Z");
+
+  const merged = parsePresetBank(bankText, { mergeMode: "merge", existingStore: localStore });
+  assert.equal(merged.presets.length, 3);
+  assert.deepEqual(merged.presets.map((p) => p.name), ["Harp Bell", "Local Unique", "Muscaria Trip"]);
+  // Existing "Harp Bell" was preserved (no clobber in merge mode)
+  assert.equal(merged.presets[0].session.phrase, "local version of harp bell");
+
+  // Rejects invalid bank structure
+  assert.throws(() => parsePresetBank("not json"), (err) => err instanceof SessionError);
+  assert.throws(() => parsePresetBank(JSON.stringify({ format: "wrong", version: 1, presets: [] })), (err) => err instanceof SessionError);
 });
 

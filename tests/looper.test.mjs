@@ -182,14 +182,20 @@ test("saved songs validate strictly and round-trip", () => {
   rejects({ loops: [{ repeats: 1, layers: [Array(11).fill(null)] }] }, "song.loops[0].layers[0]");
   rejects({ loops: [{ repeats: 1, layers: [Array(12).fill(null)] }] }, "song.loops[0].layers[0]");
   const bad = (slot) => ({ loops: [{ repeats: 1, layers: [[slot, ...Array(11).fill(null)]] }] });
-  rejects(bad({ key: 13, style: "swell", voice: "velvet_pad" }), "song.loops[0].layers[0][0].key");
+  rejects(bad({ key: 25, style: "swell", voice: "velvet_pad" }), "song.loops[0].layers[0][0].key");
   rejects(bad({ key: 2, style: "organ", voice: "velvet_pad" }), "song.loops[0].layers[0][0].style");
   rejects(bad({ key: 2, style: "swell", voice: "kazoo" }), "song.loops[0].layers[0][0].voice");
   rejects(bad({ key: 2, style: "swell" }), "song.loops[0].layers[0][0].voice");
   rejects(bad({ key: 2, style: "swell", voice: "velvet_pad", velocity: 9 }), "song.loops[0].layers[0][0].velocity");
   const long = { loops: Array.from({ length: 5 }, () => ({ repeats: 8, layers: plain.loops[0].layers })) };
   rejects(long, "song.loops");
-  assert.throws(() => makeSlot(13, "swell"), RangeError);
+  assert.throws(() => makeSlot(25, "swell"), RangeError);
+  assert.equal(makeSlot(13, "swell").key, 13);
+  assert.equal(makeSlot(24, "swell").key, 24);
+  assert.equal(makeSlot(0, "swell", "velvet_pad", -2).octave, -2);
+  assert.equal(makeSlot(0, "swell", "velvet_pad", 2).octave, 2);
+  assert.throws(() => makeSlot(0, "swell", "velvet_pad", -3), RangeError);
+  assert.throws(() => makeSlot(0, "swell", "velvet_pad", 3), RangeError);
   assert.throws(() => makeSlot(2, "swell", "kazoo"), RangeError);
 });
 

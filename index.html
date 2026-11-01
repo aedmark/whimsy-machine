@@ -24,10 +24,15 @@
         <span class="wordmark-text">THE WHIMSY MACHINE</span>
         <span class="prompt-mark" aria-hidden="true">☉</span>
       </a>
-      <button class="icon-button" id="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sound">
-        <span class="sound-on" aria-hidden="true">BELL: UNSEALED (ON)</span>
-        <span class="sound-off" aria-hidden="true">BELL: MUFFLED (OFF)</span>
-      </button>
+      <div class="masthead-controls">
+        <button class="icon-button view-mode-toggle" id="view-mode-toggle" type="button" aria-pressed="false" title="Switch between Compact Salon View and Grand Workbench [Hotkey V]">
+          <span class="view-mode-text" id="view-mode-text">PARLOR SALON ⧉</span>
+        </button>
+        <button class="icon-button" id="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sound">
+          <span class="sound-on" aria-hidden="true">BELL: UNSEALED (ON)</span>
+          <span class="sound-off" aria-hidden="true">BELL: MUFFLED (OFF)</span>
+        </button>
+      </div>
     </header>
 
     <section class="oracle-shell" aria-labelledby="invitation">
@@ -69,29 +74,46 @@
           </svg>
           <span class="stage-marker stage-marker-left">LIVE SPECIMEN</span>
           <span class="stage-marker stage-marker-right" id="stage-bell-jar">BELL JAR Nº 01</span>
-          <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
+          <canvas id="vision" aria-label="The oracle's animated audiovisual creature" data-midi-target="master:filterCutoff"></canvas>
           <p class="stage-caption" id="stage-caption">ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE</p>
         </div>
-        <div class="theremin-bar" id="theremin-bar" role="group" aria-label="Aetheric Bone Theremin">
-          <button class="theremin-button" id="theremin-toggle" type="button" aria-pressed="true" title="Engage or mute the Aetheric Bone Theremin">
-            <span class="theremin-glyph" aria-hidden="true">⚡</span> BONE THEREMIN: ACTIVE
-          </button>
-          <button class="theremin-button" id="theremin-scale-snap" type="button" aria-pressed="false" title="Toggle between continuous analog glide and scale degree quantization">
-            SCALE SNAP: OFF (GLIDE)
-          </button>
-          <output class="theremin-readout" id="theremin-status" aria-live="off">THEREMIN · FLOW · RESIN 0.0</output>
-        </div>
-        <div class="theremin-bar spore-harp-bar" id="spore-harp-bar" role="group" aria-label="The BioParasite Spore Harp">
-          <button class="theremin-button harp-button" id="spore-harp-toggle" type="button" aria-pressed="true" title="Engage or silence the BioParasite Spore Harp">
-            <span class="harp-glyph" aria-hidden="true">𝄢</span> SPORE HARP: ACTIVE
-          </button>
-          <button class="theremin-button harp-button" id="spore-harp-strum" type="button" title="Strum the resonant hyphal strings across the bell jar">
-            STRUM HYPHAE <span aria-hidden="true">≋</span>
-          </button>
-          <button class="theremin-button harp-button" id="spore-harp-symbiosis" type="button" title="Cycle symbiosis mode: LICHEN, CORDYCEPS, SILK, MUTUAL">
-            SYMBIOSIS: LICHEN
-          </button>
-          <output class="theremin-readout harp-telemetry" id="spore-harp-telemetry" aria-live="off">SPORE HARP · 8 HYPHAE · LICHEN · TENSION 1.0</output>
+        <div class="somatic-rack" id="somatic-rack" role="group" aria-label="Bio-somatic instrument rack">
+          <div class="theremin-bar" id="theremin-bar" role="group" aria-label="Aetheric Bone Theremin">
+            <button class="theremin-button" id="theremin-toggle" type="button" aria-pressed="true" data-midi-target="somatic:theremin_toggle" title="Engage or mute the Aetheric Bone Theremin">
+              <span class="theremin-glyph" aria-hidden="true">⚡</span> BONE THEREMIN: ACTIVE
+            </button>
+            <button class="theremin-button" id="theremin-scale-snap" type="button" aria-pressed="true" data-midi-target="somatic:theremin_scale_snap" title="Toggle between scale degree quantization and continuous free glide">
+              SCALE SNAP: ON (QUANTIZED)
+            </button>
+            <output class="theremin-readout" id="theremin-status" aria-live="off">THEREMIN · FLOW · RESIN 0.0</output>
+          </div>
+          <div class="theremin-bar spore-harp-bar" id="spore-harp-bar" role="group" aria-label="The BioParasite Spore Harp">
+            <button class="theremin-button harp-button" id="spore-harp-toggle" type="button" aria-pressed="false" data-midi-target="somatic:spore_harp_toggle" title="Engage or silence the BioParasite Spore Harp">
+              <span class="harp-glyph" aria-hidden="true">○</span> SPORE HARP: MUTED
+            </button>
+            <button class="theremin-button harp-button" id="spore-harp-strum" type="button" data-midi-target="somatic:spore_harp_strum" title="Strum the resonant hyphal strings across the bell jar">
+              STRUM HYPHAE <span aria-hidden="true">≋</span>
+            </button>
+            <button class="theremin-button harp-button" id="spore-harp-symbiosis" type="button" data-midi-target="somatic:spore_harp_symbiosis" title="Cycle symbiosis mode: LICHEN, CORDYCEPS, SILK, MUTUAL">
+              SYMBIOSIS: LICHEN
+            </button>
+            <button class="theremin-button harp-button" id="spore-harp-tension" type="button" data-midi-target="somatic:spore_harp_tension" title="Cycle hyphal string tension: 1.0× CONCERT, 1.25× TIGHT, 1.5× BRILLIANT, 0.75× WARM">
+              TENSION: 1.0× CONCERT
+            </button>
+            <output class="theremin-readout harp-telemetry" id="spore-harp-telemetry" aria-live="off">SPORE HARP · MUTED</output>
+          </div>
+          <div class="theremin-bar muscaria-bar" id="muscaria-bar" role="group" aria-label="PlantWave Amanita Muscaria Transducer">
+            <button class="theremin-button muscaria-button" id="muscaria-toggle" type="button" aria-pressed="false" data-midi-target="somatic:muscaria_toggle" title="Switch Muscaria state: DORMANT, BIO-PULSE, or FULL HALLUCINATION">
+              <span class="muscaria-glyph" aria-hidden="true">🍄</span> MUSCARIA: DORMANT
+            </button>
+            <button class="theremin-button muscaria-button" id="muscaria-stimulate" type="button" data-midi-target="somatic:muscaria_stimulate" title="Send a galvanic stimulation pulse into the fungal hyphae">
+              STIMULATE HYPHAE <span aria-hidden="true">⚡</span>
+            </button>
+            <button class="theremin-button muscaria-button" id="muscaria-trip-depth" type="button" data-midi-target="somatic:muscaria_trip_depth" title="Cycle psychoacoustic trip depth: MILD, DEEP, TRANSCENDENT">
+              TRIP: DEEP
+            </button>
+            <output class="theremin-readout muscaria-telemetry" id="muscaria-telemetry" aria-live="off">MUSCARIA · DORMANT · 4.82 MΩ · ΔV +14.2mV</output>
+          </div>
         </div>
       </div>
 
@@ -162,26 +184,36 @@
           <button class="transport-button" id="replay" type="button" disabled>
             <span class="transport-glyph" aria-hidden="true">↻</span> RESTART THE MELODY
           </button>
+          <button class="transport-button transport-undo" id="transport-undo" type="button" title="Undo last action [Ctrl+Z]" disabled>
+            <span class="transport-glyph" aria-hidden="true">↶</span> UNDO
+          </button>
+          <button class="transport-button transport-redo" id="transport-redo" type="button" title="Redo last action [Ctrl+Y or Ctrl+Shift+Z]" disabled>
+            <span class="transport-glyph" aria-hidden="true">↷</span> REDO
+          </button>
           <button class="transport-button" id="transport-bar-lock" type="button" aria-pressed="false" title="Fit each 12-step pass to one 4/4 bar (4 beats) at the stated BPM so loops land on a DAW 4/4 grid">
             4/4 BAR LOCK
           </button>
           <button class="transport-button" id="transport-grid-steps" type="button" aria-pressed="false" title="Switch between 16-step (straight 4/4) and 12-step (shuffle triplet) metric grid">
             12 STEPS (TRIPLET)
           </button>
+          <button class="transport-button transport-live-rec" id="transport-live-rec" type="button" aria-pressed="false" title="Downbeat-quantized live stream recording directly to WAV &amp; MIDI take" disabled>
+            <span class="transport-rec-led" aria-hidden="true">●</span> LIVE REC
+          </button>
           <output class="transport-position" id="transport-position" aria-live="off">STEP -- / 12</output>
           <output class="transport-section" id="transport-section" aria-live="off" title="The INTERCAL conductor's section for the current step"></output>
+          <output class="transport-rec-status" id="transport-rec-status" aria-live="polite">REC: IDLE</output>
         </div>
         <div class="volume-control">
           <div class="volume-heading">
             <label for="master-volume">MASTER VOLUME</label>
             <output id="volume-value" for="master-volume">82%</output>
           </div>
-          <input id="master-volume" type="range" min="0" max="100" value="82" step="1">
+          <input id="master-volume" type="range" min="0" max="100" value="82" step="1" data-midi-target="master:volume">
           <div class="volume-heading tempo-heading">
             <label for="tempo-bpm">TEMPO</label>
             <output id="tempo-value" for="tempo-bpm">108 BPM</output>
           </div>
-          <input id="tempo-bpm" type="range" min="36" max="208" value="108" step="1" title="Adjust ensemble tempo (double-click to restore native pulse)">
+          <input id="tempo-bpm" type="range" min="36" max="208" value="108" step="1" data-midi-target="master:tempo" title="Adjust ensemble tempo (double-click to restore native pulse)">
         </div>
       </div>
 
@@ -232,72 +264,145 @@
             </div>
           </div>
 
+          <div class="fun-quality-bar fun-octave-bar" role="group" aria-label="Keyboard manual octave transposition">
+            <span class="fun-quality-label">OCTAVE:</span>
+            <div class="fun-octave-controls">
+              <button class="fun-chip fun-octave-button" id="fun-octave-down" type="button" title="Shift manual down 1 octave [Hotkey Z]">− OCT [Z]</button>
+              <output class="fun-octave-display" id="fun-octave-display" aria-live="polite">OCT 0 · REG C3–C5</output>
+              <button class="fun-chip fun-octave-button" id="fun-octave-up" type="button" title="Shift manual up 1 octave [Hotkey X]">+ OCT [X]</button>
+            </div>
+            <span class="fun-style-hint">KEYS [A..K] PLAY ACTIVE OCTAVE · CLICK OR TAP ANY OF 25 KEYS</span>
+          </div>
+
           <div class="fun-keyboard-wrap">
             <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="The Whimsy Machine Real-Time Play-Along Keyboard Manual">
+              <!-- Octave 1 (C to B) -->
               <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
                 <span class="fun-key-note">C</span>
-                <span class="fun-key-shortcut">[A]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-0">[A]</span>
                 <span class="fun-key-chord" id="fun-chord-0">C Maj</span>
               </button>
               <button class="fun-key fun-key-black" data-semitone="1" data-key="KeyW" type="button" aria-label="Key C sharp (shortcut W)">
                 <span class="fun-key-note">C♯</span>
-                <span class="fun-key-shortcut">[W]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-1">[W]</span>
                 <span class="fun-key-chord" id="fun-chord-1">C♯</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="2" data-key="KeyS" type="button" aria-label="Key D (shortcut S)">
                 <span class="fun-key-note">D</span>
-                <span class="fun-key-shortcut">[S]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-2">[S]</span>
                 <span class="fun-key-chord" id="fun-chord-2">D min</span>
               </button>
               <button class="fun-key fun-key-black" data-semitone="3" data-key="KeyE" type="button" aria-label="Key D sharp (shortcut E)">
                 <span class="fun-key-note">D♯</span>
-                <span class="fun-key-shortcut">[E]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-3">[E]</span>
                 <span class="fun-key-chord" id="fun-chord-3">E♭</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="4" data-key="KeyD" type="button" aria-label="Key E (shortcut D)">
                 <span class="fun-key-note">E</span>
-                <span class="fun-key-shortcut">[D]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-4">[D]</span>
                 <span class="fun-key-chord" id="fun-chord-4">E min</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="5" data-key="KeyF" type="button" aria-label="Key F (shortcut F)">
                 <span class="fun-key-note">F</span>
-                <span class="fun-key-shortcut">[F]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-5">[F]</span>
                 <span class="fun-key-chord" id="fun-chord-5">F Maj</span>
               </button>
               <button class="fun-key fun-key-black" data-semitone="6" data-key="KeyT" type="button" aria-label="Key F sharp (shortcut T)">
                 <span class="fun-key-note">F♯</span>
-                <span class="fun-key-shortcut">[T]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-6">[T]</span>
                 <span class="fun-key-chord" id="fun-chord-6">F♯</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="7" data-key="KeyG" type="button" aria-label="Key G (shortcut G)">
                 <span class="fun-key-note">G</span>
-                <span class="fun-key-shortcut">[G]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-7">[G]</span>
                 <span class="fun-key-chord" id="fun-chord-7">G Maj</span>
               </button>
               <button class="fun-key fun-key-black" data-semitone="8" data-key="KeyY" type="button" aria-label="Key G sharp (shortcut Y)">
                 <span class="fun-key-note">G♯</span>
-                <span class="fun-key-shortcut">[Y]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-8">[Y]</span>
                 <span class="fun-key-chord" id="fun-chord-8">A♭</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="9" data-key="KeyH" type="button" aria-label="Key A (shortcut H)">
                 <span class="fun-key-note">A</span>
-                <span class="fun-key-shortcut">[H]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-9">[H]</span>
                 <span class="fun-key-chord" id="fun-chord-9">A min</span>
               </button>
               <button class="fun-key fun-key-black" data-semitone="10" data-key="KeyU" type="button" aria-label="Key A sharp (shortcut U)">
                 <span class="fun-key-note">A♯</span>
-                <span class="fun-key-shortcut">[U]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-10">[U]</span>
                 <span class="fun-key-chord" id="fun-chord-10">B♭</span>
               </button>
               <button class="fun-key fun-key-white" data-semitone="11" data-key="KeyJ" type="button" aria-label="Key B (shortcut J)">
                 <span class="fun-key-note">B</span>
-                <span class="fun-key-shortcut">[J]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-11">[J]</span>
                 <span class="fun-key-chord" id="fun-chord-11">B dim</span>
               </button>
+              <!-- Center Octave C' -->
               <button class="fun-key fun-key-white" data-semitone="12" data-key="KeyK" type="button" aria-label="Key C octave (shortcut K)">
                 <span class="fun-key-note">C′</span>
-                <span class="fun-key-shortcut">[K]</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-12">[K]</span>
                 <span class="fun-key-chord" id="fun-chord-12">C Maj</span>
+              </button>
+              <!-- Octave 2 (C'# to C'') -->
+              <button class="fun-key fun-key-black" data-semitone="13" type="button" aria-label="Key C sharp octave">
+                <span class="fun-key-note">C′♯</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-13">·</span>
+                <span class="fun-key-chord" id="fun-chord-13">C♯</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="14" type="button" aria-label="Key D octave">
+                <span class="fun-key-note">D′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-14">·</span>
+                <span class="fun-key-chord" id="fun-chord-14">D min</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="15" type="button" aria-label="Key D sharp octave">
+                <span class="fun-key-note">D′♯</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-15">·</span>
+                <span class="fun-key-chord" id="fun-chord-15">E♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="16" type="button" aria-label="Key E octave">
+                <span class="fun-key-note">E′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-16">·</span>
+                <span class="fun-key-chord" id="fun-chord-16">E min</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="17" type="button" aria-label="Key F octave">
+                <span class="fun-key-note">F′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-17">·</span>
+                <span class="fun-key-chord" id="fun-chord-17">F Maj</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="18" type="button" aria-label="Key F sharp octave">
+                <span class="fun-key-note">F′♯</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-18">·</span>
+                <span class="fun-key-chord" id="fun-chord-18">F♯</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="19" type="button" aria-label="Key G octave">
+                <span class="fun-key-note">G′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-19">·</span>
+                <span class="fun-key-chord" id="fun-chord-19">G Maj</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="20" type="button" aria-label="Key G sharp octave">
+                <span class="fun-key-note">G′♯</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-20">·</span>
+                <span class="fun-key-chord" id="fun-chord-20">A♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="21" type="button" aria-label="Key A octave">
+                <span class="fun-key-note">A′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-21">·</span>
+                <span class="fun-key-chord" id="fun-chord-21">A min</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="22" type="button" aria-label="Key A sharp octave">
+                <span class="fun-key-note">A′♯</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-22">·</span>
+                <span class="fun-key-chord" id="fun-chord-22">B♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="23" type="button" aria-label="Key B octave">
+                <span class="fun-key-note">B′</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-23">·</span>
+                <span class="fun-key-chord" id="fun-chord-23">B dim</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="24" type="button" aria-label="Key C double octave">
+                <span class="fun-key-note">C″</span>
+                <span class="fun-key-shortcut" id="fun-shortcut-24">·</span>
+                <span class="fun-key-chord" id="fun-chord-24">C Maj</span>
               </button>
             </div>
           </div>
@@ -425,7 +530,7 @@
               <label for="kapellmeister-strictness">CONSONANCE SIEVE</label>
               <output id="kapellmeister-strictness-val" for="kapellmeister-strictness">G ≤ 8 (Balanced)</output>
             </div>
-            <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" title="Adjust Euler Gradus Suavitatis consonance threshold">
+            <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" data-midi-target="master:strictness" title="Adjust Euler Gradus Suavitatis consonance threshold">
           </div>
           <div class="kapellmeister-compass" id="kapellmeister-compass" aria-hidden="true">
             <!-- Four equal columns: each region's chord label wraps inside its own
@@ -508,10 +613,33 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button" id="midi-learn-mixer-btn" type="button" aria-pressed="false" title="Toggle MIDI CC Learn Mode [Hotkey: L]">
+              MIDI LEARN <span class="hotkey-pill">[L]</span> <span aria-hidden="true">🎛</span>
+            </button>
             <button class="beat-button" id="mixer-reset" type="button">
               RESET CONSOLE <span aria-hidden="true">↺</span>
             </button>
           </div>
+        </div>
+        <div class="part-lock-bar" id="part-lock-bar" role="toolbar" aria-label="Part Lock and Mutation Deck">
+          <div class="part-lock-actions">
+            <button class="beat-button part-lock-btn" id="part-lock-mutate" type="button" title="Mutate all unlocked instruments in-place [Hotkey: M]">
+              MUTATE UNLOCKED <span class="hotkey-pill">[M]</span> ⚄
+            </button>
+            <button class="beat-button part-lock-btn" id="part-lock-reroll" type="button" title="Summon a fresh slip from the urn and fuse unlocked parts into a chimera creature">
+              RE-ROLL UNLOCKED ⚅
+            </button>
+            <button class="beat-button part-lock-btn" id="part-lock-toggle-all" type="button" title="Toggle lock across all instruments">
+              LOCK ALL 🔒
+            </button>
+            <button class="beat-button part-lock-chip" id="part-lock-visuals" type="button" aria-pressed="false" title="Freeze creature visual appearance in vitrine">
+              BODY 🔓
+            </button>
+            <button class="beat-button part-lock-chip" id="part-lock-tonality" type="button" aria-pressed="false" title="Freeze root pitch and musical scale">
+              KEY 🔓
+            </button>
+          </div>
+          <span class="part-lock-summary" id="part-lock-summary">ALL PARTS FREE</span>
         </div>
         <div class="mixer-strips" id="mixer-strips"></div>
         <p class="mixer-legend">POST-FADER VU · DOUBLE-CLICK A FADER FOR UNITY OR A PAN FOR CENTER · PLATE ENGAGE/SILENCE SWITCHES ARE THESE MUTES</p>
@@ -567,6 +695,9 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button plate-lock-btn" id="beat-lock" type="button" aria-pressed="false" title="Freeze Plate I Beat during re-rolls and mutations">
+              LOCK 🔓
+            </button>
             <button class="beat-button" id="beat-toggle" type="button" aria-pressed="true">
               PULSE: ENGAGED
             </button>
@@ -579,13 +710,13 @@
           </div>
         </div>
         <div class="bone-forge-bar" id="bone-forge-bar" role="group" aria-label="The Bone Forge & Crucible Beat Machine">
-          <button class="beat-button bone-button" id="bone-beat-toggle" type="button" aria-pressed="true" title="Engage or silence the Bone Forge & Crucible percussion">
+          <button class="beat-button bone-button" id="bone-beat-toggle" type="button" aria-pressed="true" data-midi-target="somatic:bone_beat_toggle" title="Engage or silence the Bone Forge & Crucible percussion">
             BONE FORGE: ACTIVE
           </button>
-          <button class="beat-button bone-button" id="bone-beat-strike" type="button" title="Deliver an immediate manual kinetic hammer strike to the forge">
+          <button class="beat-button bone-button" id="bone-beat-strike" type="button" data-midi-target="somatic:bone_beat_strike" title="Deliver an immediate manual kinetic hammer strike to the forge">
             HAMMER STRIKE <span aria-hidden="true">⚒</span>
           </button>
-          <button class="beat-button bone-button" id="bone-beat-quench" type="button" title="Quench overheating forge metals in cold mineral brine">
+          <button class="beat-button bone-button" id="bone-beat-quench" type="button" data-midi-target="somatic:bone_beat_quench" title="Quench overheating forge metals in cold mineral brine">
             QUENCH STEAM <span aria-hidden="true">♨</span>
           </button>
           <output class="beat-telemetry bone-telemetry" id="bone-beat-telemetry" aria-live="off">BONE FORGE · TEMPERED · 24°C · 0.0V · DAMP 3</output>
@@ -611,6 +742,9 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button plate-lock-btn" id="bass-lock" type="button" aria-pressed="false" title="Freeze Plate II Bass during re-rolls and mutations">
+              LOCK 🔓
+            </button>
             <button class="beat-button" id="bass-toggle" type="button" aria-pressed="true">
               BASS: ENGAGED
             </button>
@@ -643,6 +777,9 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button plate-lock-btn" id="harmony-lock" type="button" aria-pressed="false" title="Freeze Plate III Organ during re-rolls and mutations">
+              LOCK 🔓
+            </button>
             <button class="beat-button" id="harmony-toggle" type="button" aria-pressed="true">
               ORGAN: ENGAGED
             </button>
@@ -675,6 +812,9 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button plate-lock-btn" id="chime-lock" type="button" aria-pressed="false" title="Freeze Plate IV Chimes during re-rolls and mutations">
+              LOCK 🔓
+            </button>
             <button class="beat-button" id="chime-toggle" type="button" aria-pressed="true">
               CHIMES: ENGAGED
             </button>
@@ -707,6 +847,9 @@
             </div>
           </div>
           <div class="beat-actions">
+            <button class="beat-button plate-lock-btn" id="chant-lock" type="button" aria-pressed="false" title="Freeze Plate V Choir during re-rolls and mutations">
+              LOCK 🔓
+            </button>
             <button class="beat-button" id="chant-toggle" type="button" aria-pressed="true">
               CHOIR: ENGAGED
             </button>
@@ -764,6 +907,7 @@
             <div class="session-row">
               <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
               <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
+              <button class="beat-button" id="session-update-preset" type="button" disabled title="Instantly overwrite selected preset with active settings">UPDATE <span aria-hidden="true">⟳</span></button>
             </div>
           </div>
           <div class="session-field">
@@ -771,15 +915,20 @@
             <div class="session-row">
               <select id="session-preset-list" class="kapellmeister-select"></select>
               <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
+              <button class="beat-button" id="session-clone-preset" type="button" disabled title="Duplicate selected preset">CLONE <span aria-hidden="true">⧉</span></button>
+              <button class="beat-button" id="session-rename-preset" type="button" disabled title="Rename selected preset">RENAME <span aria-hidden="true">✎</span></button>
               <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
             </div>
           </div>
           <div class="session-field session-files">
-            <span class="session-files-label">PORTABLE SESSION FILE</span>
+            <span class="session-files-label">PORTABLE PRESETS &amp; BANKS</span>
             <div class="session-row">
               <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
               <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
+              <button class="beat-button" id="session-export-bank" type="button" disabled>EXPORT BANK <span aria-hidden="true">⤓</span></button>
+              <button class="beat-button" id="session-open-bank" type="button">OPEN BANK <span aria-hidden="true">⤒</span></button>
               <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
+              <input id="session-bank-input" type="file" accept=".funbank,application/json" hidden>
             </div>
           </div>
         </div>
@@ -836,6 +985,13 @@
             <div class="session-row">
               <button class="beat-button" id="export-wav" type="button" disabled>RECORD WAV LOOP <span aria-hidden="true">☊</span></button>
               <button class="beat-button" id="export-stems" type="button" disabled>EXPORT 11 STEMS (ZIP) <span aria-hidden="true">⧉</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="export-live-label">
+            <span class="session-files-label" id="export-live-label">LIVE STREAM TAKE (LAST RECORDING)</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-live-wav" type="button" disabled>SAVE LIVE WAV <span aria-hidden="true">☊</span></button>
+              <button class="beat-button" id="export-live-midi" type="button" disabled>SAVE LIVE MIDI <span aria-hidden="true">♪</span></button>
             </div>
           </div>
           <div class="session-field" role="group" aria-labelledby="export-score-label">
@@ -918,6 +1074,34 @@
               <output id="midi-clock-status" class="transport-position" aria-live="off">CLOCK: INTERNAL</output>
             </div>
           </div>
+          <div class="session-field" role="group" aria-labelledby="studio-midi-learn-label">
+            <span class="session-files-label" id="studio-midi-learn-label">MIDI LEARN &amp; CONTROLLER CC MAPPING</span>
+            <div class="session-row">
+              <button class="beat-button" id="midi-learn-studio-btn" type="button" aria-pressed="false">MIDI LEARN [L] <span aria-hidden="true">🎛</span></button>
+              <button class="beat-button" id="midi-map-clear-btn" type="button">CLEAR ALL ⌫</button>
+              <button class="beat-button" id="midi-map-reset-btn" type="button">RESET FM-1 DEFAULTS ↺</button>
+            </div>
+            <div class="session-row">
+              <label class="midi-feedback-label" for="midi-feedback-toggle">
+                <input type="checkbox" id="midi-feedback-toggle" checked />
+                <span>OUTBOUND CC FEEDBACK TO HARDWARE</span>
+              </label>
+              <output id="midi-learn-status" class="transport-position" aria-live="polite">LEARN: INACTIVE</output>
+            </div>
+            <div id="midi-map-summary" class="midi-map-summary" aria-live="off"></div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="studio-history-label">
+            <span class="session-files-label" id="studio-history-label">ACTION HISTORY (GLOBAL UNDO / REDO)</span>
+            <div class="session-row">
+              <button class="beat-button" id="studio-undo-btn" type="button" disabled>UNDO ↶ [Ctrl+Z]</button>
+              <button class="beat-button" id="studio-redo-btn" type="button" disabled>REDO ↷ [Ctrl+Y]</button>
+              <button class="beat-button" id="studio-history-clear-btn" type="button">CLEAR HISTORY ⌫</button>
+            </div>
+            <div class="session-row">
+              <output id="studio-history-status" class="transport-position" aria-live="polite">HISTORY: READY (0 UNDO / 0 REDO)</output>
+            </div>
+            <div id="studio-history-breadcrumbs" class="history-breadcrumbs" aria-live="off"></div>
+          </div>
           <div class="session-field" role="group" aria-labelledby="studio-audio-sink-label">
             <span class="session-files-label" id="studio-audio-sink-label">AUDIO OUTPUT ROUTING &amp; LOCAL SOUND</span>
             <div class="session-row">
@@ -961,6 +1145,14 @@
       </section>
     </section>
 
+    <div class="workbench-bar" id="workbench-bar">
+      <button class="workbench-unfold-btn" id="workbench-unfold" type="button" aria-expanded="false" title="Expand the full 4-wing esoteric studio [Hotkey V]">
+        <span class="unfold-icon" id="unfold-icon" aria-hidden="true">▾</span>
+        <span class="unfold-text" id="unfold-text">UNFOLD GRAND WORKBENCH</span>
+        <span class="unfold-hint" id="unfold-hint">ESOTERIC PLATES · INFORM 7 · FULL LOOPER · STEM EXPORT [V]</span>
+      </button>
+    </div>
+
     <footer>
       <span>E.E.M.F. · OOPISMCGOOPIS LTD · (C) ANNO MMXXVI</span>
       <span id="status" role="status">AWAITING INPUT</span>
@@ -993,12 +1185,12 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "2f16d2f06c29";
+      const ASSET_VERSION = "c0fb6e3df99b";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "bone-beat.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
-        "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
-        "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
-        "session.mjs", "shakespeare.mjs", "share.mjs", "spore-harp.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
+        "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "history.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "live-recorder.mjs", "lolcode.mjs", "looper.mjs",
+        "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi-learn.mjs", "midi.mjs", "mixer.mjs", "muscaria.mjs", "music.mjs", "mycelium.mjs", "part-lock.mjs", "schedulers.mjs", "score.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "spore-harp.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "view-mode.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
       for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;

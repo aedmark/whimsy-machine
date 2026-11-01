@@ -104,21 +104,26 @@ Never force-push or rewrite shared history.
 | `src/cabinet.mjs` | Discovery drawers and the whole-cabinet mode: state, unlock rules, on-device memory |
 | `src/mixer.mjs` | Eight-channel mixing console state, fader taper, solo rules, and VU meter math |
 | `src/session.mjs` | Validated `.fun` session format and on-device preset store |
+| `src/part-lock.mjs` | Part lock state, granular channel freezing, chimeric score synthesis, and algorithmic portmanteau naming (P12-01, D-102) |
 | `src/zip.mjs` | Zero-dependency STORED ZIP writer for stem bundles |
 | `src/midi.mjs` | Standard MIDI File (Type 1) writer for the ensemble score |
 | `src/midi-io.mjs` | Web MIDI input/output and Web Audio sink routing adapter (D-061) |
+| `src/midi-learn.mjs` | Web MIDI Learn state model, priority CC overlay, bidirectional feedback, and target registry (P12-02, D-104) |
+| `src/history.mjs` | Global action history stack, transactional multi-level undo/redo, and continuous parameter coalescing (P12-03, D-105) |
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/theremin.mjs` | The Aetheric Bone Theremin model, BoneAmanita physics transitions, and heterodyne synth voice (P10-01, D-089) |
 | `src/bone-beat.mjs` | The Bone Forge & Crucible Beat Machine, physical percussion synth, and somatic engine (P10-02, D-090) |
 | `src/spore-harp.mjs` | The BioParasite Spore Harp, physical acoustic plucked string synth, and symbiotic hyphae (P10-03, D-091) |
+| `src/muscaria.mjs` | PlantWave Amanita Muscaria bio-pulse transducer, galvanic bio-acoustics, and psychoacoustic hallucination matrix (P10-04, D-095) |
 | `src/vitrine-canvas.mjs` | Apparition Vitrine 2D Canvas renderer (`OracleVision`), silhouette/kinetic/appendage/mycelium geometry, and gesture physics (D-067) |
 | `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |
 | `src/audio-export.mjs` | Studio-grade 16/24/32f WAV encoder, tail folding, dither, and sampler metadata (P8-01, D-076) |
 | `src/tuning.mjs` | Concert pitch A4 tuning reference, score key/mode overrides, 4/4 bar lock, and native 16-step straight grid metre (P8-04, P8-05, D-078, D-079) |
 | `src/version.mjs` | Product application version, engine versioning, and score/fixture fingerprint (P8-03, D-077) |
+| `src/view-mode.mjs` | Dual presentation view mode state model, parlor salon vs grand workbench transitions, and persistence (P12-04, D-103) |
 | `src/inspector.mjs` | "Under the Parlor Glass" live esoteric VM step inspector for Plates I–V in Wing III (P5-34, D-069) |
 | `src/herbarium.mjs` | "The Naturalist's Herbarium" on-device curio gallery, miniature SVG portrait geometry, and side-by-side trait comparator (P5-35, D-070) |
 | `src/manuscript.mjs` | "The Kapellmeister's Manuscript" live Inform 7 custom rulebook sandbox compiler and line-numbered diagnostic adapter (P5-36, D-071) |
@@ -129,6 +134,7 @@ Never force-push or rewrite shared history.
 | `manual.html` | Standalone explorable 3x technical manual |
 | `docs/manual.json` | 3x documentation scheme manual source of truth |
 | `firmware-c/` | Standalone C reference implementation and native M-VAVE FM-1 firmware application (D-073, D-074, D-075) |
+| `plugin-clap/` | Isolated native CLAP 1.2+ instrument plugin for DAWs (P8-13, D-080) |
 | `tests/` | Dependency-free Node tests |
 | `ROADMAP.md` | Planned work with stable IDs |
 | `docs/` | Architecture, decisions, tests, risks, and current state |

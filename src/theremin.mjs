@@ -38,7 +38,7 @@ export const THEREMIN_MAX_MIDI = 84; // C6
 export function createThereminModel(initial = {}) {
   return {
     enabled: initial.enabled !== undefined ? Boolean(initial.enabled) : true,
-    scaleSnap: initial.scaleSnap !== undefined ? Boolean(initial.scaleSnap) : false,
+    scaleSnap: initial.scaleSnap !== undefined ? Boolean(initial.scaleSnap) : true,
     decoherenceBuildup: Number(initial.decoherenceBuildup) || 0.0,
     classicalTurns: Number(initial.classicalTurns) || 0,
     stillnessTime: Number(initial.stillnessTime) || 0.0,
@@ -57,10 +57,10 @@ export function createThereminModel(initial = {}) {
 
 /**
  * Maps horizontal normalized coordinate (-1..1) to a frequency in Hz.
- * Defaults to continuous microtonal analog glide (scaleSnap = false).
- * When scaleSnap is true, snaps to the closest degree of the creature's scale.
+ * Defaults to scale degree quantization (scaleSnap = true).
+ * When scaleSnap is false, allows continuous free microtonal analog glide.
  */
-export function pitchForThereminCoordinate(normX, score, scaleSnap = false) {
+export function pitchForThereminCoordinate(normX, score, scaleSnap = true) {
   const rootMidi = score?.root !== undefined ? score.root : 60;
   const scaleIndex = score?.scale !== undefined ? score.scale % SCALES.length : 0;
   const scale = SCALES[scaleIndex] || SCALES[0];
@@ -355,6 +355,7 @@ export function createThereminVoice(audioContext, destination) {
         pingOsc.connect(pingGain).connect(destination);
         pingOsc.start(time);
         pingOsc.stop(time + 0.16);
+        pingOsc.onended = () => { try { pingGain?.disconnect?.(); } catch {} };
       }
     },
     silence(atTime = null) {

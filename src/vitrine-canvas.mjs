@@ -37,6 +37,7 @@ export const interaction = {
   thereminStuck: false,
   thereminFrequency: 440,
   sporeHarpModel: null,
+  muscariaModel: null,
 };
 
 export function mulberry32(seed) {
@@ -348,9 +349,11 @@ export function drawStrangeAttractorDust(ctx, score, base, elapsed, colors) {
   const pts = generateAttractorPoints(cliffordAttractor, effectiveParams, 420, 20, attractorBuffer);
   const scale = base * 0.24;
   const alpha = 0.3 + interaction.hold * 0.25 + (interaction.agitation || 0) * 0.3;
+  const isTrippy = interaction.muscariaModel?.enabled && interaction.muscariaModel.mode === "HALLUCINATING";
+  const dustHue = isTrippy ? (colors[0] + elapsed * 55) % 360 : colors[0];
   ctx.save();
   ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = `hsla(${colors[0]} 100% 82% / ${Math.min(0.85, alpha)})`;
+  ctx.fillStyle = `hsla(${dustHue} 100% 82% / ${Math.min(0.85, alpha)})`;
   ctx.beginPath();
   for (let i = 0; i < pts.length; i += 2) {
     const px = pts[i] * scale;
@@ -576,6 +579,7 @@ export function appendagePlacement(score, index, count, base, elapsed) {
 }
 
 export function drawAppendageOrganelle(ctx, score, index, radius, elapsed, colors) {
+  ctx.shadowBlur = 0;
   const hue = wrapHue(score.irisHue + index * score.irisShift);
   const secondHue = wrapHue(hue + score.hueShift);
   const now = performance.now();
@@ -722,8 +726,9 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
   ctx.translate(placement.x + quiver, placement.y + quiver);
   ctx.rotate(dynamicAngle);
 
-  // Glow halo
-  ctx.shadowBlur = size * (0.35 + agitation * 0.45 + (isRetaliating ? 1.1 : 0) + (interaction.retaliationFlash || 0) * 0.8);
+  // Glow halo: clamped to prevent catastrophic Gaussian blur rasterization in Firefox/Gecko
+  const haloBlur = Math.min(10, size * (0.2 + agitation * 0.25 + (isRetaliating ? 0.6 : 0) + (interaction.retaliationFlash || 0) * 0.5));
+  ctx.shadowBlur = haloBlur;
   ctx.shadowColor = isRetaliating
     ? "hsl(45 100% 88%)"
     : `hsla(${hue} 100% 72% / ${0.5 + agitation * 0.4})`;
@@ -761,6 +766,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
       ctx.lineWidth = Math.max(0.7, size * 0.08);
       ctx.strokeStyle = chitinHighlight;
@@ -839,6 +845,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
       ctx.lineWidth = Math.max(0.7, size * 0.08);
       ctx.strokeStyle = darkOutline;
       ctx.stroke();
@@ -867,6 +874,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
       ctx.lineWidth = Math.max(0.75, size * 0.08);
       ctx.strokeStyle = stalkStroke;
       ctx.stroke();
@@ -910,6 +918,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
       ctx.lineWidth = Math.max(0.6, size * 0.06);
       ctx.strokeStyle = stalkStroke;
@@ -980,6 +989,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
       drawAppendageOrganelle(ctx, score, index, size * 0.45, elapsed, colors);
 
@@ -1035,6 +1045,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
         ctx.lineWidth = Math.max(0.8, size * 0.09);
         ctx.strokeStyle = stalkStroke;
         ctx.stroke();
+        ctx.shadowBlur = 0;
 
         const finalA = side * (0.4 + Math.PI * 1.4);
         const finalR = size * 1.05 * reach;
@@ -1054,6 +1065,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
     }
 
     case 6: { // Archetype 6: Pholiota Phosphor-Gland Lantern
+      ctx.shadowBlur = 0;
       const bractCount = 6;
       const flare = isRetaliating ? 1.35 : 1 + agitation * 0.25;
 
@@ -1101,6 +1113,7 @@ export function drawCellularAppendage(ctx, score, index, base, elapsed, colors) 
       ctx.closePath();
       ctx.fillStyle = membraneFill;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
       ctx.lineWidth = Math.max(0.6, size * 0.06);
       ctx.strokeStyle = chitinHighlight;
@@ -1417,6 +1430,113 @@ export function drawSporeHarpStrings(ctx, model, base, elapsed, colors) {
   ctx.restore();
 }
 
+export function drawMuscariaTransducer(ctx, model, base, elapsed, colors, mycelium) {
+  if (!model?.enabled) return;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const isTrippy = model.mode === "HALLUCINATING";
+  const clip1 = { x: -base * 0.28, y: base * 0.42 };
+  const clip2 = { x: -base * 0.12, y: base * 0.46 };
+
+  // 1. Coiled Copper Lead Wires running down to the brass pedestal
+  ctx.strokeStyle = "rgba(184, 115, 51, 0.75)";
+  ctx.lineWidth = 1.6;
+  for (const clip of [clip1, clip2]) {
+    ctx.beginPath();
+    ctx.moveTo(clip.x, clip.y + 8);
+    const steps = 8;
+    for (let s = 1; s <= steps; s += 1) {
+      const sy = clip.y + 8 + s * 4.5;
+      const sx = clip.x + Math.sin(s * 1.8 + elapsed * 2) * 3.5;
+      ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  // 2. Twin Brass Alligator Clip Bodies
+  for (const [idx, clip] of [clip1, clip2].entries()) {
+    ctx.save();
+    ctx.translate(clip.x, clip.y);
+    ctx.rotate(idx === 0 ? -0.22 : 0.18);
+
+    const brassGrad = ctx.createLinearGradient(-4, -8, 6, 8);
+    brassGrad.addColorStop(0, "#eab308");
+    brassGrad.addColorStop(0.5, "#ca8a04");
+    brassGrad.addColorStop(1, "#854d0e");
+    ctx.fillStyle = brassGrad;
+    ctx.strokeStyle = "#713f12";
+    ctx.lineWidth = 1.0;
+
+    ctx.beginPath();
+    ctx.moveTo(-5, -6);
+    ctx.lineTo(5, -6);
+    ctx.lineTo(3, 8);
+    ctx.lineTo(-3, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    const contactGlow = ctx.createRadialGradient(0, -6, 0, 0, -6, isTrippy ? 10 : 6);
+    contactGlow.addColorStop(0, isTrippy ? "rgba(244, 114, 182, 0.95)" : "rgba(250, 204, 21, 0.9)");
+    contactGlow.addColorStop(1, "rgba(234, 179, 8, 0)");
+    ctx.fillStyle = contactGlow;
+    ctx.beginPath();
+    ctx.arc(0, -6, isTrippy ? 10 : 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 3. Action-Potential Electrical Sparks Traveling along Hyphae
+  if (model.actionPotentials && model.actionPotentials.length > 0) {
+    for (const spark of model.actionPotentials) {
+      const p = spark.progress;
+      const start = (spark.branchIndex % 2 === 0) ? clip1 : clip2;
+      const angle = -Math.PI * 0.5 + (spark.branchIndex - 3.5) * 0.28;
+      const dist = base * (0.15 + 0.55 * p);
+      const sx = start.x + Math.cos(angle) * dist + Math.sin(p * 12 + elapsed * 10) * 8;
+      const sy = start.y + Math.sin(angle) * dist;
+
+      ctx.fillStyle = isTrippy ? "rgba(232, 121, 249, 0.42)" : "rgba(125, 211, 252, 0.42)";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8 * spark.magnitude, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = isTrippy ? "rgba(245, 208, 254, 0.95)" : "rgba(224, 242, 254, 0.95)";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 3.5 * spark.magnitude, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.8 * spark.magnitude, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // 4. Entheogenic Substrate Aura (Trippy Mode)
+  if (isTrippy) {
+    const auraPulse = 0.8 + 0.2 * Math.sin(elapsed * 4);
+    const subAura = ctx.createRadialGradient(0, base * 0.45, base * 0.05, 0, base * 0.45, base * 0.55);
+    subAura.addColorStop(0, `rgba(217, 70, 239, ${0.35 * auraPulse})`);
+    subAura.addColorStop(0.5, `rgba(239, 68, 68, ${0.2 * auraPulse})`);
+    subAura.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = subAura;
+    ctx.beginPath();
+    ctx.arc(0, base * 0.45, base * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
   const stipeLen = 50 * maturity;
   const capW = 38 * maturity;
@@ -1466,12 +1586,19 @@ function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
     }
   }
 
+  const isMuscariaActive = Boolean(interaction.muscariaModel?.enabled);
   const capGrad = ctx.createLinearGradient(0, -capH, 0, 4);
-  capGrad.addColorStop(0, `hsla(${colors[0]} ${score.saturation}% 52% / 0.92)`);
-  capGrad.addColorStop(0.7, `hsla(${colors[1]} ${score.saturation}% 65% / 0.85)`);
-  capGrad.addColorStop(1, `hsla(${colors[2]} 100% 80% / 0.95)`);
+  if (isMuscariaActive) {
+    capGrad.addColorStop(0, "rgba(220, 38, 38, 0.96)");
+    capGrad.addColorStop(0.7, "rgba(239, 68, 68, 0.92)");
+    capGrad.addColorStop(1, "rgba(254, 202, 202, 0.98)");
+  } else {
+    capGrad.addColorStop(0, `hsla(${colors[0]} ${score.saturation}% 52% / 0.92)`);
+    capGrad.addColorStop(0.7, `hsla(${colors[1]} ${score.saturation}% 65% / 0.85)`);
+    capGrad.addColorStop(1, `hsla(${colors[2]} 100% 80% / 0.95)`);
+  }
   ctx.fillStyle = capGrad;
-  ctx.strokeStyle = `hsla(${colors[2]} 100% 88% / 0.9)`;
+  ctx.strokeStyle = isMuscariaActive ? "rgba(254, 226, 226, 0.95)" : `hsla(${colors[2]} 100% 88% / 0.9)`;
   ctx.lineWidth = 1.2;
 
   ctx.beginPath();
@@ -1483,7 +1610,7 @@ function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
   ctx.stroke();
 
   // Marginal veil teeth
-  ctx.fillStyle = `hsla(${colors[2]} 100% 90% / 0.92)`;
+  ctx.fillStyle = isMuscariaActive ? "rgba(255, 255, 255, 0.95)" : `hsla(${colors[2]} 100% 90% / 0.92)`;
   for (let d = -2; d <= 2; d += 1) {
     ctx.beginPath();
     ctx.arc(d * (capW * 0.2), 3, 1.2, 0, Math.PI * 2);
@@ -1492,7 +1619,7 @@ function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
 
   // Ernst Haeckel-style stippled universal veil scales (verrucae) across pileus
   if (maturity > 0.45) {
-    ctx.fillStyle = `hsla(${colors[2]} 95% 88% / 0.8)`;
+    ctx.fillStyle = isMuscariaActive ? "rgba(255, 255, 255, 0.96)" : `hsla(${colors[2]} 95% 88% / 0.8)`;
     const scales = [
       [0, -capH * 0.8, 1.6],
       [-capW * 0.22, -capH * 0.6, 1.3],
@@ -2092,16 +2219,18 @@ export function drawVitrinePedestal(ctx, width, height, colors, score, elapsed) 
     ctx.fill();
   }
 
-  // Lichen flakes and fibrous botanical rootlets
+  // Lichen flakes and fibrous botanical rootlets (batched single path)
   const seedRng = mulberry32((score.seed ^ 0x5b3a8e12) >>> 0);
   ctx.fillStyle = `hsla(${colors[2]} 65% 72% / 0.42)`;
+  ctx.beginPath();
   for (let i = 0; i < 24; i += 1) {
     const lx = brassX + seedRng() * brassW;
     const ly = pedestalY - 2 + seedRng() * 9;
-    ctx.beginPath();
-    ctx.arc(lx, ly, 0.8 + seedRng() * 1.1, 0, Math.PI * 2);
-    ctx.fill();
+    const lr = 0.8 + seedRng() * 1.1;
+    ctx.moveTo(lx + lr, ly);
+    ctx.arc(lx, ly, lr, 0, Math.PI * 2);
   }
+  ctx.fill();
 
   // Driftwood grain lines
   ctx.strokeStyle = "hsla(30 25% 22% / 0.4)";
@@ -2316,11 +2445,12 @@ export class OracleVision {
     ctx.fillRect(0, 0, width, height);
 
     ctx.save();
+    const particleColors = colors.map((c) => `hsl(${c} ${score.saturation}% 78%)`);
     for (const particle of this.particles) {
       const driftX = this.reducedMotion ? 0 : Math.sin(elapsed * particle.drift + particle.phase + interaction.morphPhase * 0.5) * (4 + score.motion * 1.8);
       const driftY = this.reducedMotion ? 0 : Math.cos(elapsed * 0.3 + particle.phase + interaction.morphPhase * 0.4) * score.motion;
       ctx.globalAlpha = 0.15 + Math.sin(elapsed + particle.phase) * 0.1 + interaction.hold * 0.12;
-      ctx.fillStyle = `hsl(${colors[Math.floor(particle.phase) % colors.length]} ${score.saturation}% 78%)`;
+      ctx.fillStyle = particleColors[Math.floor(particle.phase) % particleColors.length];
       ctx.beginPath();
       ctx.arc(particle.x * width + driftX, particle.y * height + driftY, particle.radius * (1 + interaction.tap * 0.45), 0, Math.PI * 2);
       ctx.fill();
@@ -2364,10 +2494,13 @@ export class OracleVision {
     if (interaction.sporeHarpModel?.enabled && interaction.sporeHarpModel.strings?.length) {
       drawSporeHarpStrings(ctx, interaction.sporeHarpModel, base, elapsed, colors);
     }
+    if (interaction.muscariaModel?.enabled) {
+      drawMuscariaTransducer(ctx, interaction.muscariaModel, base, elapsed, colors, this.mycelium);
+    }
 
     ctx.save();
     ctx.shadowColor = `hsla(${colors[1]} 100% 70% / 0.58)`;
-    ctx.shadowBlur = score.bloom * 0.62;
+    ctx.shadowBlur = this.reducedMotion ? 0 : Math.min(18, score.bloom * 0.28);
 
     const aura = ctx.createRadialGradient(0, 0, base * 0.04, 0, 0, base * 1.25);
     aura.addColorStop(0, `hsla(${colors[2]} ${score.saturation}% 90% / 0.96)`);
@@ -2384,6 +2517,22 @@ export class OracleVision {
     ctx.clip();
     drawKineticCore(ctx, score, base, elapsed, colors);
     ctx.restore();
+
+    if (interaction.muscariaModel?.enabled && interaction.muscariaModel.mode === "HALLUCINATING") {
+      const shift = 2.4 + Math.sin(elapsed * 3.5) * 1.6;
+      const ghostPoints = Math.min(120, points);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.translate(-shift, 0);
+      ctx.fillStyle = "rgba(244, 63, 94, 0.22)";
+      traceBody(ctx, score, base, elapsed, ghostPoints);
+      ctx.fill();
+      ctx.translate(shift * 2, 0);
+      ctx.fillStyle = "rgba(56, 189, 248, 0.22)";
+      traceBody(ctx, score, base, elapsed, ghostPoints);
+      ctx.fill();
+      ctx.restore();
+    }
 
     ctx.globalCompositeOperation = "screen";
     ctx.lineWidth = (0.7 + score.edge / 70) * (1 + interaction.hold * 0.45 + interaction.tap * 0.35);

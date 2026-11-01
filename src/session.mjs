@@ -16,18 +16,33 @@ import { DEFAULT_VOICE_ID } from "./voices.mjs";
 import { MIXER_CHANNEL_IDS, LEGACY_MIXER_CHANNEL_IDS } from "./mixer.mjs";
 import { DEFAULT_REFERENCE_PITCH, MAX_REFERENCE_PITCH, MIN_REFERENCE_PITCH } from "./tuning.mjs";
 import { ENGINE_VERSION } from "./version.mjs";
+import { HerbariumError, validateSpecimen } from "./herbarium.mjs";
+import { PART_IDS } from "./part-lock.mjs";
 
 export const SESSION_FORMAT = "whimsy-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
 // Version 7 (P8-03, P8-04, D-077, D-078) adds engineVersion and optional
 // rootOverride, scaleOverride, referencePitch, and barLock.
-export const SESSION_VERSION = 7;
+// Version 8 (P11-01) adds Fun Machine octave transposition (-2..2).
+// Version 9 (D-101) adds bio-somatic settings, live recorder preferences, and herbarium specimen linkage.
+export const SESSION_VERSION = 9;
 export const SESSION_FILE_EXTENSION = "fun";
-export const MAX_SESSION_BYTES = 64 * 1024;
+export const MAX_SESSION_BYTES = 96 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
 export const MAX_CELL_CYCLES = 999;
 export const MAX_MUTATION = 9999;
+
+export const BANK_FORMAT = "whimsy-preset-bank";
+export const BANK_VERSION = 1;
+export const BANK_FILE_EXTENSION = "funbank";
+export const MAX_BANK_BYTES = 512 * 1024;
+
+export const SPORE_HARP_SYMBIOSIS_IDS = Object.freeze(["silk", "lichen", "cordyceps", "mutual"]);
+export const SPORE_HARP_TENSION_VALUES = Object.freeze([0.75, 1.0, 1.25, 1.5]);
+export const MUSCARIA_MODE_IDS = Object.freeze(["dormant", "bio_pulse", "hallucinating"]);
+export const MUSCARIA_TRIP_DEPTH_IDS = Object.freeze(["mild", "deep", "transcendent"]);
+export const RECORDER_BIT_DEPTHS = Object.freeze([16, 24, 32]);
 
 export const PRESET_STORAGE_KEY = "whimsy-machine.presets.v1";
 export const MAX_PRESETS = 24;
@@ -110,7 +125,7 @@ export function validateSession(raw) {
     "acoustics", "funMachine", "plates", "mixer",
   ];
   // The version decides which keys belong, so an unknown version is named first.
-  if (isPlainObject(raw) && ![1, 2, 3, 4, 5, 6, SESSION_VERSION].includes(raw.version)) {
+  if (isPlainObject(raw) && ![1, 2, 3, 4, 5, 6, 7, 8, SESSION_VERSION].includes(raw.version)) {
     throw new SessionError("session.version", `must be 1 to ${SESSION_VERSION}`);
   }
   const versionKeys = [
@@ -118,6 +133,12 @@ export function validateSession(raw) {
     ...(raw?.version >= 4 ? ["song"] : []),
     ...(raw?.version >= 6 ? ["varied"] : []),
     ...(raw?.version >= 7 ? ["engineVersion", "rootOverride", "scaleOverride", "referencePitch", "barLock", ...(raw.gridSteps !== undefined ? ["gridSteps"] : [])] : []),
+    ...(raw?.version >= 9 ? [
+      ...(raw.somatic !== undefined ? ["somatic"] : []),
+      ...(raw.recorder !== undefined ? ["recorder"] : []),
+      ...(raw.herbarium !== undefined ? ["herbarium"] : []),
+      ...(raw.locks !== undefined ? ["locks"] : []),
+    ] : []),
   ];
   expectKeys(raw, "session", versionKeys);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
@@ -137,10 +158,15 @@ export function validateSession(raw) {
   // loop sequencer that played it was removed (D-038).
   let style;
   let voice = DEFAULT_VOICE_ID;
+  let octave = 0;
   if (raw.version >= 5) {
-    expectKeys(raw.funMachine, "session.funMachine", ["style", "voice"]);
+    const hasOctave = raw.funMachine && "octave" in raw.funMachine;
+    expectKeys(raw.funMachine, "session.funMachine", ["style", "voice", ...(hasOctave ? ["octave"] : [])]);
     style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
     voice = expectEnum(raw.funMachine.voice, "session.funMachine.voice", SLOT_VOICES);
+    if (hasOctave) {
+      octave = expectInt(raw.funMachine.octave, "session.funMachine.octave", -2, 2);
+    }
   } else if (raw.version >= 3) {
     expectKeys(raw.funMachine, "session.funMachine", ["style"]);
     style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
@@ -166,7 +192,7 @@ export function validateSession(raw) {
       expectEnum(step[1], `${path}[1]`, CHORD_QUALITY_IDS);
     });
   }
-  const funMachine = Object.freeze({ style, voice });
+  const funMachine = Object.freeze({ style, voice, octave });
 
   let song = emptySong();
   if (raw.version >= 4) {
@@ -225,6 +251,84 @@ export function validateSession(raw) {
     ? expectInt(raw.referencePitch, "session.referencePitch", MIN_REFERENCE_PITCH, MAX_REFERENCE_PITCH)
     : DEFAULT_REFERENCE_PITCH;
 
+  let somatic;
+  if (raw.version >= 9 && raw.somatic !== undefined) {
+    expectKeys(raw.somatic, "session.somatic", ["sporeHarp", "muscaria", "theremin"]);
+
+    expectKeys(raw.somatic.sporeHarp, "session.somatic.sporeHarp", ["symbiosis", "tension"]);
+    const rawSymbiosis = typeof raw.somatic.sporeHarp.symbiosis === "string" ? raw.somatic.sporeHarp.symbiosis.toLowerCase() : raw.somatic.sporeHarp.symbiosis;
+    const symbiosis = expectEnum(rawSymbiosis, "session.somatic.sporeHarp.symbiosis", SPORE_HARP_SYMBIOSIS_IDS);
+    const tensionNum = Number(raw.somatic.sporeHarp.tension);
+    if (!SPORE_HARP_TENSION_VALUES.some((v) => Math.abs(v - tensionNum) < 0.01)) {
+      throw new SessionError("session.somatic.sporeHarp.tension", `must be one of ${SPORE_HARP_TENSION_VALUES.join(", ")}`);
+    }
+
+    expectKeys(raw.somatic.muscaria, "session.somatic.muscaria", ["targetMode", "tripDepth"]);
+    const rawTargetMode = typeof raw.somatic.muscaria.targetMode === "string" ? raw.somatic.muscaria.targetMode.toLowerCase() : raw.somatic.muscaria.targetMode;
+    const targetMode = expectEnum(rawTargetMode, "session.somatic.muscaria.targetMode", MUSCARIA_MODE_IDS);
+    const rawTripDepth = typeof raw.somatic.muscaria.tripDepth === "string" ? raw.somatic.muscaria.tripDepth.toLowerCase() : raw.somatic.muscaria.tripDepth;
+    const tripDepth = expectEnum(rawTripDepth, "session.somatic.muscaria.tripDepth", MUSCARIA_TRIP_DEPTH_IDS);
+
+    expectKeys(raw.somatic.theremin, "session.somatic.theremin", ["scaleSnap"]);
+    const scaleSnap = expectBool(raw.somatic.theremin.scaleSnap, "session.somatic.theremin.scaleSnap");
+
+    somatic = Object.freeze({
+      sporeHarp: Object.freeze({ symbiosis, tension: tensionNum }),
+      muscaria: Object.freeze({ targetMode, tripDepth }),
+      theremin: Object.freeze({ scaleSnap }),
+    });
+  } else {
+    somatic = Object.freeze({
+      sporeHarp: Object.freeze({ symbiosis: "silk", tension: 1.0 }),
+      muscaria: Object.freeze({ targetMode: "dormant", tripDepth: "deep" }),
+      theremin: Object.freeze({ scaleSnap: true }),
+    });
+  }
+
+  let recorder;
+  if (raw.version >= 9 && raw.recorder !== undefined) {
+    expectKeys(raw.recorder, "session.recorder", ["wavBitDepth", "autoMidi"]);
+    recorder = Object.freeze({
+      wavBitDepth: expectEnum(raw.recorder.wavBitDepth, "session.recorder.wavBitDepth", RECORDER_BIT_DEPTHS),
+      autoMidi: expectBool(raw.recorder.autoMidi, "session.recorder.autoMidi"),
+    });
+  } else {
+    recorder = Object.freeze({ wavBitDepth: 16, autoMidi: true });
+  }
+
+  let herbarium;
+  if (raw.version >= 9 && raw.herbarium !== undefined) {
+    expectKeys(raw.herbarium, "session.herbarium", ["pinned", "specimen"]);
+    const pinned = expectBool(raw.herbarium.pinned, "session.herbarium.pinned");
+    let specimen = null;
+    if (raw.herbarium.specimen !== null) {
+      try {
+        specimen = validateSpecimen(raw.herbarium.specimen, "session.herbarium.specimen");
+      } catch (error) {
+        if (error instanceof HerbariumError) {
+          throw new SessionError(error.path, error.message.replace(/^[^:]+:\s*/, ""));
+        }
+        throw error;
+      }
+    }
+    herbarium = Object.freeze({ pinned, specimen });
+  } else {
+    herbarium = Object.freeze({ pinned: false, specimen: null });
+  }
+
+  let locks = Object.freeze({});
+  if (raw.version >= 9 && raw.locks !== undefined) {
+    if (!isPlainObject(raw.locks)) throw new SessionError("session.locks", "must be an object");
+    const cleanLocks = {};
+    for (const [key, val] of Object.entries(raw.locks)) {
+      if (!PART_IDS.includes(key)) {
+        throw new SessionError(`session.locks.${key}`, `unknown lock part "${key}"`);
+      }
+      cleanLocks[key] = expectBool(val, `session.locks.${key}`);
+    }
+    locks = Object.freeze(cleanLocks);
+  }
+
   return Object.freeze({
     format: SESSION_FORMAT,
     version: SESSION_VERSION,
@@ -250,6 +354,10 @@ export function validateSession(raw) {
     plates: Object.freeze(plates),
     mixer: Object.freeze(mixer),
     song,
+    somatic,
+    recorder,
+    herbarium,
+    locks,
   });
 }
 
@@ -318,12 +426,53 @@ export function parsePresetStore(text) {
   return Object.freeze({ version: 1, presets: Object.freeze(presets) });
 }
 
-// Saves or replaces a preset by name, newest first, capped at MAX_PRESETS.
-export function upsertPreset(store, name, session, savedAt) {
+// Saves or replaces a preset by name. If overwrite is true and the preset exists,
+// it is updated in-place at its current index; otherwise, it is inserted at index 0.
+export function upsertPreset(store, name, session, savedAt, { overwrite = false } = {}) {
   const cleanName = expectPresetName(name, "preset.name");
   const entry = Object.freeze({ name: cleanName, savedAt: String(savedAt), session: validateSession(session) });
+  const existingIdx = store.presets.findIndex((preset) => preset.name === cleanName);
+  if (overwrite && existingIdx !== -1) {
+    const next = [...store.presets];
+    next[existingIdx] = entry;
+    return Object.freeze({ version: 1, presets: Object.freeze(next) });
+  }
   const others = store.presets.filter((preset) => preset.name !== cleanName);
   return Object.freeze({ version: 1, presets: Object.freeze([entry, ...others].slice(0, MAX_PRESETS)) });
+}
+
+export function duplicatePreset(store, sourceName, newName, savedAt) {
+  const cleanSourceName = expectPresetName(sourceName, "preset.sourceName");
+  const cleanNewName = expectPresetName(newName, "preset.newName");
+  const source = store.presets.find((p) => p.name === cleanSourceName);
+  if (!source) throw new SessionError("preset.sourceName", `preset "${cleanSourceName}" not found`);
+  if (store.presets.some((p) => p.name === cleanNewName)) {
+    throw new SessionError("preset.newName", `preset "${cleanNewName}" already exists`);
+  }
+  const entry = Object.freeze({
+    name: cleanNewName,
+    savedAt: String(savedAt || new Date().toISOString()),
+    session: source.session,
+  });
+  return Object.freeze({ version: 1, presets: Object.freeze([entry, ...store.presets].slice(0, MAX_PRESETS)) });
+}
+
+export function renamePreset(store, oldName, newName) {
+  const cleanOldName = expectPresetName(oldName, "preset.oldName");
+  const cleanNewName = expectPresetName(newName, "preset.newName");
+  if (cleanOldName === cleanNewName) return store;
+  const existingIdx = store.presets.findIndex((p) => p.name === cleanOldName);
+  if (existingIdx === -1) throw new SessionError("preset.oldName", `preset "${cleanOldName}" not found`);
+  if (store.presets.some((p) => p.name === cleanNewName)) {
+    throw new SessionError("preset.newName", `preset "${cleanNewName}" already exists`);
+  }
+  const updated = Object.freeze({
+    ...store.presets[existingIdx],
+    name: cleanNewName,
+  });
+  const next = [...store.presets];
+  next[existingIdx] = updated;
+  return Object.freeze({ version: 1, presets: Object.freeze(next) });
 }
 
 export function removePreset(store, name) {
@@ -332,6 +481,67 @@ export function removePreset(store, name) {
 
 export function serializePresetStore(store) {
   return JSON.stringify({ version: 1, presets: store.presets });
+}
+
+export function serializePresetBank(store) {
+  const validated = parsePresetStore(serializePresetStore(store));
+  return `${JSON.stringify({
+    format: BANK_FORMAT,
+    version: BANK_VERSION,
+    exportedAt: new Date().toISOString(),
+    count: validated.presets.length,
+    presets: validated.presets,
+  }, null, 2)}\n`;
+}
+
+export function parsePresetBank(text, { mergeMode = "merge", existingStore = emptyPresetStore() } = {}) {
+  if (typeof text !== "string") throw new SessionError("bank", "must be text");
+  if (new TextEncoder().encode(text).length > MAX_BANK_BYTES) {
+    throw new SessionError("bank", `is larger than ${MAX_BANK_BYTES / 1024} KB`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new SessionError("bank", "is not valid JSON");
+  }
+  if (!isPlainObject(parsed)) throw new SessionError("bank", "must be an object");
+  if (parsed.format !== BANK_FORMAT) throw new SessionError("bank.format", `must be "${BANK_FORMAT}"`);
+  if (parsed.version !== BANK_VERSION) throw new SessionError("bank.version", `must be ${BANK_VERSION}`);
+  if (!Array.isArray(parsed.presets)) throw new SessionError("bank.presets", "must be an array");
+
+  genreCodes();
+  const validBankPresets = [];
+  for (const entry of parsed.presets) {
+    try {
+      expectKeys(entry, "preset", ["name", "savedAt", "session"]);
+      const name = expectPresetName(entry.name, "preset.name");
+      if (validBankPresets.some((p) => p.name === name)) continue;
+      validBankPresets.push(Object.freeze({
+        name,
+        savedAt: String(entry.savedAt),
+        session: validateSession(entry.session),
+      }));
+    } catch {
+      // Skip invalid preset entry
+    }
+  }
+
+  if (mergeMode === "replace") {
+    return Object.freeze({
+      version: 1,
+      presets: Object.freeze(validBankPresets.slice(0, MAX_PRESETS)),
+    });
+  }
+
+  // Merge mode: append new presets that don't already exist by name
+  const existingNames = new Set(existingStore.presets.map((p) => p.name));
+  const newPresets = validBankPresets.filter((p) => !existingNames.has(p.name));
+  const merged = [...existingStore.presets, ...newPresets].slice(0, MAX_PRESETS);
+  return Object.freeze({
+    version: 1,
+    presets: Object.freeze(merged),
+  });
 }
 
 function isQuotaExceededError(error) {

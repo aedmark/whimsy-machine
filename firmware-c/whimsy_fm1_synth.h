@@ -45,6 +45,9 @@ typedef struct {
     int32_t low;           /* Q15 */
     int32_t band;          /* Q15 */
     int32_t high;          /* Q15 */
+    int32_t low_r;         /* Q15 */
+    int32_t band_r;        /* Q15 */
+    int32_t high_r;        /* Q15 */
     int32_t cutoff;        /* Q15 (0..16384) */
     int32_t resonance;     /* Q15 (0..32768) */
 } WhimsyFilter;
@@ -62,26 +65,34 @@ typedef struct {
 typedef struct {
     WhimsyOscillator lead_osc;
     WhimsyOscillator manual_osc[4]; /* 4-voice polyphonic pad */
+    WhimsyOscillator pulse_osc;     /* Malbolge kick pulse */
+    WhimsyOscillator snare_osc;     /* Malbolge snare / crack */
+    WhimsyOscillator hat_osc;       /* Malbolge clockwork escapement tick */
     WhimsyOscillator bass_osc;
     WhimsyOscillator organ_osc[3];  /* 3-voice chord organ */
     WhimsyOscillator chime_osc;
     WhimsyOscillator choir_osc[3];  /* 3 formant bandpass filters */
+    WhimsyOscillator mycelium_osc;  /* Bio-acoustic guttation pops & knocks */
+    WhimsyOscillator mycelium_noise;/* Bio-acoustic spore puffs */
     WhimsyMixer mixer;
     uint32_t current_step;
     uint16_t bpm;
+    uint32_t sample_rate;
     uint32_t samples_per_step;
     uint32_t step_sample_counter;
+    uint32_t rng_state;             /* Lightweight noise generator */
 } WhimsySynthEngine;
 
 /* ---------------------------------------------------------------------------
  * Engine Lifecycle & Rendering
  * --------------------------------------------------------------------------- */
 void whimsy_synth_init(WhimsySynthEngine *engine);
+void whimsy_synth_set_sample_rate(WhimsySynthEngine *engine, uint32_t sample_rate);
 void whimsy_synth_set_bpm(WhimsySynthEngine *engine, uint16_t bpm);
 void whimsy_synth_trigger_note(WhimsySynthEngine *engine, WhimsyVoiceTrack track, uint8_t note, uint8_t velocity);
 void whimsy_synth_release_note(WhimsySynthEngine *engine, WhimsyVoiceTrack track, uint8_t note);
 
-/* Render one block (128 frames, stereo signed 32-bit Q23) for FM-1 DAC DMA */
+/* Render one block (frames, stereo signed 32-bit Q23) for DAC DMA or plugin host */
 int whimsy_synth_render_block(WhimsySynthEngine *engine, int32_t *output, unsigned frames);
 
 #ifdef __cplusplus

@@ -531,14 +531,14 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   const chimes = composeChimes(pietSource, fractranSource, score, 0);
   const chant = composeChant(chantSource, score, 0);
 
-  // 1. Keyboard manual: exactly 13 keys, 5 black, 8 white, valid keyboard shortcuts [A..K]
-  assert.equal(FUN_KEY_MAP.length, 13);
+  // 1. Keyboard manual: 2-octave 25 keys (P11-01), 10 black, 15 white, valid primary keyboard shortcuts [A..K]
+  assert.equal(FUN_KEY_MAP.length, 25);
   const blackKeys = FUN_KEY_MAP.filter((k) => k.isBlack);
   const whiteKeys = FUN_KEY_MAP.filter((k) => !k.isBlack);
-  assert.equal(blackKeys.length, 5);
-  assert.equal(whiteKeys.length, 8);
-  assert.deepEqual(blackKeys.map((k) => k.semitone), [1, 3, 6, 8, 10]);
-  assert.deepEqual(whiteKeys.map((k) => k.semitone), [0, 2, 4, 5, 7, 9, 11, 12]);
+  assert.equal(blackKeys.length, 10);
+  assert.equal(whiteKeys.length, 15);
+  assert.deepEqual(blackKeys.map((k) => k.semitone), [1, 3, 6, 8, 10, 13, 15, 18, 20, 22]);
+  assert.deepEqual(whiteKeys.map((k) => k.semitone), [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24]);
   assert.equal(FUN_KEY_BY_CODE.KeyA.note, "C");
   assert.equal(FUN_KEY_BY_CODE.KeyW.note, "C♯");
   assert.equal(FUN_KEY_BY_CODE.KeyK.note, "C'");

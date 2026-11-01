@@ -4,22 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-28, session 95, on `main`._
+_Last updated: 2026-10-31, session 107, on `main`._
 
-- Phases 1–9 Complete: Esoteric engines (Plates I–VI), 22 Inform 7 rulebooks, FM-1 hardware firmware, studio WAV and stem exports, autopoietic dynamics (D-001–D-088).
-- Phase 10: BoneAmanita Resonances (P10-01–P10-03, D-089–D-091) complete: Aetheric Bone Theremin, Bone Forge Beat Machine, and BioParasite Spore Harp.
-- Harmonic Closure & Somatic Decoupling (D-092, D-093): 100% modal consonance for mycelium and chord-aware spore harp strumming.
-- Ten-Channel Mixer Matrix & Rogue Audio Elimination (D-094): Dedicated `forge` and `harp` strips, strict "no bus bypasses its strip" routing, total silence on console mute (clockwork tick and crackle ducking), bidirectional UX binding, 11-stem ZIP exports, and legacy session migration.
+- Phases 1–11 Complete: Esoteric engines (Plates I–VI), 22 Inform 7 rulebooks, FM-1 hardware, studio exports, autopoietic dynamics (D-001–D-088), 25-Key Manual (P11-01, D-098), Live Stream Audio & MIDI Recording (P11-02, D-099), and Preset Memory Schema v9 (P11-03, D-101).
+- Phase 8 Extensibility: Native CLAP Instrument Plugin (`P8-13`, `D-080`) complete: pure C ABI (C11) in isolated `plugin-clap/`, 23 automatable parameters, sample-accurate DAW beat/tempo synchronization, Session v9 project state recall, 9-bus stereo multi-out audio routing, and test suite verified via `test_clap.c` and `tests/clap.test.mjs`.
+- Phase 10: BoneAmanita Resonances (P10-01–P10-04, D-089–D-095) complete: Aetheric Bone Theremin, Bone Forge, Spore Harp, and PlantWave Muscaria Transducer.
+- QA Performance Audit, Firefox Gecko/SWGL Stabilization, and QoL Polish (D-096, D-097, D-100): Canvas 2D rasterization guardrails, Web Audio node pruning, scale snapping, and modal consonance.
+- Phase 12 Production & Live Performance (P12-01–P12-04, D-102–D-105) complete: P12-01 part locks/chimeras, P12-04 Parlor Salon console, P12-02 Web MIDI Learn with bidirectional CC feedback, and P12-03 Global Action History stack.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10, Modal Scale Closure (D-092), Somatic Bus Decoupling & Consonance (D-093), and Ten-Channel Console Integration & Rogue Audio Elimination (D-094) are fully implemented and verified! Version 1.5.0. 280/280 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-13, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10 (P10-01 through P10-04), Musicological Alignment, Firefox Stabilization (D-096), Spore Harp Calibration (D-097), 25-Key Manual Expansion (P11-01, D-098), Downbeat-Quantized Live Stream Audio & MIDI Recording Engine (P11-02, D-099), Polish & QoL Pass (D-100), Preset Memory Schema v9 (P11-03, D-101), Part Lock & Chimeras (P12-01, D-102), Production View / Salon Console (P12-04, D-103), Web MIDI Learn (P12-02, D-104), and Global Undo/Redo Action History Stack (P12-03, D-105) are fully implemented and verified! Version 1.5.0. 338/339 tests passing (338 passed, 1 skipped). Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-28, session 95, local Linux environment)
+**Verified** (2026-10-31, session 107, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **280/280 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **338/339 behavioral and structural checks passed (1 skipped)** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 47 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -47,7 +48,8 @@ _Last updated: 2026-10-28, session 95, on `main`._
 - An Euler-Tonnetz and Euclidean harmonic conductor (`src/conductor.mjs`) harmonizes all six esoteric bandmates across a 4-region Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) progression, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, pure 5-limit Just Intonation chime overtones, and Bjorklund Euclidean rhythm hocketing $E(k, 12)$ (P5-14, D-016).
 - The Kapellmeister music-theory console (`#kapellmeister-engine`) provides 22 selectable rulebooks across five menu families plus THE CREATURE'S OWN rulebook, an Euler consonance strictness slider ($3\dots 14$), live harmonic step/chord/vector/Euler score telemetry, and an animated 4-region SVG Tonnetz compass (P5-15, P5-29, D-019, D-041, D-060).
 - The Antique Parlor Room Acoustic Space (`#parlor-acoustics-engine`) synthesizes authentic 1890s Edison wax-cylinder surface noise (horn resonance, Poisson dust pops, 78 RPM groove rumble), a 1.6-second wood-and-velvet chamber convolution reverb (`ConvolverNode`), and mechanical brass clockwork escapement ticks on quarter-beats, active in both live playback and offline 16-bit WAV rendering (P5-15, D-019).
-- The Fun Machine accompanist and Loop Machine (`#fun-machine-engine`, `#looper`, D-029, D-039, P5-26, D-045, D-046, D-052): hold a key on the 13-key manual or `[A..K]` and choose SWELL, ARPEGGIO, or PROGRESSION; the pad, arpeggio, and lead play in the band's rhythm, the band follows the chord, and the LOLCODE lead ducks. The Loop Machine records takes into stacked loops (up to 4 layers, 16 loops, 32 passes) with real-time audible clock latching, layer isolation during new loop recording, armed downbeat sync, a 1-loop count-in pass, a mechanical clockwork metronome, an interactive 12-step tracker ribbon, auto-advancing STEP REC, downbeat anticipation latching, and musical section roles (Intro, Main, Bridge, Outro) with live Outro cueing and full linear offline export to WAV, stems, and MIDI.
+- The Fun Machine accompanist and Loop Machine (`#fun-machine-engine`, `#looper`, D-029, D-039, P5-26, D-045, D-046, D-052, P11-01, D-098): play a 2-octave 25-key manual ($C_3\dots C_5$) with $[-2..+2]$ octave transposition buttons and $[Z]/[X]$ hotkeys (or `[A..K]` active-octave typing) and choose SWELL, ARPEGGIO, or PROGRESSION; the pad, arpeggio, and lead play in the band's rhythm, the band follows the chord, and the LOLCODE lead ducks. The Loop Machine records takes into stacked loops (up to 4 layers, 16 loops, 32 passes) with real-time audible clock latching, layer isolation during new loop recording, armed downbeat sync, a 1-loop count-in pass, a mechanical clockwork metronome, an interactive 12-step tracker ribbon, auto-advancing STEP REC, downbeat anticipation latching, and musical section roles (Intro, Main, Bridge, Outro) with live Outro cueing and full linear offline export to WAV, stems, and MIDI.
+- The Downbeat-Quantized Live Stream Audio & MIDI Recording Engine (`#transport-live-rec`, `#transport-rec-status`, `#export-live-wav`, `#export-live-midi`, `src/live-recorder.mjs`, P11-02, D-099): taps live master Float32 PCM audio directly from `transport.output` and transcribes live played chords, leads, drums, bass, arpeggios, and vitrine interactions into real-time note events. Arming quantizes start to step 0 of the upcoming downbeat, and stopping quantizes finish to the next downbeat loop boundary, generating perfectly bar-aligned, cleanly looping takes exported directly to studio WAV (16/24/32f with peak ceiling protection, `acid` tempo chunks, and `smpl` loop points) and Standard MIDI Files (Type 1, 480 PPQ).
 - Summoned creatures sync their phrase to `#omen=...` URL fragments without sending query parameters over HTTP, can be copied via `COPY OMEN LINK` (`#share-link`), and can be exported as a 1200×1520 engraved broadsheet PNG (`#export-png`) containing the live creature capture, specimen name, confided phrase, seed, and six-language ensemble ledger (P3-01, P3-02, D-015).
 - A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
@@ -81,8 +83,8 @@ _Last updated: 2026-10-28, session 95, on `main`._
 ## Next steps
 
 1. Deploy staged bundle (`dist-neocities/`) to Neocities via web dashboard or `neocities-cli` (P6-01, D-065).
-2. Hands-on review of the four-wing layout (D-027) in Safari and Firefox.
-3. Tag v1.0.0 semantic release.
+2. Hands-on review of the Parlor Salon desktop synth console, MIDI Learn, and Undo/Redo in Safari, Firefox, and Chrome.
+3. Hands-on verification of WAV, stems, and MIDI files imported into REAPER, Ableton Live, and Logic Pro (P8-12).
 
 ## Open questions
 
@@ -90,338 +92,360 @@ _Last updated: 2026-10-28, session 95, on `main`._
 
 ## Session log
 
-### Session 94 (2026-10-28): Somatic Audio Bus Decoupling, Mycelium Modal Consonance, and Channel Voicing Rebalance (D-093)
+### Session 106 (2026-10-30): Global Undo/Redo Action History Stack (P12-03, D-105)
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Address user feedback that the Mycelium plate is way too loud by default, its generations clash with the rest of the ensemble, and that the new beat machine and harp do not need to be lumped into those channels (D-093).
+**Goal:** Implement Phase 12 Candidate 3 (P12-03, D-105): design and build a multi-level transactional action history stack for the Whimsy Machine, enabling seamless undo and redo across creature summons, part locks, plate cycling, mixer faders, Kapellmeister rulebooks, Fun Machine settings, and looper edits with live playback preservation.
 
-**Done:** Decoupled Bone Beat and Spore Harp into dedicated somatic buses, rebalanced Mycelium channel voicing to unity (0 dB), snapped mycelial events to creature scale (0% out-of-scale tones), and implemented chord-aware Spore Harp auto-strumming. 280/280 automated tests pass.
+**Done:** All parts implemented and verified under D-105. P12-03 marked complete. 336/337 tests pass (1 skipped).
 
 **Changed:**
-1. Somatic Audio Bus Decoupling (`src/ensemble.mjs`, `src/app.mjs`):
-   - Added `forgeBus` (gain 0.70) and `sporeHarpBus` (gain 0.62) to `buildEnsembleGraph()`. Both connect to master compressor and chamber reverb send (`parlorReverbFilter`); `sporeHarpBus` also feeds tempo delay.
-   - Decoupled Bone Forge percussion from Plate I (`beatBus`) and Spore Harp plucks from Plate VI (`fungalBus`), freeing Plate I for pure Malbolge drums and Plate VI for pure bio-acoustic environmental sonification.
-2. Mycelium Plate Voicing & Balance:
-   - In `src/ensemble.mjs`, reset `CHANNEL_VOICING_DB.fungal` from +4 dB to 0 dB (unity gain).
-   - In `src/schedulers.mjs`, scaled Bracket Conk woody shelf resonance from 0.7 to 0.35 and droplet pings from 0.45 to 0.22.
-3. Modal Scale Closure for Mycelium Events (`src/mycelium.mjs`):
-   - Replaced quarter-tone `rootAnchor` exponent (`/ 24`) with 12-TET semitone intervals (`/ 12`).
-   - Implemented `snapToScale(freq, score)`, clamping and quantizing tone event frequencies (`spikes`, `drops`, bandpass filters) to the nearest scale pitch class of the creature. Out-of-scale tone events dropped from 72.7% to 0.0%.
-4. Chord-Aware Spore Harp Auto-Strumming (`src/spore-harp.mjs`):
-   - In `scheduleSporeHarpStep`, passed active chord and filtered string selection to chord pitch classes (`chord.pitchClasses`), eliminating semitone rubs.
-   - Scaled auto-strum velocity to a gentle background arpeggio (0.35), click transient to 0.09 * vel, and string bus gain to 0.55. Full velocity (0.85) preserved for direct vitrine swiping.
-5. Verification & Tests:
-   - Added test in `tests/mycelium.test.mjs` verifying 100% modal scale closure for mycelium tone events.
-   - Added test in `tests/spore-harp.test.mjs` verifying chord-aware consonant string selection in `scheduleSporeHarpStep`.
-   - Updated `tests/transport.test.mjs` asserting `forgeBus` and `sporeHarpBus` destination routing and 0 dB fungal voicing.
-   - Re-stamped asset version via `tools/stamp_assets.mjs`.
+1. Pure History State Model (`src/history.mjs`, `tests/history.test.mjs`):
+   - Created pure, immutable history state model with bounded transactional stacks (`past`, `present`, `future`) up to 50 levels deep (`DEFAULT_MAX_HISTORY = 50`).
+   - Implemented `cloneSnapshot()`, `areSnapshotsEqual()`, `createHistoryState()`, `initHistory()`, `pushHistory()`, `undo()`, `redo()`, `clearHistory()`, and `getHistorySummary()`.
+   - Prevented redundant identical pushes and cleanly truncated `past` when exceeding maximum capacity.
+2. Apparatus Snapshotting & Debounced Coalescing (`src/app.mjs`):
+   - Reused existing validated session state serialization (`captureSession()` / `applySession()`) for full-fidelity snapshot capture and restoration without schema drift.
+   - Guarded restoration with `isHistoryRestoring` flag to eliminate recursive history mutation loops.
+   - Implemented 400ms coalescing debounce timer for continuous stream inputs (mixer faders, master volume, live tempo, Euler strictness, and incoming learned MIDI CCs), committing on slider release (`change` / pointer release) or timeout to eliminate history bloat.
+   - Discrete mutations (summons, mutations, plate cell cycling, channel mutes/solos, part locks, rulebooks, looper takes, and preset loads) commit immediately.
+   - Preserved seamless live Web Audio playback during undo/redo restoration via in-place state hot-swapping without transport disruption.
+3. Dual-Access UI Controls & Global Hotkeys (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added `#transport-undo` and `#transport-redo` buttons into the masthead transport rail (`.transport-keys`), accessible in both Parlor Salon and Grand Workbench views.
+   - Added Studio Deck history tools (`#studio-undo-btn`, `#studio-redo-btn`, `#studio-history-clear-btn`, `#studio-history-status`, `#studio-history-breadcrumbs`) with dynamic SVG breadcrumb indicators in the Keep Wing.
+   - Added global keyboard accelerators `[Ctrl+Z]` / `[Cmd+Z]` for Undo, and `[Ctrl+Y]` / `[Cmd+Y]` / `[Ctrl+Shift+Z]` for Redo, safely bypassing native text inputs (`input`, `textarea`, `elements.phrase`).
+4. Documentation, Manual, and Testing:
+   - Added Entry 47 (`global-action-history`) to `docs/manual.json` and compiled `manual.html`.
+   - Recorded Decision D-105 in `docs/DECISIONS.md`.
+   - Updated `AGENTS.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, and `docs/HANDOFF.md`.
+   - Archived Session 96 to `docs/archive/sessions.md` to maintain the rolling 10-session window (Sessions 97 through 106).
+   - Resolved boot race condition: eliminated premature top-level `syncSessionButtons()` call in `src/app.mjs` and guarded `renderPresetList()` and `syncSessionButtons()` with `rulebooksInstalled()` checks, preventing unhandled `Kapellmeister rulebooks are not installed yet` exceptions on page reload with stored presets.
+   - Resolved Muscaria Hallucinating audio freeze: corrected undeclared variable `parlorAmbienceLevel` to `parlorAcousticsLevel` in `scheduleEnsembleStep` and exported/imported `DRONE_DETUNE`, preventing scheduler crash and total apparatus muting in hallucination mode.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
 
-### Session 93 (2026-10-28): Modal Scale Closure & Consonant Chimes for Creature Variations (D-092)
+**Verified:**
+- `node --test tests/*.test.mjs`: 337/338 tests passing (1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 47 entries, 0 errors, 0 warnings.
+
+### Session 105 (2026-10-30): Web MIDI Learn, Priority CC Mapping, and Bidirectional Controller Feedback (P12-02, D-104)
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Resolve user observation that the Befunge-93 chord organ and Piet/FRACTRAN chimes drift into an a-tonal pattern that conflicts with the other instruments every few measures (D-092).
+**Goal:** Implement Phase 12 Candidate 2 (P12-02, D-104): design and build a zero-dependency Web MIDI Learn engine allowing musicians to map physical hardware encoders, faders, and buttons to 28 parameters across the apparatus, with priority overlay on factory FM-1 controls, bidirectional CC feedback to motorized hardware, and on-device localStorage persistence.
 
-**Done:** Diagnosed root cause, implemented modal scale closure across variation moves, filtered microtonal quarter-tone overtones in creature chimes, and verified zero regressions across 278/278 tests.
+**Done:** Pure state model in `src/midi-learn.mjs` with comprehensive unit test suite (`tests/midi-learn.test.mjs`), dual-access Learn buttons in the Mixer header and Studio Deck, `[L]` keyboard hotkey, in-place amber target highlighting and pulsing armed indicators, conflict resolution, outbound CC transmission with echo suppression, localStorage persistence under `whimsy-machine.midi-map.v1`, and 46-entry technical manual documentation. All 328 behavioral checks passing (1 skipped).
 
 **Changed:**
-1. Root Cause Diagnosis:
-   - In `CREATURE_GENRE`, `buildCreatureBook()` constructs the written spine strictly within `scalePitchClasses(score)`. However, `varySpine()` in `src/variation.mjs` was applying unrestricted genre substitution moves (`tritone_substitution` at `root + 6`, `secondary_dominants` at `root + 7`, and `modal_borrowing` with $\flat\text{VI}/\flat\text{VII}/\text{iv}$) copied from the borrowed character across passes 1..3. In simulation, 23.1% of chord steps on passes 1..3 forced foreign notes outside the creature's scale into the chord, directly driving the Befunge chord organ off-scale.
-   - `conductChimes` in `src/conductor.mjs` selected overtone ratios from the borrowed genre's overtone table. When borrowing from jazz or blues genres, ratios like $11/8$ (551 cents $\approx 49$ cents flat of tritone), $13/8$ (840.5 cents $\approx 40.5$ cents sharp of minor 6th), $7/6$ (267 cents $\approx 33$ cents flat of minor 3rd), and $7/4$ (968.8 cents $\approx 31.2$ cents flat of minor 7th) introduced abrasive microtonal quarter-tone beating against 12-TET instruments.
-2. Modal Scale Closure (`src/variation.mjs`, `src/conductor.mjs`):
-   - Added `scale` parameter to `varySpine()`.
-   - Constrained all substitution, secondary dominant, borrowing, and cadence moves with `fitsScale(cand) => !scale || cand.pitchClasses.every((pc) => scale.includes(pc))`.
-   - In `src/conductor.mjs`, passed `creatureScale` when `activeGenre === CREATURE_GENRE`. Out-of-scale chord steps on passes 1..3 dropped from 23.1% to 0.0%.
-   - Standard Inform 7 genres pass `scale = null`, maintaining 100% byte-for-byte fidelity with the 22 Inform 7 genre fixtures in `tests/fixtures/variations-golden.json`.
-3. Consonant Chime Overtones (`src/conductor.mjs`):
-   - In `conductChimes`, filtered `book.overtones` for `CREATURE_GENRE` to ratios with $\le 25$ cents deviation from 12-TET.
-4. Testing & Verification:
-   - Added test in `tests/creature-rulebook.test.mjs` verifying modal closure and consonant chime intervals across all 4 harmonic passes for 50 creatures (200 passes).
-   - All 278/278 automated tests pass.
+1. Pure MIDI Learn State Engine (`src/midi-learn.mjs`, `tests/midi-learn.test.mjs`):
+   - Defined registry of 28 targets across 4 groups:
+     - 10 Mixer Channel Faders (`fader:lead` through `fader:theremin`, 0..100).
+     - 10 Mixer Channel Mutes (`mute:lead` through `mute:theremin`, toggle).
+     - 4 Master Controls: Volume (0..100), Tempo (36..208 BPM), Creature Filter Cutoff (0..100%), Euler Strictness (3..14).
+     - 4 Somatic Suites: Bone Forge (toggle, hammer strike, quench steam), Spore Harp (toggle, strum hyphae, symbiosis cycle, tension cycle), Muscaria (mode cycle, stimulate pulse, trip depth cycle), and Bone Theremin (toggle, scale snap toggle).
+   - Implemented `createMidiLearnState()`, `enterLearnMode()`, `exitLearnMode()`, `toggleLearnMode()`, `armTarget()`, `disarmTarget()`, `learnMapping()`, `unmapTarget()`, `clearAllMappings()`, `resetToBuiltinDefaults()`, `resolveMidiCC()`, `computeOutboundCC()`.
+   - Verified linear domain conversion (`ccToDomain`, `domainToCC`) and toggle/trigger handling.
+2. Priority Overlay Resolution & Built-in CC Fallback:
+   - Inbound MIDI CC messages resolve against custom user mappings in `customMap` first.
+   - Unmapped CCs fall back to built-in factory defaults (FM-1 profile CC 70–75, CC 1/2/7/11/64), preserving out-of-the-box plug-and-play behavior.
+   - Stealing conflict resolution: learning an already-assigned CC to a new parameter unbinds the previous target cleanly without duplicates.
+3. Dual-Access One-Click Learn UX & Visual Feedback (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added `#midi-learn-mixer-btn` in the Mixer header and `#midi-learn-studio-btn` in the Studio Deck.
+   - Bound keyboard **`[L]`** hotkey (outside text inputs) to toggle MIDI Learn mode.
+   - Outlined all mappable controls with dashed amber borders (`.is-midi-learning [data-midi-target]`) and pulsing golden borders when armed (`.is-midi-armed`).
+   - Clicking any mappable parameter in learn mode arms it; receiving a hardware CC immediately binds the target, saves to storage, and disarms.
+   - Pressing `Escape` exits learn mode immediately without halting audio playback.
+4. Bidirectional Hardware CC Feedback (Motorized Faders & LED Rings):
+   - Added `makeControlChange(channel, controller, value)` in `src/midi-io.mjs`.
+   - Implemented `sendMidiFeedback()`: whenever faders, volume, tempo, cutoff, or strictness change from UI/keyboard/presets, transmits outbound CC updates to the active MIDI output port.
+   - Prevented feedback loops: incoming MIDI messages tag adjustments with `{ fromMidi: true }`, suppressing outbound loopback echo.
+   - Added `#midi-feedback-toggle` in the Studio Deck (default ON).
+5. Storage Persistence & Deck Management:
+   - Serialized in `localStorage` under `whimsy-machine.midi-map.v1` (`loadMidiMapFromStorage()`, `saveMidiMapToStorage()`).
+   - `#midi-map-summary` in the Studio Deck renders compact chips of all active bindings with one-click unmap `[×]` buttons, plus `CLEAR ALL ⌫` and `RESET FM-1 DEFAULTS ↺`.
+6. Assets & Documentation:
+   - Restamped asset version to `d72890a0c48c` via `node tools/stamp_assets.mjs`.
+   - Added entry 46 (`web-midi-learn`) to `docs/manual.json` and built `manual.html`.
+   - Recorded D-104 in `docs/DECISIONS.md`.
+   - Archived Session 95 into `docs/archive/sessions.md` to preserve the 10-session handoff window.
 
-### Session 92 (2026-10-28): The BioParasite Spore Harp, Symbiotic Hyphal Strings, and Vitrine Swiping (P10-03, D-091)
+**Verified:**
+- `node --test tests/*.test.mjs`: 328/329 checks passed (328 passed, 1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 46 entries, 0 errors, 0 warnings.
+
+### Session 104 (2026-10-30): Parlor Salon Synth Enclosure, 25-Key Manual Geometry, and Visual Polish
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Implement Candidate 4 of Phase 10: The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*) inspired by BoneAmanita's `BioParasite` (`~/PycharmProjects/BoneAmanita/spores/biome.py`) (P10-03, D-091).
+**Goal:** Address maintainer feedback and visual review from 5 live screenshots: 25-key manual layout truncation, oversized creature headline in catalogued reading, redundant esoteric preamble in Salon view, off-center playback transport buttons, and unify the 3 fragmented floating cards into a single cohesive "steampunk/victorian Korg mini" parlor deck.
 
-**Done:** All parts implemented and verified under D-091. P10-03 marked complete. 277/277 tests pass.
+**Done:** Fixed 25-key organ black key positioning math across both Grand and Salon layouts, unified Transport, Volume/Tempo, Voice Presets, and Keybed into a single ebonized/brass desktop synth enclosure (`.wing-perform`), structured an illuminated 4x2 voice selector matrix, balanced side-by-side master transport and tempo controls, and verified all 320 tests pass.
 
 **Changed:**
-1. State & Symbiosis Model (`src/spore-harp.mjs`, `tests/spore-harp.test.mjs`):
-   - Created pure acoustic string harp model tracking 8 hyphal strings (`hyphalStrings`), symbiosis mode (`SILK`, `LICHEN`, `CORDYCEPS`, `MUTUAL`), dampening, activity counter, and vitrine coordinates.
-   - Hyphal strings tuned across creature scale degrees in concert harp register (C3–C5, MIDI 48..72) with organic inharmonic detune factors and string stiffness coefficients.
-   - Symbiosis modes map to BoneAmanita biological behaviors:
-     - `SILK`: Chitin-sheathed pure harmonic plucks with natural damping.
-     - `LICHEN`: Photobiont harmonic fifth resonance swelling behind each pluck.
-     - `CORDYCEPS`: Inharmonic stiff partials with parasitic pitch bend and chitin scrape.
-     - `MUTUAL`: Guttation water-drop meniscus pop on string release with crystalline resonance.
-   - Implemented geometric segment intersection check (`checkStringIntersection`) using robust 2D orientation tests and distance clamping for tactile vitrine swiping.
-2. Web Audio Acoustic Physical String Pluck Synth (`src/spore-harp.mjs`):
-   - Chitin click impulse transient synthesized via high-frequency enveloped noise burst.
-   - Dual detuned string core oscillators with exponential damping per string tension and length.
-   - High-order sympathetic inharmonic overtone partials modulated by string stiffness and symbiosis mode.
-   - Damped lowpass bio-acoustic string filter tracking pluck velocity and decaying string displacement.
-3. Vitrine Canvas Rendering (`src/vitrine-canvas.mjs`):
-   - Added `drawSporeHarpStrings` rendering 8 organic hyphal string threads spanning the apparition vitrine.
-   - Animated decaying standing-wave visual displacement oscillating at string fundamental pitch.
-   - Glowing spore dust particles shedding from vibrating strings along wave crests.
-4. UI & Transport Integration (`index.html`, `styles.css`, `src/app.mjs`):
-   - Added `#spore-harp-bar` directly beneath `#theremin-bar` in the Vitrine pedestal with `#spore-harp-toggle`, `#spore-harp-strum`, `#spore-harp-symbiosis`, and `#spore-harp-telemetry`.
-   - Wired into `currentTransport.fungalBus` (Fungal mixer channel strip 6, chamber reverb send, master compressor, offline WAV stem exports).
-   - Wired touch/pointer dragging across vitrine to trigger string plucks via segment collision.
-   - Flying ballistospores puffing from vitrine taps collide with and pluck hyphal strings.
-   - Integrated into `scheduleFungalBioStep` for automatic creature loop step arpeggiation.
+1. Unified Steampunk/Victorian "Korg Mini" Parlor Deck (`styles.css`):
+   - Eliminated the three disconnected floating dark boxes; unified the Master Section, Voice Matrix, and Keybed inside `.is-salon-view .wing-perform` as a single desktop instrument chassis with brass-trimmed ebonized walnut casing (`radial-gradient`, `box-shadow`, `border: 2px solid #5a4225; border-top: 2px solid var(--brass)`).
+   - Upper Panel (Master Section): Placed the 4 vintage tactile transport buttons (`PLAY`, `PAUSE`, `STOP`, `RESTART`) on the left and balanced Volume/Tempo sliders on the right in a unified faceplate strip (`.is-salon-view .transport-deck`).
+   - Middle Panel (Voice Matrix): Arranged the 8 voice preset chips into an illuminated, balanced 4x2 matrix (`repeat(4, 1fr)`) with warm amber backlit active states, eliminating the trailing single-chip wrap.
+   - Lower Panel (Recessed Keybed): Built the 25-key manual directly into the bottom of the synth chassis (`.fun-keyboard-wrap`), recessed with deep inner shadow.
+2. 25-Key Organ Manual Layout Fix (`styles.css`):
+   - Diagnosed root cause of keyboard distortion: legacy CSS rules from 13-key manual only positioned 5 black keys using 8-white-key percentages (`8.8%`, `21.3%`, etc.) and black keys for octave 2 (`13, 15, 18, 20, 22`) lacked `left` rules, defaulting to `left: 0` and stacking $A'\sharp$ over $C$.
+   - Sized `.fun-key-black` width to `4.5%` (proportional to 15 white keys, each $100\% / 15 = 6.67\%$).
+   - Placed all 10 black keys centered over their respective white key boundaries using exact `calc((100% * boundary / 15) - 2.25%)` rules for semitones `1, 3, 6, 8, 10, 13, 15, 18, 20, 22` in both views.
+   - Expanded `.fun-keyboard` max-width from 680px to `52rem` (matching the workstation console scale).
+3. Reading Card Headline Typography & Preamble Removal (`styles.css`):
+   - Added `.is-salon-view .reading h2` font-size clamp `clamp(0.95rem, 1.3vw, 1.25rem)` with `line-height: 1.25` and `max-width: 32ch`, preventing multi-line word wrapping on long names.
+   - Added `.is-salon-view .introduction` to `display: none !important`, removing the redundant crest and "UTTER A PHRASE UNTO THE GLASS" banner in Salon mode.
+4. Verification & Testing:
+   - All 319 behavioral and structural tests pass (1 skipped).
+   - `python3 tools/check_docs.py` and `python3 tools/manual.py check docs/manual.json` pass with 0 errors, 0 warnings.
+
+### Session 103 (2026-10-30): Production View, Compact Parlor Console & Beginner Focus Mode (P12-04, D-103)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Phase 12 Candidate 4 (P12-04, D-103): design and build a distraction-free, single-screen stage console consolidating the vitrine, master transport, 10-channel mixer, and play manual without vertical scrolling, resolving beginner cognitive overload while empowering live performance workflows.
+
+**Done:** Designed and verified dual presentation architecture (`src/view-mode.mjs`, `styles.css`, `index.html`, `src/app.mjs`), created new unit test suite (`tests/view-mode.test.mjs`), integrated 3-badge docked somatic rack, wired hotkey `[V]` and masthead/console view toggles, verified zero-scroll 100vh layout on desktop, updated manual to 45 entries, and verified all 319/320 automated tests pass with 0 documentation errors.
+
+**Changed:**
+1. View Mode State Machine (`src/view-mode.mjs`, `tests/view-mode.test.mjs`):
+   - Defined `VIEW_MODES` (`["salon", "workbench"]`), `DEFAULT_VIEW_MODE = "salon"`, and `VIEW_MODE_STORAGE_KEY = "whimsy-machine.view-mode.v1"`.
+   - Implemented `parseViewMode()`, `toggleViewMode()`, `isSalonMode()`, `viewModeLabel()`, and `unfoldButtonLabels()`.
+2. Centered Single-Column Parlor Stage (`styles.css`, `index.html`):
+   - Overhauled Salon layout into a centered, balanced single-column parlor presentation (`max-width: 60rem; margin: 0 auto;`).
+   - Clean vertical hierarchy: Apparition Vitrine on top, Calling Slip in the middle, and Play Deck (Transport + Organ keys + Voices) below.
+   - Eliminated audio engineering overwhelm: completely hid 10-channel mixer console, part locks, and DAW transport buttons (12/16 steps, bar lock, step counter, live rec status) in Salon mode.
+3. Clean Organ Keys & Clutter Elimination:
+   - Suppressed chord text collision (`.fun-key-chord`) in black keys and tuned font-size floor to >= 0.6rem.
+   - Hid somatic control bars (`#somatic-rack`) in Salon mode, restoring the Vitrine to a pristine Victorian specimen bell jar without bolted control strips.
+4. Seamless View Transitions & Hotkey (`src/app.mjs`):
+   - Added `#view-mode-toggle` in the Masthead (`PARLOR SALON ⧉` / `GRAND WORKBENCH ▾`).
+   - Added `#workbench-unfold` at the console foot (`UNFOLD GRAND WORKBENCH ▾` / `COLLAPSE TO PARLOR SALON ▴`).
+   - Bound **`[V]`** hotkey (outside text inputs) to cycle instantaneously between Salon and Workbench modes.
+   - Screen-reader progressive disclosure: sets `aria-hidden="true"` on tucked machinery (Plates I–V, Looper sequencer, Inform 7 compiler, Keep decks) in Salon mode.
+5. Technical Manual & Asset Versioning:
+   - Added `parlor-salon-console` to `docs/manual.json` (45 entries, 0 warnings) and built `manual.html`.
+   - Restamped asset version to `d020d60de5b2` via `node tools/stamp_assets.mjs`.
+   - Archived Session 93 into `docs/archive/sessions.md` to maintain the 10-session handoff window.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 319/320 tests passing (1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 45 entries, 0 errors, 0 warnings.
+
+### Session 102 (2026-10-30): Part Lock, In-Place Unlocked Mutation, and Chimeric Score Synthesis (P12-01, D-102)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Candidate 1 of Phase 12 (P12-01, D-102): granular channel freezing across 10 mixer channels and 2 meta-locks; in-place downbeat mutation with `[M]` hotkey; and chimeric hybrid score synthesis with algorithmic portmanteau naming upon summoning with active locks.
+
+**Done:** All part lock state models, chimera score generator, naming fusions, UI controls, session schema v9 persistence, and hotkeys implemented and verified under D-102. 314/315 tests passing (1 skipped).
+
+**Changed:**
+1. Part Lock Core Model & Chimera Score Generator (`src/part-lock.mjs`, `tests/part-lock.test.mjs`):
+   - Defined `PART_IDS` covering 10 mixer channels (`beat`, `bass`, `harmony`, `chime`, `chant`, `lead`, `forge`, `harp`, `fungal`, `theremin`) and 2 meta-locks (`visuals`, `tonality`).
+   - Implemented `createPartLockState()`, `togglePartLock()`, `setAllLocks()`, and `countActiveLocks()`.
+   - Implemented `fuseCreatureNames()`: algorithmic portmanteau and fusion of noun/adjective combinations based on body lock state.
+   - Implemented `buildChimeraScore()`: creates composite scores inheriting locked parameters from the active creature and unlocked parameters from newly summoned creatures.
+   - Implemented `mutateUnlockedPlates()`: advances mutation counters only on unlocked esoteric plates and somatic seeds.
+2. UI & Interaction Layer (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added Master Part Lock Bar (`#part-lock-bar`) at the top of the Mixer Console (Wing II) with `#part-lock-mutate` (`MUTATE UNLOCKED [M] ⚄`), `#part-lock-reroll` (`RE-ROLL UNLOCKED ⚅`), `#part-lock-toggle-all` (`LOCK ALL 🔒` / `UNLOCK ALL 🔓`), `#part-lock-visuals` (`BODY 🔓`), `#part-lock-tonality` (`KEY 🔓`), and live status readout (`#part-lock-summary`).
+   - Added individual padlock buttons (`.mixer-lock`, text `🔒`/`🔓`, `.is-locked`, strip `.is-part-locked`) to all 10 channel strips in the Parlor Mixing Console.
+   - Added plate lock buttons (`#beat-lock`, `#bass-lock`, `#harmony-lock`, `#chime-lock`, `#chant-lock`) to Plate headers in Wing III.
+   - Bound keyboard `[M]` hotkey outside of text inputs to trigger instant downbeat unlocked mutation.
+3. Storage & Backward Compatibility (`src/session.mjs`, `tests/session.test.mjs`):
+   - Serialized `session.locks` boolean map in Session Schema v9 with full non-destructive backward compatibility.
+4. Assets & Documentation:
+   - Restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
+   - Recorded D-102 in `docs/DECISIONS.md`, marked P12-01 complete in `ROADMAP.md`, updated `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/archive/sessions.md`, and `docs/HANDOFF.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 314/315 tests passing (1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** P12-02 Web MIDI Learn & Controller CC Mapping or hands-on review of chimeric sound creation.
+
+### Session 101 (2026-10-30): Preset Memory Schema v9, Bio-Somatic Persistence, Preset Bank Bundles, and Session Ledger Workflow Enhancements (P11-03, D-101)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Candidate 3 of Phase 11 (P11-03, D-101): expand Session Schema to v9 to serialize somatic instrument parameters, Herbarium specimen pins, and live recorder preferences; guarantee safe dormant boot upon preset load; streamline Keep Wing Session Ledger workflow with instant overwrite, cloning, and renaming; introduce `.funbank` Preset Bank Bundles with interactive merge/replace import.
+
+**Done:** All schema, storage, UI controls, preset bank handling, and safe dormant loading implemented and verified under D-101. 308/309 tests passing (1 skipped).
+
+**Changed:**
+1. Preset Schema v9 & Storage Serialization (`src/session.mjs`, `tests/session.test.mjs`):
+   - Bumped `SESSION_VERSION` to 9 and expanded `MAX_SESSION_BYTES` to 96 KB.
+   - Added `BANK_FORMAT = "whimsy-preset-bank"`, `BANK_VERSION = 1`, `BANK_FILE_EXTENSION = "funbank"`, and `MAX_BANK_BYTES = 512 * 1024`.
+   - Validated and serialized `somatic` (`sporeHarp`, `muscaria`, `theremin`), `recorder` (`wavBitDepth`, `autoMidi`), and `herbarium` (`pinned`, `specimen`).
+   - Maintained full backwards compatibility with legacy schemas v1–v8, backfilling safe somatic defaults on load.
+   - Implemented `upsertPreset(..., { overwrite = true })`, `duplicatePreset()`, `renamePreset()`, `serializePresetBank()`, and `parsePresetBank()`.
+2. Acoustic Safety Invariant on Preset Boot (`src/app.mjs`):
+   - Guaranteed that `applySession()` loads Muscaria in safe `DORMANT` mode, preserving saved `targetMode` and `tripDepth` until intentionally unmuted or triggered.
+3. Session Ledger UI Controls & Bank Import/Export (`index.html`, `styles.css`, `src/app.mjs`, `tests/static.test.mjs`):
+   - Added `#session-update-preset` (`UPDATE ⟳`, instant overwrite without modal confirmation), `#session-clone-preset` (`CLONE ⧉`), `#session-rename-preset` (`RENAME ✎`).
+   - Added `#session-export-bank` (`EXPORT BANK ⤓`) and `#session-open-bank` (`OPEN BANK ⤒`) with file input `#session-bank-input`.
+   - On `.funbank` open, prompted user with choice between Merge (non-destructive append) and Replace (fresh bank).
+   - Synchronized button enabled/disabled states dynamically with active score and selected presets.
+4. Assets & Documentation:
+   - Restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
+   - Marked P11-03 complete in `ROADMAP.md` and recorded D-101 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/archive/sessions.md`, and `docs/HANDOFF.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 308/309 tests passing (1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Hands-on review of Preset Memory & Bank workflow, or candidate work on Phase 11.
+
+### Session 100 (2026-10-30): Polish & QoL Pass: System Comms, Fungal Instrument Sculpting, and Consonance Tuning (D-100)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Conduct an exhaustive polish and quality-of-life pass: resolve system communications and Theremin routing defects, overhaul the BioParasite Spore Harp to a sparkling concert harp register with distinct symbiosis personalities and tension control, expand PlantWave Muscaria hallucination dynamics across the entire ensemble, and enforce consonance-first vitrine defaults (D-100).
+
+**Done:** All comms routing, somatic live MIDI logging, acoustic sculpting, and consonance tuning implemented and verified under D-100. 305/306 tests passing (1 skipped).
+
+**Changed:**
+1. Somatic System Communications & Theremin Dynamic Routing (`src/app.mjs`, `src/theremin.mjs`, `index.html`):
+   - Implemented `updateThereminRouting()`, dynamically connecting `thereminMasterGain` to `currentTransport.output` during playback and falling back to `audioContext.destination` when idle. The Theremin is now fully governed by master transport volume and ducking, and streams directly into `liveCaptureProcessor` for live take WAV capture.
+   - Updated vitrine Theremin to default to quantized scale degrees (`scaleSnap: true`), displaying `SCALE SNAP: ON (QUANTIZED)` on load, with toggle to `SCALE SNAP: OFF (FREE GLIDE)` for microtonal glide.
+2. Complete 10-Channel Live MIDI Transcription (`src/live-recorder.mjs`, `src/app.mjs`, `tests/live-record.test.mjs`):
+   - Added `LIVE_MIDI_TRACKS` incorporating all somatic and bio-acoustic channels: `forge` (channel 9, GM drums), `harp` (channel 6, GM 46 Orchestral Harp), `fungal` (channel 7, GM 98 Crystal), and `theremin` (channel 8, GM 54 Synth Voice).
+   - Wired real-time `logNote` calls across Spore Harp auto-strum and interactive vitrine swiping, Bone Beat acoustic percussion strikes, Muscaria PlantWave note emissions, and Theremin melodic performances.
+3. BioParasite Spore Harp Acoustic Redesign & String Tension Control (`src/spore-harp.mjs`, `index.html`, `src/app.mjs`, `tests/spore-harp.test.mjs`):
+   - Lifted hyphal string octave register by two full octaves into the sparkling concert parlor harp register ($C_4\dots C_6$, MIDI $60\dots 84$), eliminating muddy collisions with the walking sub-bass.
+   - Added `HARP_TENSION_PRESETS` (`0.75× WARM`, `1.0× CONCERT`, `1.25× TIGHT`, `1.5× BRILLIANT`) with dedicated `#spore-harp-tension` button cycling tension and dynamic plectrum transient shaping.
+   - Sculpted four distinct, unmistakable symbiosis acoustic personalities:
+     - `SILK`: Pure, singing concert harp & koto with clean crystalline partials, warm decay, and open treble ring.
+     - `LICHEN`: Photobiont harmonic bloom with shimmering octave & fifth resonance, longer singing sustain, and choral glow.
+     - `CORDYCEPS`: High-tension metallic harpsichord/kalimba attack with snappy transients, inharmonic partials ($1.0\times, 2.756\times, 5.404\times, 8.933\times$), and initial 15-cent pitch bite.
+     - `MUTUAL`: Liquid guttation droplet release pop with water meniscus chirp and dual-detuned chorus wobble ($\pm 7\text{ cents}$).
+   - Lifted bus gain to `0.55`, string bus to `0.58`, channel strip voicing to `+2 dB`, auto-strum velocity to `0.38`.
+   - Prioritized active chord pitch classes on ballistospore puffs and vitrine swipes to eliminate semitone rubs.
+4. Muscaria Transducer & Whole-Ensemble Hallucination Dynamics (`src/muscaria.mjs`, `src/schedulers.mjs`, `src/app.mjs`, `tests/muscaria.test.mjs`):
+   - Differentiated trip depths via `TRIP_DEPTH_CONFIGS`: `MILD` ($\pm 12\text{¢}$ warp, $\pm 24\text{ms}$ delay, $\pm 20\%$ filter), `DEEP` ($\pm 28\text{¢}$ warp, $\pm 50\text{ms}$ delay, $+0.12$ feedback swell, $\pm 45\%$ filter), and `TRANSCENDENT` ($\pm 60\text{¢}$ warp, $\pm 95\text{ms}$ delay, $+0.22$ feedback swell, $\pm 75\%$ filter).
+   - Enabled whole-ensemble entheogenic trip in `scheduleEnsembleStep()`: smooth Doppler delay line modulation via `setTargetAtTime`, delay feedback swell, parlor chamber reverb expansion, resonant creature filter sweeps, vocal choir formant liquefaction (`formantMultiplier` in `scheduleChantStep`), and master tape wow detune on lead voice (`tripWarpCents` in `scheduleNote`) and tonic drones.
+   - Enforced 100% modal closure and chord tone agreement in `generatePlantWaveNotes`, eliminating semitone clashes.
 5. Assets & Housekeeping:
-   - Added `"spore-harp.mjs"` to `MODULES` in `index.html` boot script and restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
-   - Updated `AGENTS.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/DECISIONS.md`, and `docs/HANDOFF.md`.
-   - Archived Session 82 to `docs/archive/sessions.md` to preserve the 10-session handoff window.
+   - Restamped `ASSET_VERSION` (`9035c44a14fc`) via `tools/stamp_assets.mjs`.
+   - Recorded D-100 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, and `docs/HANDOFF.md`.
+   - Archived Session 90 to `docs/archive/sessions.md` to preserve the 10-session handoff window.
 
 **Verified:**
-- `node --test tests/*.test.mjs`: 277/277 tests passing.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** User review of Phase 10 instruments or next roadmap phase.
-
-### Session 91 (2026-10-28): The Bone Forge & Crucible Beat Machine, Physical Percussion Synthesizers, and Somatic Dynamics (P10-02, D-090)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Candidate 2 of Phase 10: The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*) inspired by BoneAmanita's `TheForge` and `TheCrucible` (P10-02, D-090).
-
-**Done:** All parts implemented and verified under D-090. P10-02 marked complete. 270/270 tests pass.
-
-**Changed:**
-1. State & Somatic Model (`src/bone-beat.mjs`, `tests/bone-beat.test.mjs`):
-   - Created pure physical acoustic percussion model tracking Heat (°C, ambient 24°C, overheat 80°C), Voltage (0.0 to 20.0V), Dampeners (default 3), Instability, and Status (`TEMPERED`, `OVERHEAT`, `QUENCHED`, `SURGE`).
-   - Kinetic strikes accumulate thermal energy and voltage excitation.
-   - High voltage surges (> 14.0V) are absorbed by Crucible Dampeners, reducing voltage and damping rhythm.
-   - Overheat conditions (> 80°C) trigger automatic mineral brine steam quench on downbeats, cooling the forge and restoring dampeners.
-   - Deterministic polyrhythmic pattern composition (`composeBoneBeat`) generating Euclidean and cross-rhythm masks across 12-step and 16-step straight grid metres based on creature `beatMode`.
-2. Physical Acoustic Percussion Synthesizers (`src/bone-beat.mjs`):
-   - *Struck Bone (heavy):* Keratin pitch-drop click (1400 -> 380 Hz) and 210 Hz marrow cavity resonance.
-   - *Resonant Mineral Plate (stone):* Subterranean lithophone gong thud utilizing Bessel plate mode partials (1.0x, 2.29x, 3.42x over 82 Hz fundamental).
-   - *Tempered Brass Anvil (kinetic):* Piercing smithy pings with ringing metallic partials (1680 Hz, 2940 Hz, 4410 Hz).
-   - *Quenching Steam (quench):* Hot vapor release synthesizing white noise swept through a resonant bandpass filter (5800 -> 1600 Hz).
-3. UI & Transport Integration (`index.html`, `styles.css`, `src/app.mjs`):
-   - Added `#bone-forge-bar` inside Plate I (`#beat-engine`) with `#bone-beat-toggle`, `#bone-beat-strike`, `#bone-beat-quench`, and live `#bone-beat-telemetry`.
-   - Wired into `scheduleBeatStep`, routing through `currentTransport.beatBus` into mixer console Plate I strip, master compressor, parlor reverb send, and offline WAV loop / stem exports.
-   - Coupled vitrine taps and retaliation strikes directly to forge strikes and excitation.
-   - Isolated offline render states via `boneBeatModel: createBoneBeatModel(boneBeatModel)` on `offlineTransport` to avoid mutating live thermal parameters.
-4. Assets & Housekeeping:
-   - Added `"bone-beat.mjs"` to `MODULES` in `index.html` boot script and restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
-   - Updated `AGENTS.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/DECISIONS.md`, and `docs/HANDOFF.md`.
-   - Archived Session 79 to `docs/archive/sessions.md` to preserve the 10-session handoff window.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 270/270 tests passing.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** P10-03 The BioParasite Spore Harp (*Symbiotic Hyphal Plucks*) or user review of The Bone Forge & Crucible Beat Machine.
-
-### Session 90 (2026-10-28): The Aetheric Bone Theremin, BoneAmanita Resonances, and Vitrine Electrophone Synthesis (P10-01, D-089)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Candidate 1 of Phase 10: The Aetheric Bone Theremin (*The Thereminist / GLASS*) inspired by BoneAmanita (`~/PycharmProjects/BoneAmanita`), adding Candidate 3 (The Bone Beat Machine) and Candidate 4 (The BioParasite Spore Harp) to the roadmap (P10-01, D-089).
-
-**Done:** All parts implemented and verified under D-089. P10-01 marked complete. 261/261 tests pass.
-
-**Changed:**
-1. State & Metabolic Model (`src/theremin.mjs`, `tests/theremin.test.mjs`):
-   - Created pure physical-metabolic state model with dual virtual antennas: horizontal X-axis maps pitch across a 3-octave span defaulting to continuous analog glide (`scaleSnap: false`) with 40 ms portamento, plus optional creature scale degree quantization; vertical Y-axis maps proximity/gain.
-   - Modeled BoneAmanita somatic transitions calibrated to elapsed delta time: kinetic resin flow, stillness dwell with a 2.5s grace period before calcified slag ($0..1.0$) accumulates, turbulent flick melt ($> 0.32$), fluid note transitions without stochastic burst pings, trapped-in-amber muffling at threshold $20.0$, and critical collapse at threshold $100.0$.
-2. Web Audio Synthesizer Graph (`src/theremin.mjs`, `src/app.mjs`):
-   - Single warm singing triangle carrier oscillator and phase-locked sub-octave foundation ($0.5\times$, zero beating tremolo!).
-   - Static soft-clipping `WaveShaperNode` with smooth `slagDrive` input gain ramping ($1.0\dots 3.2$), eliminating real-time buffer reallocation and audio clicks.
-   - Resonant `BiquadFilterNode` with vacuum-tube warmth and dynamic amber muffling.
-   - Stereo `StereoPannerNode` tracking vitrine horizontal location.
-   - Multi-partial crystalline shatter tines ($2.76\times, 3.52\times, 4.18\times$ ratios) reserved strictly for critical collapse overloads.
-   - Dedicated master gain output routing adhering to mute, local control, and master volume.
-3. Canvas Overlays & DOM Pedestal Controls (`src/vitrine-canvas.mjs`, `index.html`, `styles.css`, `src/app.mjs`):
-   - Apparition Vitrine renders amber-golden pitch and volume antenna rays, glowing vacuum-tube node aura, dynamic branching calcification filaments, and faceted amber gem crystallization ring.
-   - Added `#theremin-bar` with `#theremin-toggle`, `#theremin-scale-snap`, and `#theremin-status` telemetry readout.
-   - Continuous audio interaction updates during vitrine pointermove, drag, and animation frames.
-4. Documentation & Roadmap:
-   - Added Phase 10 to `ROADMAP.md` (P10-01 marked complete, P10-02 and P10-03 added).
-   - Recorded D-089 in `docs/DECISIONS.md`.
-   - Updated `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, and `docs/HANDOFF.md`.
-   - Archived Session 78 to `docs/archive/sessions.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 261/261 checks passed (including 6 unit tests in `tests/theremin.test.mjs`).
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-- Restamped `ASSET_VERSION` via `node tools/stamp_assets.mjs`.
-
-**Next session should start with:** P10-02 The Bone Forge & Crucible Beat Machine (*The Bone Beat Machine*), modeling struck bone, resonant mineral plates, tempered brass, and quenching steam.
-
-### Session 89 (2026-10-28): Codebase Polish, Dead Code Pruning, 60 FPS Attractor Drawing Optimization, and DOM Wiring Consolidation (D-088)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Conduct an exhaustive polish and bugfix pass across the repository before proposing the next roadmap phase: prune orphaned code blocks and dead CSS, eliminate per-frame 60 FPS garbage generation in Canvas attractor drawing, cache recurring DOM queries during playback, and align UI selectors (D-088).
-
-**Done:** All parts implemented and verified under D-088. 255/255 tests pass.
-
-**Changed:**
-1. Zero-Allocation Canvas Attractor Rendering (`src/autopoiesis.mjs`, `src/vitrine-canvas.mjs`):
-   - Inlined Clifford strange attractor recurrence in `generateAttractorPoints()`, eliminating array destructuring and 440 small array allocations per frame.
-   - Reused static `attractorBuffer` in `src/vitrine-canvas.mjs` to eliminate `Float32Array` heap allocations.
-   - Batched 420 particle drawing operations into a single `beginPath()` -> `rect()` -> `fill()` path call, eliminating 420 individual canvas fill operations per frame.
-   - Added `Math.max(1, ...)` zero-dimension guards to `resize()` and backdrop gradient in `OracleVision`.
-2. Looper & Keep Wing DOM Performance & Selector Alignment (`src/app.mjs`, `styles.css`):
-   - Cached looper, cabinet, and Keep Wing segmented deck controls in top-level `elements = { ... }` in `src/app.mjs`, replacing inline `document.querySelector` lookups during playback steps.
-   - Fixed Keep Wing panel CSS selector to `.wing-keep:not([hidden])` in `styles.css`.
-   - Connected `.looper-role-tag` to looper tile badges and aligned Herbarium comparison trait classes (`.herbarium-compare-label`, `.herbarium-compare-row.is-match`).
-3. Dead Code & Orphaned Block Removal (`src/app.mjs`, `src/lolcode.mjs`, `styles.css`, `tests/`):
-   - Removed orphaned `const RHYTHMS` table in `src/app.mjs`.
-   - Pruned 21 unused import symbols in `src/app.mjs` and unused imports across 7 test suites.
-   - Removed dead `consume()` helper in `src/lolcode.mjs`.
-   - Removed stale `#fun-machine-rec`, `.fun-machine-actions`, and `.transport-hint` selectors from `styles.css`.
-4. Documentation & Verification:
-   - Restamped `ASSET_VERSION` in `index.html` via `tools/stamp_assets.mjs`.
-   - Recorded D-088 in `docs/DECISIONS.md`.
-   - Updated `docs/CHANGELOG.md` with version 1.4.4.
-   - Archived Session 77 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
-   - Updated `docs/HANDOFF.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 255/255 checks passed.
+- `node --test tests/*.test.mjs`: 305/306 checks passed (305 passed, 1 skipped).
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 - Zero-dependency boundary and phrase determinism contracts fully preserved.
 
-**Next session should start with:** Proposing the next roadmap phase (e.g., public hosting P6-01, new esoteric engine or synthesis expansions) based on maintainer goals.
-
-### Session 88 (2026-10-28): Restored 12-Step Triplet Metre Default for Natural Parlor Arrangements (D-087)
+### Session 99 (2026-10-29): BioParasite Spore Harp Acoustic Calibration, Harmonic Consonance Sieve, and Default State (D-097)
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Restore the 12-step compound shuffle metric grid as the default on fresh runs per maintainer direction, ensuring newly summoned creatures and initial loads embody the natural swing the generative score, motifs, and esoteric VM scripts were originally arranged around.
+**Goal:** Address user feedback that the BioParasite Spore Harp overpowered the rest of the ensemble by volume and dissonance, and set it to muted/off by default on summon and load.
 
-**Done:** Default restored, static UI aligned, and automated tests passing under D-087. 255/255 automated checks pass.
-
-**Changed:**
-1. Default Grid Steps (`src/tuning.mjs`, D-087):
-   - Set `DEFAULT_GRID_STEPS = 12` (preserving `GRID_STEPS_OPTIONS = [12, 16]`).
-2. Static Shell Alignment (`index.html`, D-087):
-   - Set `#transport-grid-steps` static button state to `12 STEPS (TRIPLET)` with `aria-pressed="false"`.
-   - Set `#transport-position` static readout to `STEP -- / 12`.
-   - Restamped `ASSET_VERSION` to `348c06057dfb` via `tools/stamp_assets.mjs`.
-3. Unit Testing & Decisions (`tests/metre.test.mjs`, `docs/DECISIONS.md`, `docs/CHANGELOG.md`):
-   - Updated `tests/metre.test.mjs` asserting `DEFAULT_GRID_STEPS === 12`.
-   - Recorded D-087 in `docs/DECISIONS.md`.
-   - Archived Session 76 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
-
-### Session 87 (2026-10-27): Ensemble Timbral Expansion Stage 2 — Plates I–V Archetype Synthesis Overhaul (P8-18, D-086)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Stage 2 of the ensemble timbral expansion (P8-18, D-086) per maintainer direction, overhauling the per-step Web Audio schedulers for Plates I–V in `src/schedulers.mjs` to unlock rich tonal, timbral, and acoustic variance across all eight respective archetypes.
-
-**Done:** All Stage 2 plate archetypes implemented, tested, and verified under D-086. 255/255 automated tests passing.
+**Done:** All acoustic, harmonic, and ergonomic issues resolved and verified under D-097. 294/295 tests pass (1 skipped).
 
 **Changed:**
-1. Malbolge Beat Machine (`src/schedulers.mjs`, D-086):
-   - Implemented 8 distinct kick, snare, and transient profiles driven by `score.beatMode` and `score.beatDensity`.
-   - Added triangle transient click oscillator (1450 Hz -> 120 Hz) for Automaton March (mode 0), Ossuary Polyrhythm (mode 3), and Telegram Clatter (mode 4).
-   - Added deep cavernous sub boom (28 Hz with 0.32s decay) and warm 780 Hz snare bandpass (Q 1.8) for Seance Waltz (mode 1).
-   - Added punchy triangle kick drop with tight 0.14s decay and 2200 Hz woodblock snare (Q 3.6) for Pendulum Galop (mode 2).
-   - Added ultra-snappy 3400 Hz metallic snare crack (Q 5.2, 42 ms decay) for Telegram Clatter (mode 4).
-   - Added heavy 350 ms bell kick drop (startFreq 1.6x base) with lower resonant snare body for Bell-Tower Toll (mode 5).
-   - Added step-modulated undulating snare bandpass filter center (950 +/- 350 Hz) for Ectoplasm Shuffle (mode 6).
-2. Brainfuck Walking Bass (`src/schedulers.mjs`, D-086):
-   - Synthesized 8 bass archetype characters driven by `score.bassMode`.
-   - Added upright double-bass fingerboard acoustic pluck transient (sine at 3.5x freq decaying in 20 ms) for Walking Cellar (mode 0).
-   - Added 303 resonant saw sweep with high filter Q (3.8 normal, 5.2 accented) and aggressive cutoff opening up to 3200 Hz for Acid Catacomb (mode 1).
-   - Added sub unison upper oscillator (`freq * 1`) and gentle 1.2 Q lowpass clamped below 420 Hz for clean room rumble in Subterranean Dub (mode 2).
-   - Added snappy plucky filter bite with fast 0.38x step duration and quick attack for Crypt Arpeggiator (mode 4).
-   - Added slow-attack bowed envelope (45 ms) with rich saw upper partials for Ghost Bow (mode 6).
-3. Befunge-93 Harmony Organ (`src/schedulers.mjs`, D-086):
-   - Mapped 8 organ stop timbres and registrations driven by `score.harmonyMode` across triangle, sawtooth, square, and sine waveforms.
-   - Added bright sawtooth lead voice with snappy 6 ms attack for Harpsichord Pinball (mode 1).
-   - Added slow 55 ms swell attack and scheduled an added 4' pipe stop oscillator at the upper octave (`freq * 2`) for Cathedral Swell (mode 2).
-   - Added fast 6 ms plucked attack and scheduled a crystalline inharmonic stop oscillator at `freq * 2.76` for Clockwork Celesta (mode 3).
-   - Configured hollow square/triangle registration for Phantom Calliope (mode 4) and ethereal pure sine triad for Glass Harmonica (mode 5).
-4. Piet/FRACTRAN Chimes & Pad (`src/schedulers.mjs`, D-086):
-   - Expanded 8 chime and pad modes driven by `score.chimeMode`.
-   - Scheduled inharmonic overtone oscillator at `1.52 * bellFreq` with heavy metallic peak gain (0.45x) for Balinese Gamelan (mode 5).
-   - Scaled pad filter cutoff dynamically with `score.chimeShimmer` (`shimmerBoost = (score.chimeShimmer - 50) * 4`), opening the spectral pad up to 3200 Hz.
-5. Shakespeare Formant Choir (`src/schedulers.mjs`, D-086):
-   - Modeled 8 dramatic vocal archetypes driven by `score.chantMode`.
-   - Scheduled pink noise buffer source through a breath gain envelope connected into the glottal mix for aspirated air turbulence in Witches' Coven (mode 1) and Ariel's Spirit (mode 2).
-   - Elevated formant frequencies by 1.25x (`formantShift * 1.25`) to model an ethereal high soprano vocal tract for Ariel's Spirit (mode 2).
-   - Drove sawtooth glottal source oscillator up to 0.65 gain for VODER Synthesizer (mode 4).
-   - Modulated formant filter Q dynamically with `score.chantFormant` (`resonanceBoost = (score.chantFormant - 25) * 0.04`).
-6. Automated Verification (`tests/utterance-coherence.test.mjs`):
-   - Added unit tests verifying distinct kick/snare frequency and decay profiles for beat modes 0, 1, 2, and transient clickers.
-   - Verified bass modes 0, 1, 2 for upright plucks, 303 acid resonant sweeps, and sub dub weight.
-   - Verified harmony modes 2 and 3 for cathedral 4' stops and celesta inharmonic overtone stops.
-   - Verified chime mode 5 for gamelan inharmonic overtones and shimmer modulation.
-   - Verified chant modes 1 and 2 for breath noise and soprano formant shift, plus formant resonance boost.
-   - Suite total increased from 254 to 255 tests, all passing cleanly.
-
-### Session 86 (2026-10-27): Ensemble Timbral Expansion Stage 1 — Lead Register Elevation & Mycelium Physical Modeling (P8-18, D-085)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Stage 1 of the ensemble timbral expansion (P8-18, D-085) per maintainer feedback, addressing two critical acoustic issues: (1) elevate the LOLCODE lead melody into singing register (C4–C6) with dynamic gate articulation, replace muddy `-12` sub-octave dragging voice stacks with shimmering overtones (`+12`, `+24`), and rebalance continuous drone sub-bass rumble so the melody soars cleanly; (2) ground the mycelium bio-acoustic droplet and spike fundamentals in `score.root` pitch class, and implement physical acoustic modeling in `scheduleFungalBioStep()` (woody shelf thumps for Bracket Conk, liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophores).
-
-**Done:** All Stage 1 improvements implemented, tested, and verified. 254/254 automated tests passing.
-
-**Changed:**
-1. Lead Synthesis & Articulation (`src/schedulers.mjs`, `src/ensemble.mjs`, `src/app.mjs`, D-085):
-   - Lifted notes below middle C (MIDI 60) by +12 semitones into the singing register (C4–C6, MIDI 60–84).
-   - Scaled attack/decay dynamics dynamically with `score.gate`: crisp gate produces punchy staccato pluck transients (5–12 ms) with clean note release, while legato gate produces smooth singing sustain.
-   - Replaced sub-octave dragging layers (`{ interval: -12 }`) in `voiceStack()` with singing overtones: octave shimmer (`+12`), wide chorused octaves, and double-octave brilliance (`+24`), eliminating low-end mud while preserving consonance rules against raw unconducted fifths (`interval: 7`).
-   - Rebalanced continuous drone sub-bass resting gain from 0.085 down to 0.045 in `src/ensemble.mjs` and `src/app.mjs`.
-2. Mycelium Bio-Acoustic Grounding & Physical Modeling (`src/mycelium.mjs`, `src/schedulers.mjs`, D-085):
-   - Anchored fundamental droplet and spike frequencies to `score.root` pitch class (`rootAnchor = 2 ** (((score.root % 12) - 6) / 24)`), ensuring different phrases and keys summon distinct bio-acoustic registers while preserving bloom tilt invariants.
-   - Extended sporophore decay envelopes and added physical acoustic modeling: hollow woody shelf resonance thumps (85 Hz -> 45 Hz) for Bracket Conk (form 1), liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophore forms.
-3. Automated Verification (`tests/utterance-coherence.test.mjs`, `tests/mycelium.test.mjs`):
-   - Added unit test asserting lead scheduler lifts low roots (30, 36, 48, 55) into singing register (>= MIDI 60) and confirms all voice stacks maintain non-negative intervals (`interval >= 0`).
-   - Added unit test asserting mycelium fundamental frequencies shift deterministically with root pitch class across different keys while keeping decay and peak parameters strictly bounded across all eight forms.
-   - Suite total increased from 252 to 254 tests, all passing with zero failures.
-
-### Session 85 (2026-10-27): Phase 9 Autopoiesis & Fractal Dynamics (P9-01, P9-02, P9-03, D-083) and 16-Step Progression & Metre Synchronization (P8-17, D-084)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement Phase 9 (P9-01, P9-02, P9-03, D-083) bringing autopoiesis and fractal dynamics to the Whimsy Machine: pure, zero-dependency discrete graph and 1D boundary solver for Project Navi's Creative Determinant (Nelson Spence's nonlinear elliptic boundary value problem $L\Phi = a\|\nabla\Phi\| + b\Phi - c(\Phi^+)^p$ modeling Coherence, Contradiction, and Care), Picard iteration steady-state solver, spectral viability check, Clifford/De Jong strange attractor generators, Apparition Vitrine glowing attractor dust and multi-octave Weierstrass fractal fluting, Tonnetz harmonic vitality fields, Fibonacci delay cascades, and self-similar fractal arpeggiation. Address maintainer feedback on 16-step mode and 4/4 bar lock tempo feel (P8-17, D-084), fixing Fun Machine one-finger chord progression pad truncation at step 12 and ensuring equal-duration quarter-note beats across all metres.
-
-**Done:** All parts implemented, documented, and verified. 252/252 automated tests pass.
-
-**Changed:**
-1. Mathematical Foundation (`src/autopoiesis.mjs`, P9-01, D-083):
-   - Pure zero-dependency discrete graph representations (`createRingGraph`, `createTonnetzGraph`, `buildGraph`, `isValidGraph`).
-   - Finite graph Laplacian $L$ with positive off-diagonals, symmetric adjacency, and boundary dissipation.
-   - Forward-difference gradient norm $\|\nabla\Phi\|_i$ and nonlinear reaction term $b\Phi - c(\Phi^+)^p$.
-   - Discrete Picard steady-state iteration with adaptive damping and convergence residual monitoring.
-   - Spectral viability verification via Gershgorin disc and Rayleigh quotient approximations checking $\lambda_1(L - \text{diag}(b)) < 0$.
-   - Clifford and De Jong strange attractor iteration with parameter derivation from phrase score (`attractorParamsFromScore`).
-   - Tonnetz harmonic vitality evaluation (`computeTonnetzHarmonicField`), Golden-Ratio Fibonacci fractal delay cascades (`fibonacciDelayTaps`), and self-similar recursive arpeggio sequence generation (`fractalArpeggioSequence`).
-2. Visual Morphogenesis (`src/vitrine-canvas.mjs`, P9-02, D-083):
-   - Enhanced `fluxOffset` with multi-octave self-similar Weierstrass fractal fluting preserving topological radius clamping ($[0.38, 1.08]$).
-   - Added `drawStrangeAttractorDust` rendering seed-deterministic Clifford strange attractor glowing particulate clouds inside `drawKineticCore`.
-3. 16-Step Metre Alignment & Chord Progression Temporal Synchronization (P8-17, D-084):
-   - `src/accompaniment.mjs`: Updated `strikeLength(performance, stepIndex)` to bound to `performance?.steps?.length ?? 12`, resolving the pad truncation bug where 16-step clock-synced chords cut off at step 12 (beat 3) instead of holding for all 16 steps of the bar. Parameterized `varyProgression(chords, key, genre, score, stride)` with `stride = stepsCount === 16 ? 4 : 3` to build a 16-chord spine in 16-step mode, preventing region chord wrap-around.
-   - `src/conductor.mjs`: Parameterized `buildFunProgression(rootSemitone, quality, genre, tonicRoot, stepsCount = 12)` to generate 16 steps (4 steps per region) in 16-step mode, locking lead melody offsets to region chord boundaries.
-   - `src/tuning.mjs`: Added `effectiveRhythmTemplate(rhythmIndex, stepsCount = 12, barLock44 = false)` with length-4 symmetric beat templates (`RHYTHMS_16`) and length-3 triplet templates (`RHYTHMS_LOCKED_12`), guaranteeing equal quarter-note beat durations ($60 / \text{BPM}$ seconds) and zero metric loop drift across both 16-step straight time and 12-step bar-locked time.
-   - `src/app.mjs`: Retuned delay echo line across tempo, genre, bar lock, and grid changes using scaled step unit duration.
-4. System Integration & Verification:
-   - Added `"autopoiesis.mjs"` to `MODULES` in `index.html`.
-   - Stamped asset version to `19e8cc68592b` via `tools/stamp_assets.mjs`.
-   - Created `tests/autopoiesis.test.mjs` with 7 rigorous test suites; extended `tests/utterance-coherence.test.mjs` with 16-step strike length and quarter-note beat symmetry tests (252/252 automated tests passing).
-   - Added `autopoietic-fractal-dynamics` to `docs/manual.json` (44 entries, 0 warnings) and rebuilt `manual.html`.
-   - Recorded D-083 and D-084 in `docs/DECISIONS.md`, updated `ROADMAP.md` (P9-01, P9-02, P9-03, P8-17), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/CHANGELOG.md` (v1.4.0, v1.4.1), and archived Session 73 in `docs/archive/sessions.md`.
+1. Off-by-Default State & Ergonomics (`src/spore-harp.mjs`, `src/app.mjs`, `index.html`, D-097):
+   - Initialized `createSporeHarpModel` with `enabled: false`.
+   - Initialized mixer state with `harp` channel muted by default (`setMuted(createMixerState(), "harp", true)`), resetting to muted on `RESET CONSOLE`.
+   - Updated `index.html` static `#spore-harp-toggle` button to `aria-pressed="false"`, `○ SPORE HARP: MUTED`, and telemetry to `SPORE HARP · MUTED`.
+   - Wired `#spore-harp-strum` ("STRUM HYPHAE") to automatically unmute and engage the harp when clicked.
+2. Gain Staging & Parlor Volume Taming (`src/ensemble.mjs`, `src/spore-harp.mjs`):
+   - Reduced `sporeHarpBus.gain` from 0.62 down to 0.36 (~-5 dB), placing it in the delicate ambient bed behind lead, organ, and choir.
+   - Reduced `stringBus.gain` from 0.55 down to 0.38.
+   - Softened plectrum click transient gain from 0.09 down to 0.035 * vel and starting frequency to 2200 Hz.
+   - Reduced auto-strum velocity from 0.35 down to 0.18, and paced secondary shimmer to half-bar boundaries (steps 0 and 6) at 0.10 velocity.
+   - Capped interactive vitrine swipe velocity to 0.72.
+3. Harmonic Consonance Sieve & Pure Octave Bloom (`src/spore-harp.mjs`):
+   - In `LICHEN` mode: Replaced the clashing unvoiced fifth ($f_0 \times 1.5$) with pure harmonic octave shimmer ($f_0 \times 2.0$), dropped gain from 0.18 to 0.05 * vel, and routed it through the damping lowpass filter.
+   - In `MUTUAL` mode: Replaced microtonal drop chirp with harmonic 3.0 -> 2.0 intervals and dropped gain to 0.06 * vel.
+   - Tamed `baseDecay` from 2.8s down to 0.35..1.3s, allowing strings to naturally clear before chord transitions.
+   - Reduced inharmonicity from 0.014 down to 0.0025, preserving organic wooden string feel without sour pitch detuning.
+   - In `scheduleSporeHarpStep`, introduced harmonic consonance scoring for candidate fallback, explicitly rejecting semitone ($|d|=1$) and tritone ($|d|=6$) clashes against active chords.
+4. Documentation & Verification:
+   - Restamped asset version `ed33d9bb0a09` via `tools/stamp_assets.mjs`.
+   - Recorded D-097 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
+   - Archived Session 89 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
 
 **Verified:**
-- `node --test tests/*.test.mjs`: 252/252 checks passed.
+- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Zero-dependency boundary and phrase determinism contracts fully preserved.
+
+### Session 98 (2026-10-29): QA Performance Audit, Firefox Gecko/SWGL 2D Canvas Stabilization, and Web Audio Node Lifecycle Pruning (D-096)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Diagnose and resolve severe browser freezing and high resource consumption reported when running the application in Firefox ("almost crashed their firefox").
+
+**Done:** All root causes identified, remediated, verified with unit and regression test suite, and documented. 294/295 tests passing (1 skipped).
+
+**Changed:**
+1. Canvas 2D Gecko & Software Skia Rasterization Guardrails (`src/vitrine-canvas.mjs`):
+   - Eliminated Gaussian blur context leaks in `drawCellularAppendage`: clamped outer hull `shadowBlur` to $\le 10\text{px}$ and explicitly reset `ctx.shadowBlur = 0;` immediately after outer hull fill/stroke across all 10 appendage archetypes.
+   - Enforced an explicit `ctx.shadowBlur = 0;` reset at the entry of `drawAppendageOrganelle`.
+   - Clamped creature body bloom `shadowBlur` from `score.bloom * 0.62` down to `this.reducedMotion ? 0 : Math.min(18, score.bloom * 0.28)`.
+   - Pre-computed `particleColors` array outside the 145-particle attractor loop, eliminating 145 string allocations and CSS color parses per frame.
+   - Batched 24 individual pedestal lichen arc fills into a single path and fill.
+   - Replaced per-frame `ctx.createRadialGradient` allocations in `drawMuscariaTransducer` action-potential spark rendering with layered alpha glow fills.
+   - Capped chromatic aberration ghost vertices to $\min(120, points)$.
+2. Web Audio Node Lifecycle Pruning & Zombie Graph Elimination (`src/schedulers.mjs`, `src/voices.mjs`, `src/spore-harp.mjs`, `src/bone-beat.mjs`, `src/muscaria.mjs`, `src/theremin.mjs`):
+   - Implemented `cleanupOnEnded(source, ...nodes)` helper attaching an `onended` handler to transient audio sources to disconnect all intermediate nodes (`GainNode`, `BiquadFilterNode`, `StereoPannerNode`, `DelayNode`, `OscillatorNode`) once sound playback completes.
+   - Wired lifecycle pruning across all 10 ensemble channels, the parlor escapement clockwork ticks, vitrine impacts, spore puffs, theremin tine shatters, and Fun Machine synths.
+   - Completely resolved Gecko `AudioNodeEngine` retention of dead nodes, eliminating audio thread starvation and browser freezes.
+3. Automated QA Performance Test Suite (`tests/qa-performance.test.mjs`):
+   - Verified that 100% of transient audio sources attach `onended` cleanup and simulate disconnects on playback completion.
+   - Verified Canvas 2D rasterization guardrails in source and runtime behavior.
+   - Stress-tested continuous playback at 240 BPM across 7 diverse phrases without producing NaN or infinite values.
+4. Documentation & Decision:
+   - Recorded D-096 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Zero-dependency boundary and phrase determinism contracts fully preserved.
+
+### Session 97 (2026-10-28): Musicological Dynamic Alignment, "The Creature's Own" Modal Preservation, and Creature Lead Synthesis
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address three musicological and acoustic issues raised by user testing:
+1. Fun Machine chord progression alignment with ensemble and key stability when keys are held long enough.
+2. Distinct dynamic rulebook generation and melodic modal diversity for "THE CREATURE'S OWN".
+3. Lead voice timbral diversity between phrases.
+4. Clarify the role, state, and visual indicators of the "AS WRITTEN" toggle.
+
+**Done:** All 4 areas investigated, implemented, and verified. 291/292 tests passing (1 skipped).
+
+**Changed:**
+1. Dynamic Fun Machine Progression Derivation (`src/creature-rulebook.mjs`, `src/conductor.mjs`):
+   - Implemented dynamic `customProgressions` generation in `buildCreatureBook` mapping `progressionByInterval` to the creature's own 4 regions and scale rather than inheriting the borrowed character's tables.
+   - Preserves exact harmonic alignment across all 4 passes when holding a key in progression style on the manual.
+   - Updated `harmonicPassAt()` in `src/app.mjs` so live held keys walk the 4-pass harmonic cycle smoothly across downbeats without getting locked to pass 0 when a single loop exists in `song`.
+2. Modal Melody Tone Preservation for "The Creature's Own" (`src/conductor.mjs`, `src/creature-rulebook.mjs`):
+   - Enabled scale tone preservation on passing beats (`allowPassing && book.code === CREATURE_GENRE`) in `projectWithinGenre()` when consonant under Euler Gradus ($G \le 8$) and not an avoid note against the chord (`avoidNoteResolution(pc, chord) === null`).
+   - Restored distinct phrase scales and modal colors (Dorian 6ths, Phrygian flat-2nds, Lydian sharp-4ths, Mixolydian 7ths, Blues blue notes) that were previously collapsed into identical `[0, 3, 7]` triad arpeggios.
+   - Broadened candidate root selection in `buildCreatureBook()` using `score.harmonySwap` and `score.harmonyBorrow`, yielding 118 distinct progressions over 200 creatures.
+3. Creature Lead Timbre & Voice Synthesis Overhaul (`src/schedulers.mjs`):
+   - Upgraded `scheduleNote()` to dynamically read and synthesize the creature's assigned voice patch via `creatureVoice(score).lead`.
+   - Connected dynamic ADSR envelopes (attack, sustain ratio, sustainTau), voice filter cutoff and Q, vocal formant bandpass filters (Æther Choir), delayed operatic vibrato LFO, and detune spread scaling (`score.funSpread`).
+4. "AS WRITTEN" UX and Telemetry Clarification (`src/app.mjs`):
+   - Updated the "AS WRITTEN" toggle to explicitly display `AS WRITTEN [ON]` when variations are bypassed and `AS WRITTEN [OFF]` when creature variations are active.
+   - Updated tooltips and telemetry announcing whether canonical rulebook changes are sounding or creature variation moves are active.
+5. Assets & Documentation:
+   - Restamped `ASSET_VERSION` to `30ed23078c6d` via `tools/stamp_assets.mjs`.
+   - Archived Sessions 87 and 88 to `docs/archive/sessions.md` to maintain the 10-session handoff window.
 
 

@@ -265,14 +265,26 @@ export const FUN_KEY_MAP = Object.freeze([
   { semitone: 10, note: "A♯", isBlack: true, key: "KeyU", displayKey: "U" },
   { semitone: 11, note: "B", isBlack: false, key: "KeyJ", displayKey: "J" },
   { semitone: 12, note: "C'", isBlack: false, key: "KeyK", displayKey: "K" },
+  { semitone: 13, note: "C'♯", isBlack: true, key: null, displayKey: null },
+  { semitone: 14, note: "D'", isBlack: false, key: null, displayKey: null },
+  { semitone: 15, note: "D'♯", isBlack: true, key: null, displayKey: null },
+  { semitone: 16, note: "E'", isBlack: false, key: null, displayKey: null },
+  { semitone: 17, note: "F'", isBlack: false, key: null, displayKey: null },
+  { semitone: 18, note: "F'♯", isBlack: true, key: null, displayKey: null },
+  { semitone: 19, note: "G'", isBlack: false, key: null, displayKey: null },
+  { semitone: 20, note: "G'♯", isBlack: true, key: null, displayKey: null },
+  { semitone: 21, note: "A'", isBlack: false, key: null, displayKey: null },
+  { semitone: 22, note: "A'♯", isBlack: true, key: null, displayKey: null },
+  { semitone: 23, note: "B'", isBlack: false, key: null, displayKey: null },
+  { semitone: 24, note: "C''", isBlack: false, key: null, displayKey: null },
 ]);
 
 export const FUN_KEY_BY_CODE = Object.freeze(
-  Object.fromEntries(FUN_KEY_MAP.map((item) => [item.key, item])),
+  Object.fromEntries(FUN_KEY_MAP.filter((item) => item.key).map((item) => [item.key, item])),
 );
 
 export const FUN_KEY_BY_KEY = Object.freeze(
-  Object.fromEntries(FUN_KEY_MAP.map((item) => [item.displayKey, item])),
+  Object.fromEntries(FUN_KEY_MAP.filter((item) => item.displayKey).map((item) => [item.displayKey, item])),
 );
 
 export function buildFunChord(rootSemitone, quality = "auto", genre = null, tonicRoot = 0) {
@@ -333,10 +345,12 @@ export function buildFunProgression(rootSemitone, quality = "auto", genre = null
   const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
   const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
   const books = rulebooks();
+  const book = genreBook(genre);
   const tableId = quality === "auto" || !quality
-    ? genreBook(genre).progressionByInterval[relFromTonic]
+    ? book.progressionByInterval[relFromTonic]
     : books.qualityProgressions[quality] ?? books.qualityProgressions.major;
-  const rows = books.progressions[tableId];
+  const rows = (book.customProgressions && book.customProgressions[tableId])
+    ?? books.progressions[tableId];
   const chordDefs = rows.map((row) => ({ root: (r + row.degree) % 12, quality: row.quality, melodyOffsets: row.melody }));
   const summary = rows.map((row, i) => row.shown.replace("[root]", PITCH_NAMES[chordDefs[i].root])).join(" → ");
 
@@ -495,10 +509,24 @@ function projectWithinGenre(rawSemitone, chord, allowPassing, maxGradus, book) {
     return octave + snapToNearest(pc, melody.tonesByStrictness[strictness].map((tone) => (chord.root + tone) % 12));
   }
   if (melody.method === "members") {
+    if (allowPassing && book.code === CREATURE_GENRE) {
+      const candRel = ((pc - chord.root) % 12 + 12) % 12;
+      const g = SEMITONE_GRADUS[candRel];
+      if (g <= maxGradus && !avoidNoteResolution(pc, chord)) {
+        return octave + pc;
+      }
+    }
     const candidates = [...melody.members.map((member) => chordMember(chord, member)), ...melody.extensions.map((tone) => (chord.root + tone) % 12)];
     return octave + snapToNearest(pc, candidates);
   }
   if (melody.method === "chord") {
+    if (allowPassing && book.code === CREATURE_GENRE) {
+      const candRel = ((pc - chord.root) % 12 + 12) % 12;
+      const g = SEMITONE_GRADUS[candRel];
+      if (g <= maxGradus && !avoidNoteResolution(pc, chord)) {
+        return octave + pc;
+      }
+    }
     return octave + snapToNearest(pc, chord.pitchClasses);
   }
 

@@ -70,7 +70,7 @@ const REQUIRED_RANGES = Object.freeze({
   ...Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`step_${index}`, [0, 8]])),
 });
 
-const NAME_PARTS = Object.freeze({
+export const NAME_PARTS = Object.freeze({
   first: [
     "CERULEAN", "VELVET", "WOBBLING", "LUMINOUS", "TINY", "ANCIENT", "POLITE", "ILLEGAL",
     "SLEEPY", "ELECTRIC", "WAYWARD", "GENTLE", "FURIOUS", "GLASS", "SECRET", "MOSSY",
@@ -159,7 +159,7 @@ export const FUNGAL_NAMES = Object.freeze([
   "HYPHAL HYDRA",
 ]);
 
-function creatureName(values) {
+export function creatureName(values) {
   const adjective = NAME_PARTS.first[values.name_a];
   const noun = NAME_PARTS.second[values.name_b];
   const action = NAME_PARTS.third[values.name_c];
@@ -287,6 +287,7 @@ export function parseScore(lines, seed, phrase) {
     curiosaClass: CURIOSA_CLASSES[values.folio_series],
     folioId: formatFolioId(seed, values.folio_series, values.bell_jar),
     steps: Object.freeze(steps),
+    rawValues: Object.freeze({ ...values }),
     name: creatureName(values),
   });
 }

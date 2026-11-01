@@ -512,7 +512,7 @@ test("Audit Dimension 6: Apparition Vitrine silhouette radius clamping and proce
   }
 });
 
-test("Audit Dimension 7 (Extended): Session migrations from legacy schemas v1–v5 and corruption recovery", () => {
+test("Audit Dimension 7 (Extended): Session migrations from legacy schemas v1–v5 and corruption recovery", async () => {
   const baseV1 = {
     format: SESSION_FORMAT,
     version: 1,
@@ -572,6 +572,23 @@ test("Audit Dimension 7 (Extended): Session migrations from legacy schemas v1–
   assert.throws(() => validateSession({ ...baseV1, tempo: 999 }), (err) => err instanceof SessionError && err.path === "session.tempo");
   assert.throws(() => validateSession({ ...baseV1, genre: "nonexistent_genre" }), (err) => err instanceof SessionError && err.path === "session.genre");
   assert.throws(() => validateSession("not an object"), (err) => err instanceof SessionError && err.path === "session");
+
+  // Preset reading safety before rulebook compilation (P5-23, D-033 invariant)
+  const appSrc = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.ok(
+    appSrc.includes("function renderPresetList(selectName = null) {\n  const list = elements.sessionPresetList;\n  if (!list || !rulebooksInstalled()) return;"),
+    "renderPresetList must guard against uninstalled rulebooks"
+  );
+  assert.ok(
+    appSrc.includes("function syncSessionButtons() {\n  const ready = Boolean(currentScore);\n  if (!rulebooksInstalled()) {"),
+    "syncSessionButtons must guard against uninstalled rulebooks"
+  );
+  const topLevelSyncMatches = appSrc.match(/^syncSessionButtons\(\);/gm) || [];
+  assert.equal(
+    topLevelSyncMatches.length,
+    0,
+    "syncSessionButtons() must not be called at top level before boot() installs rulebooks"
+  );
 });
 
 test("Audit Dimension 8 (Extended): URL fragment #omen=... encoding and specimen filename generation", () => {

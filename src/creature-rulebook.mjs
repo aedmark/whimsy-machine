@@ -51,9 +51,9 @@ export function buildCreatureBook(score, rulebooks) {
 
   const regions = path.map((functionId, region) => {
     const { name, roots } = grammar.functions[functionId];
-    // Home is always the tonic itself; elsewhere a bit of harmony_swap may
-    // pass over the function's first choice for its next.
-    const start = region === 0 ? 0 : (score.harmonySwap >> region) & 1;
+    // Home is always the tonic itself; elsewhere harmony_swap and harmony_borrow
+    // explore the function's candidate roots that the scale holds.
+    const start = region === 0 ? 0 : (((score.harmonySwap >> (region - 1)) + ((score.harmonyBorrow || 0) * region)) % roots.length);
     // A chord with a third on any candidate root beats a suspended, open,
     // or diminished one: a Phrygian creature leans home on ♭II, not v°.
     const order = roots.map((_, k) => roots[(start + k) % roots.length]).filter((root) => scale.includes(root));
@@ -89,6 +89,23 @@ export function buildCreatureBook(score, rulebooks) {
     ? Object.freeze({ method: "members", members: Object.freeze(character.melody.members.filter((member) => TRIAD_MEMBERS.has(member))), extensions: Object.freeze([]) })
     : character.melody.method === "scale" ? Object.freeze({ method: "chord" }) : character.melody;
 
+  // The creature's progression on the Fun Machine follows its own four regions and scale.
+  const creatureProgId = "creature_progression";
+  const creatureProgRows = Object.freeze(regions.map((reg) => Object.freeze({
+    degree: reg.degree,
+    quality: reg.quality,
+    melody: Object.freeze([
+      reg.tones[0] ?? 0,
+      reg.tones[1] ?? reg.tones[0] ?? 0,
+      reg.tones[2] ?? reg.tones[1] ?? reg.tones[0] ?? 7,
+    ]),
+    shown: `[root] ${numeral(reg.degree, reg.quality)}`,
+  })));
+  const customProgressions = Object.freeze({
+    [creatureProgId]: creatureProgRows,
+  });
+  const progressionByInterval = Object.freeze(Array.from({ length: 12 }, () => creatureProgId));
+
   return Object.freeze({
     ...character,
     organ,
@@ -99,6 +116,8 @@ export function buildCreatureBook(score, rulebooks) {
     motto: `Written from its ${SCALE_NAMES[score.scale].toLowerCase()} scale, ${path.map((f) => grammar.functions[f].name).join(" → ")}, in the character of ${character.name}.`,
     character: character.code,
     colouring,
+    progressionByInterval,
+    customProgressions,
     feel: "",
     spine: Object.freeze({ method: "table", steps: Object.freeze(regions.flatMap((row) => [row, row, row]).map((row) => Object.freeze({ ...row, tones: Object.freeze([...row.tones]) }))) }),
   });

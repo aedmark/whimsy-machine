@@ -27,11 +27,15 @@ test("the static entry points exist", async () => {
     "src/conductor.mjs",
     "src/ensemble.mjs",
     "src/fractran.mjs",
+    "src/history.mjs",
+    "src/live-recorder.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
     "src/midi.mjs",
+    "src/midi-learn.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
+    "src/part-lock.mjs",
     "src/schedulers.mjs",
     "src/score.mjs",
     "src/session.mjs",
@@ -39,6 +43,7 @@ test("the static entry points exist", async () => {
     "src/shakespeare.mjs",
     "src/intercal.mjs",
     "src/transport.mjs",
+    "src/view-mode.mjs",
     "src/vitrine-canvas.mjs",
     "src/zip.mjs",
     "src/oracle.lol",
@@ -375,11 +380,15 @@ test("the application has no remote runtime assets", async () => {
     "src/conductor.mjs",
     "src/ensemble.mjs",
     "src/fractran.mjs",
+    "src/history.mjs",
+    "src/live-recorder.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
     "src/midi.mjs",
+    "src/midi-learn.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
+    "src/part-lock.mjs",
     "src/schedulers.mjs",
     "src/score.mjs",
     "src/session.mjs",
@@ -387,6 +396,7 @@ test("the application has no remote runtime assets", async () => {
     "src/shakespeare.mjs",
     "src/intercal.mjs",
     "src/transport.mjs",
+    "src/view-mode.mjs",
     "src/vitrine-canvas.mjs",
     "src/zip.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
@@ -614,7 +624,7 @@ test("the session ledger saves presets on-device and .fun files through the vali
   const sessionAt = html.indexOf('id="session-engine"');
   const beatAt = html.indexOf('id="beat-engine"');
   assert.ok(mixerAt < beatAt && beatAt < sessionAt);
-  for (const id of ["session-preset-name", "session-save-preset", "session-preset-list", "session-load-preset", "session-delete-preset", "session-save-file", "session-open-file", "session-file-input"]) {
+  for (const id of ["session-preset-name", "session-save-preset", "session-update-preset", "session-preset-list", "session-load-preset", "session-clone-preset", "session-rename-preset", "session-delete-preset", "session-save-file", "session-open-file", "session-export-bank", "session-open-bank", "session-file-input", "session-bank-input"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   assert.match(html, /<label for="session-preset-name">/);

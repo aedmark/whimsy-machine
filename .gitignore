@@ -20,6 +20,9 @@ firmware-c/*.elf
 firmware-c/*.o
 firmware-c/*.obj
 
+# CLAP plugin build artifacts
+plugin-clap/build/
+
 # IDE & OS junk
 .idea/
 .vscode/

@@ -311,6 +311,7 @@ export function triggerBoneStrike(context, destination, type = "bone", atTime = 
     clickOsc.connect(clickGain).connect(destination);
     clickOsc.start(time);
     clickOsc.stop(time + 0.025);
+    clickOsc.onended = () => { try { clickGain?.disconnect?.(); } catch {} };
 
     // B) Hollow marrow cavity body resonance (210 Hz bandpass)
     const bodyOsc = context.createOscillator();
@@ -331,6 +332,7 @@ export function triggerBoneStrike(context, destination, type = "bone", atTime = 
     bodyOsc.connect(bodyFilter).connect(bodyGain).connect(destination);
     bodyOsc.start(time);
     bodyOsc.stop(time + 0.10);
+    bodyOsc.onended = () => { try { bodyFilter?.disconnect?.(); bodyGain?.disconnect?.(); } catch {} };
   } else if (type === "mineral") {
     // Resonant Mineral Plate: deep subterranean stone gong thud with plate Bessel modes
     const fundamental = 82; // E2 mineral plate
@@ -351,6 +353,7 @@ export function triggerBoneStrike(context, destination, type = "bone", atTime = 
       osc.connect(gain).connect(destination);
       osc.start(time);
       osc.stop(time + decay + 0.01);
+      osc.onended = () => { try { gain?.disconnect?.(); } catch {} };
     }
   } else if (type === "brass") {
     // Tempered Brass Anvil: piercing metallic ping with ringing anvil partials
@@ -371,6 +374,7 @@ export function triggerBoneStrike(context, destination, type = "bone", atTime = 
       osc.connect(gain).connect(destination);
       osc.start(time);
       osc.stop(time + decay + 0.01);
+      osc.onended = () => { try { gain?.disconnect?.(); } catch {} };
     }
   }
 }
@@ -411,4 +415,5 @@ export function triggerQuenchSteam(context, destination, atTime = null, intensit
   noise.connect(filter).connect(gain).connect(destination);
   noise.start(time);
   noise.stop(time + duration + 0.01);
+  noise.onended = () => { try { filter?.disconnect?.(); gain?.disconnect?.(); } catch {} };
 }

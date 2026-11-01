@@ -37,7 +37,7 @@ export const CHANNEL_VOICING_DB = Object.freeze({
   chant: 12,
   // The per-form mycelium voices sit at unity as subtle ambient bio-acoustics (D-093).
   fungal: 0,
-  harp: 0,
+  harp: 2,
 });
 
 export function voicingGain(id) {
@@ -67,7 +67,7 @@ export function creatureFilter(score) {
 }
 const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5, 0.75]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
-const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
+export const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
 
 // Parlor room levels per unit of the ambience slider. The crackle was halved
 // after listening found it overpowered the band (it had been 0.42). The
@@ -197,7 +197,7 @@ export function buildEnsembleGraph(context, score, {
   fungalBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fungal, now);
   funBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fun, now);
   forgeBus.gain.setValueAtTime(0.70, now);
-  sporeHarpBus.gain.setValueAtTime(0.62, now);
+  sporeHarpBus.gain.setValueAtTime(0.55, now);
   const creature = creatureFilter(score);
   filter.type = creature.type;
   filter.frequency.value = creature.cutoff;

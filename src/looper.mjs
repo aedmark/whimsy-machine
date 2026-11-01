@@ -22,7 +22,10 @@ export const MAX_LAYERS = 4;
 export const MAX_REPEATS = 8;
 // Exports render the whole song, so its length is bounded (D-039).
 export const MAX_SONG_PASSES = 32;
-const MAX_KEY = 12;
+export const MAX_KEY = 24;
+export const MIN_OCTAVE = -2;
+export const MAX_OCTAVE = 2;
+export const DEFAULT_OCTAVE = 0;
 export const SLOT_VOICES = Object.freeze([CREATURE_VOICE_ID, ...VOICE_IDS]);
 export const LOOP_ROLES = Object.freeze(["intro", "main", "bridge", "outro"]);
 export const DEFAULT_LOOP_ROLE = "main";
@@ -42,11 +45,13 @@ export function emptyTake(steps = LOOP_STEPS) {
   return Object.freeze(Array(steps || LOOP_STEPS).fill(null));
 }
 
-export function makeSlot(key, style, voice = DEFAULT_VOICE_ID) {
+export function makeSlot(key, style, voice = DEFAULT_VOICE_ID, octave = DEFAULT_OCTAVE) {
   if (!Number.isInteger(key) || key < 0 || key > MAX_KEY) throw new RangeError(`A slot's key must be 0..${MAX_KEY}`);
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
   if (!SLOT_VOICES.includes(voice)) throw new RangeError(`Unknown voice: ${voice}`);
-  return Object.freeze({ key, style, voice });
+  const oct = Number.isInteger(octave) ? octave : DEFAULT_OCTAVE;
+  if (oct < MIN_OCTAVE || oct > MAX_OCTAVE) throw new RangeError(`A slot's octave must be ${MIN_OCTAVE}..${MAX_OCTAVE}`);
+  return Object.freeze({ key, style, voice, octave: oct });
 }
 
 export function isEmptyTake(take) {
@@ -211,7 +216,7 @@ export function setSectionVoices(song, voice, selectedLoopIndex = null) {
       const nextTake = take.map((slot) => {
         if (!slot || slot.voice === voice) return slot;
         takeChanged = true;
-        return makeSlot(slot.key, slot.style, voice);
+        return makeSlot(slot.key, slot.style, voice, slot.octave ?? DEFAULT_OCTAVE);
       });
       if (!takeChanged) return take;
       loopChanged = true;
@@ -245,7 +250,7 @@ export function transposeSectionLoops(song, oldRoot, newRoot) {
         const nextKey = ((slot.key + delta) % 12 + 12) % 12;
         if (nextKey === slot.key) return slot;
         takeChanged = true;
-        return makeSlot(nextKey, slot.style, slot.voice);
+        return makeSlot(nextKey, slot.style, slot.voice, slot.octave ?? DEFAULT_OCTAVE);
       });
       if (!takeChanged) return take;
       loopChanged = true;
@@ -436,12 +441,17 @@ export function validateSong(raw, path = "song", { legacy = false } = {}) {
       const slots = take.map((slot, step) => {
         const slotPath = `${takePath}[${step}]`;
         if (slot === null) return null;
-        expectExactKeys(slot, slotPath, legacy ? ["key", "style"] : ["key", "style", "voice"]);
+        const hasOctave = !legacy && slot.octave !== undefined;
+        expectExactKeys(slot, slotPath, legacy ? ["key", "style"] : (hasOctave ? ["key", "style", "voice", "octave"] : ["key", "style", "voice"]));
         if (!Number.isInteger(slot.key) || slot.key < 0 || slot.key > MAX_KEY) throw new SongError(`${slotPath}.key`, `must be an integer 0..${MAX_KEY}`);
         if (!ACCOMPANIMENT_STYLES.includes(slot.style)) throw new SongError(`${slotPath}.style`, `must be one of ${ACCOMPANIMENT_STYLES.join(", ")}`);
         const voice = legacy ? DEFAULT_VOICE_ID : slot.voice;
         if (!SLOT_VOICES.includes(voice)) throw new SongError(`${slotPath}.voice`, `must be one of ${SLOT_VOICES.join(", ")}`);
-        return Object.freeze({ key: slot.key, style: slot.style, voice });
+        const octave = hasOctave ? slot.octave : DEFAULT_OCTAVE;
+        if (!Number.isInteger(octave) || octave < MIN_OCTAVE || octave > MAX_OCTAVE) {
+          throw new SongError(`${slotPath}.octave`, `must be an integer ${MIN_OCTAVE}..${MAX_OCTAVE}`);
+        }
+        return Object.freeze({ key: slot.key, style: slot.style, voice, octave });
       });
       if (loop.role !== "main" && slots.every((slot) => slot === null)) throw new SongError(takePath, "must hold at least one key");
       return Object.freeze(slots);

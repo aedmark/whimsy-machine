@@ -4,19 +4,23 @@ import test from "node:test";
 import {
   HARP_STRING_COUNT,
   HARP_SYMBIOSIS_MODES,
+  HARP_TENSION_PRESETS,
   buildHyphalStrings,
   checkStringIntersection,
   createSporeHarpModel,
   cycleSymbiosis,
+  cycleTension,
   formatSporeHarpTelemetry,
+  formatTensionLabel,
   pluckHyphalString,
   scheduleSporeHarpStep,
   strumHarp,
+  triggerHyphalPluck,
 } from "../src/spore-harp.mjs";
 
 test("spore harp model initializes with symbiotic defaults", () => {
   const model = createSporeHarpModel();
-  assert.equal(model.enabled, true);
+  assert.equal(model.enabled, false);
   assert.equal(model.symbiosis, "LICHEN");
   assert.equal(model.tension, 1.0);
   assert.equal(model.autoStrum, true);
@@ -24,13 +28,13 @@ test("spore harp model initializes with symbiotic defaults", () => {
   assert.deepEqual(model.strings, []);
 
   const custom = createSporeHarpModel({
-    enabled: false,
+    enabled: true,
     symbiosis: "CORDYCEPS",
     tension: 1.4,
     autoStrum: false,
     totalPlucks: 12,
   });
-  assert.equal(custom.enabled, false);
+  assert.equal(custom.enabled, true);
   assert.equal(custom.symbiosis, "CORDYCEPS");
   assert.equal(custom.tension, 1.4);
   assert.equal(custom.autoStrum, false);
@@ -54,13 +58,62 @@ test("buildHyphalStrings constructs 8 tuned strings spanning creature scale", ()
     assert.ok(str.x1 < str.x2, "Strings must stretch from left anchor to right anchor");
   }
 
-  // Pitch must ascend across the strings
+  // Pitch must ascend across the strings and occupy the sparkling concert harp register (>= C4, MIDI 60)
   assert.ok(strings[0].frequency < strings[strings.length - 1].frequency);
+  assert.ok(strings[0].midi >= 60, `base string must be in concert register (>= 60), got ${strings[0].midi}`);
+});
+
+test("cycleTension cycles through tension presets and formatTensionLabel renders accurately", () => {
+  const model = createSporeHarpModel({ tension: 1.0 });
+  assert.equal(formatTensionLabel(model.tension), "1.0× CONCERT");
+
+  assert.equal(cycleTension(model), 1.25);
+  assert.equal(formatTensionLabel(model.tension), "1.25× TIGHT");
+
+  assert.equal(cycleTension(model), 1.5);
+  assert.equal(formatTensionLabel(model.tension), "1.5× BRILLIANT");
+
+  assert.equal(cycleTension(model), 0.75);
+  assert.equal(formatTensionLabel(model.tension), "0.75× WARM");
+
+  assert.equal(cycleTension(model), 1.0);
+  assert.equal(formatTensionLabel(model.tension), "1.0× CONCERT");
+});
+
+test("triggerHyphalPluck synthesizes all 4 symbiosis archetypes cleanly on Web Audio graph", () => {
+  const fakeContext = {
+    currentTime: 0,
+    createOscillator: () => ({
+      type: "triangle",
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      detune: { setValueAtTime: () => {} },
+      connect: (n) => n,
+      start: () => {},
+      stop: () => {},
+    }),
+    createGain: () => ({
+      gain: { setValueAtTime: () => {}, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      connect: (n) => n,
+    }),
+    createBiquadFilter: () => ({
+      type: "lowpass",
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      Q: { setValueAtTime: () => {} },
+      connect: (n) => n,
+    }),
+  };
+  const dest = fakeContext.createGain();
+
+  for (const mode of HARP_SYMBIOSIS_MODES) {
+    assert.doesNotThrow(() => {
+      triggerHyphalPluck(fakeContext, dest, 440, 0.8, { symbiosis: mode });
+    }, `symbiosis ${mode} must synthesize cleanly`);
+  }
 });
 
 test("pluckHyphalString excites string vibration and deposits spore density", () => {
   const score = { root: 60, scale: 0 };
-  const model = createSporeHarpModel();
+  const model = createSporeHarpModel({ enabled: true });
   model.strings = buildHyphalStrings(score);
 
   const initialPlucks = model.totalPlucks;
@@ -81,7 +134,7 @@ test("pluckHyphalString excites string vibration and deposits spore density", ()
 
 test("strumHarp sweeps all 8 strings in ascending and descending directions", () => {
   const score = { root: 60, scale: 0 };
-  const model = createSporeHarpModel();
+  const model = createSporeHarpModel({ enabled: true });
   model.strings = buildHyphalStrings(score);
 
   const ascending = strumHarp(model, { direction: 1, velocity: 0.8, staggerMs: 30 });
@@ -125,7 +178,7 @@ test("checkStringIntersection detects crossing movements and proximity", () => {
 });
 
 test("formatSporeHarpTelemetry reflects active and muted states", () => {
-  const model = createSporeHarpModel();
+  const model = createSporeHarpModel({ enabled: true });
   model.strings = [{}, {}, {}, {}, {}, {}, {}, {}];
 
   assert.match(formatSporeHarpTelemetry(model), /SPORE HARP · 8 HYPHAE · LICHEN · TENS 1\.0 · 0 PLUCKS/);
@@ -143,7 +196,7 @@ test("formatSporeHarpTelemetry reflects active and muted states", () => {
 test("scheduleSporeHarpStep selects consonant chord tones when chord is provided (D-093)", () => {
   const score = { root: 60, scale: 0 };
   const strings = buildHyphalStrings(score);
-  const model = createSporeHarpModel({ strings, autoStrum: true });
+  const model = createSporeHarpModel({ strings, autoStrum: true, enabled: true });
 
   const fakeContext = {
     currentTime: 0,

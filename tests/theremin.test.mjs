@@ -14,7 +14,7 @@ import {
 test("theremin model initializes with BoneAmanita defaults", () => {
   const model = createThereminModel();
   assert.equal(model.enabled, true);
-  assert.equal(model.scaleSnap, false);
+  assert.equal(model.scaleSnap, true);
   assert.equal(model.decoherenceBuildup, 0.0);
   assert.equal(model.classicalTurns, 0);
   assert.equal(model.isStuck, false);
@@ -37,7 +37,7 @@ test("pitchForThereminCoordinate maps horizontal range to creature scale", () =>
   assert.ok(dorianPCs.includes(center.pitchClass));
   assert.ok(dorianPCs.includes(right.pitchClass));
 
-  // Continuous microtonal glide when scaleSnap is false (default)
+  // Continuous microtonal glide when scaleSnap is false (free glide)
   const unquantized = pitchForThereminCoordinate(0.1234, score, false);
   assert.ok(Number.isFinite(unquantized.frequency));
   assert.ok(unquantized.frequency > 0);

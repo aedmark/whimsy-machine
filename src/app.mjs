@@ -23,6 +23,12 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
+import {
+  LIVE_REC_STATES,
+  buildLiveTakeMidi,
+  buildLiveTakeWav,
+  createLiveRecorder,
+} from "./live-recorder.mjs";
 import { MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
 import {
   MIDI_CHANNELS,
@@ -37,6 +43,7 @@ import {
   isWebMidiSupported,
   makeAllNotesOff,
   makeClockTick,
+  makeControlChange,
   makeMidiContinue,
   makeMidiStart,
   makeMidiStop,
@@ -47,6 +54,26 @@ import {
   sendMidiMessage,
   setAudioOutputSink,
 } from "./midi-io.mjs";
+import {
+  TARGET_DEFINITIONS,
+  TARGET_GROUPS,
+  TARGET_TYPES,
+  createMidiLearnState,
+  enterLearnMode,
+  exitLearnMode,
+  toggleLearnMode,
+  armTarget,
+  disarmTarget,
+  learnMapping,
+  unmapTarget,
+  clearAllMappings,
+  resetToBuiltinDefaults,
+  getMappingForTarget,
+  resolveMidiCC,
+  computeOutboundCC,
+  loadMidiMapFromStorage,
+  saveMidiMapToStorage,
+} from "./midi-learn.mjs";
 import { createStoredZip } from "./zip.mjs";
 import {
   ACCOMPANIMENT_STYLES,
@@ -78,6 +105,7 @@ import { DEFAULT_GRID_STEPS, applyScoreOverrides, effectiveRhythmTemplate, refer
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import {
+  DRONE_DETUNE,
   DRONE_SETTLE,
   DRONE_SWELL,
   PARLOR_CRACKLE_PER_LEVEL,
@@ -113,21 +141,40 @@ import {
   toggleSolo,
 } from "./mixer.mjs";
 import {
+  BANK_FILE_EXTENSION,
+  BANK_FORMAT,
+  BANK_VERSION,
+  MAX_BANK_BYTES,
   MAX_SESSION_BYTES,
   PLATE_IDS,
   PRESET_STORAGE_KEY,
   SESSION_FILE_EXTENSION,
   SESSION_FORMAT,
   SESSION_VERSION,
+  duplicatePreset,
   emptyPresetStore,
+  parsePresetBank,
   parsePresetStore,
   parseSession,
   removePreset,
+  renamePreset,
+  serializePresetBank,
   serializeSession,
   upsertPreset,
   writePresetStoreTo,
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
+import {
+  PART_IDS,
+  MIXER_PART_IDS,
+  META_PART_IDS,
+  createPartLockState,
+  countActiveLocks,
+  togglePartLock,
+  setAllLocks,
+  buildChimeraScore,
+  mutateUnlockedPlates,
+} from "./part-lock.mjs";
 import {
   LOOP_STEPS,
   MAX_REPEATS,
@@ -169,6 +216,26 @@ import {
   parseCabinetState,
   serializeCabinetState,
 } from "./cabinet.mjs";
+import {
+  VIEW_MODE_STORAGE_KEY,
+  DEFAULT_VIEW_MODE,
+  parseViewMode,
+  toggleViewMode,
+  isSalonMode,
+  viewModeLabel,
+  unfoldButtonLabels,
+} from "./view-mode.mjs";
+import {
+  createHistoryState,
+  initHistory,
+  pushHistory,
+  canUndo,
+  canRedo,
+  undo,
+  redo,
+  clearHistory,
+  getHistorySummary,
+} from "./history.mjs";
 import { OracleVision, interaction } from "./vitrine-canvas.mjs";
 import {
   createThereminModel,
@@ -195,12 +262,23 @@ import {
   checkStringIntersection,
   createSporeHarpModel,
   cycleSymbiosis,
+  cycleTension,
   formatSporeHarpTelemetry,
+  formatTensionLabel,
   pluckHyphalString,
   scheduleSporeHarpStep,
   strumHarp,
   triggerHyphalPluck,
 } from "./spore-harp.mjs";
+import {
+  createMuscariaModel,
+  cycleMuscariaMode,
+  cycleTripDepth,
+  formatMuscariaTelemetry,
+  scheduleMuscariaStep,
+  stepMuscariaModel,
+  stimulateMuscaria,
+} from "./muscaria.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
@@ -324,7 +402,13 @@ const elements = {
   sporeHarpToggle: document.querySelector("#spore-harp-toggle"),
   sporeHarpStrum: document.querySelector("#spore-harp-strum"),
   sporeHarpSymbiosis: document.querySelector("#spore-harp-symbiosis"),
+  sporeHarpTension: document.querySelector("#spore-harp-tension"),
   sporeHarpTelemetry: document.querySelector("#spore-harp-telemetry"),
+  muscariaBar: document.querySelector("#muscaria-bar"),
+  muscariaToggle: document.querySelector("#muscaria-toggle"),
+  muscariaStimulate: document.querySelector("#muscaria-stimulate"),
+  muscariaTripDepth: document.querySelector("#muscaria-trip-depth"),
+  muscariaTelemetry: document.querySelector("#muscaria-telemetry"),
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
@@ -333,6 +417,8 @@ const elements = {
   exportPng: document.querySelector("#export-png"),
   exportWav: document.querySelector("#export-wav"),
   exportStems: document.querySelector("#export-stems"),
+  exportLiveWav: document.querySelector("#export-live-wav"),
+  exportLiveMidi: document.querySelector("#export-live-midi"),
   exportMidi: document.querySelector("#export-midi"),
   exportMidiFormat: document.querySelector("#export-midi-format"),
   exportBitDepth: document.querySelector("#export-bit-depth"),
@@ -340,10 +426,21 @@ const elements = {
   exportLoopMode: document.querySelector("#export-loop-mode"),
   exportStemMode: document.querySelector("#export-stem-mode"),
   sound: document.querySelector("#sound-toggle"),
+  viewModeToggle: document.querySelector("#view-mode-toggle"),
+  viewModeText: document.querySelector("#view-mode-text"),
+  workbenchBar: document.querySelector("#workbench-bar"),
+  workbenchUnfold: document.querySelector("#workbench-unfold"),
+  unfoldIcon: document.querySelector("#unfold-icon"),
+  unfoldText: document.querySelector("#unfold-text"),
+  unfoldHint: document.querySelector("#unfold-hint"),
   transportDeck: document.querySelector("#transport-deck"),
   transportPlay: document.querySelector("#transport-play"),
   transportPause: document.querySelector("#transport-pause"),
   transportStop: document.querySelector("#transport-stop"),
+  transportUndo: document.querySelector("#transport-undo"),
+  transportRedo: document.querySelector("#transport-redo"),
+  transportLiveRec: document.querySelector("#transport-live-rec"),
+  transportRecStatus: document.querySelector("#transport-rec-status"),
   transportBarLock: document.querySelector("#transport-bar-lock"),
   transportGridSteps: document.querySelector("#transport-grid-steps"),
   transportPosition: document.querySelector("#transport-position"),
@@ -351,15 +448,28 @@ const elements = {
   mixerStrips: document.querySelector("#mixer-strips"),
   mixerTelemetry: document.querySelector("#mixer-telemetry"),
   mixerReset: document.querySelector("#mixer-reset"),
+  partLockBar: document.querySelector("#part-lock-bar"),
+  partLockMutate: document.querySelector("#part-lock-mutate"),
+  partLockReroll: document.querySelector("#part-lock-reroll"),
+  partLockToggleAll: document.querySelector("#part-lock-toggle-all"),
+  partLockVisuals: document.querySelector("#part-lock-visuals"),
+  partLockTonality: document.querySelector("#part-lock-tonality"),
+  partLockSummary: document.querySelector("#part-lock-summary"),
   sessionTelemetry: document.querySelector("#session-telemetry"),
   sessionPresetName: document.querySelector("#session-preset-name"),
   sessionSavePreset: document.querySelector("#session-save-preset"),
+  sessionUpdatePreset: document.querySelector("#session-update-preset"),
   sessionPresetList: document.querySelector("#session-preset-list"),
   sessionLoadPreset: document.querySelector("#session-load-preset"),
+  sessionClonePreset: document.querySelector("#session-clone-preset"),
+  sessionRenamePreset: document.querySelector("#session-rename-preset"),
   sessionDeletePreset: document.querySelector("#session-delete-preset"),
   sessionSaveFile: document.querySelector("#session-save-file"),
   sessionOpenFile: document.querySelector("#session-open-file"),
   sessionFileInput: document.querySelector("#session-file-input"),
+  sessionExportBank: document.querySelector("#session-export-bank"),
+  sessionOpenBank: document.querySelector("#session-open-bank"),
+  sessionBankInput: document.querySelector("#session-bank-input"),
   herbariumTelemetry: document.querySelector("#herbarium-telemetry"),
   herbariumPinBtn: document.querySelector("#herbarium-pin-btn"),
   herbariumCards: document.querySelector("#herbarium-cards"),
@@ -375,8 +485,20 @@ const elements = {
   midiBroadcastBtn: document.querySelector("#midi-broadcast-btn"),
   midiClockModeSelect: document.querySelector("#midi-clock-mode-select"),
   midiClockStatus: document.querySelector("#midi-clock-status"),
+  midiLearnStudioBtn: document.querySelector("#midi-learn-studio-btn"),
+  midiMapClearBtn: document.querySelector("#midi-map-clear-btn"),
+  midiMapResetBtn: document.querySelector("#midi-map-reset-btn"),
+  midiFeedbackToggle: document.querySelector("#midi-feedback-toggle"),
+  midiLearnStatus: document.querySelector("#midi-learn-status"),
+  midiMapSummary: document.querySelector("#midi-map-summary"),
+  studioUndoBtn: document.querySelector("#studio-undo-btn"),
+  studioRedoBtn: document.querySelector("#studio-redo-btn"),
+  studioHistoryClearBtn: document.querySelector("#studio-history-clear-btn"),
+  studioHistoryStatus: document.querySelector("#studio-history-status"),
+  studioHistoryBreadcrumbs: document.querySelector("#studio-history-breadcrumbs"),
   audioSinkSelect: document.querySelector("#audio-sink-select"),
   studioLocalControlBtn: document.querySelector("#studio-local-control-btn"),
+  midiLearnMixerBtn: document.querySelector("#midi-learn-mixer-btn"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -390,6 +512,7 @@ const elements = {
   fungal: document.querySelector("#score-fungal"),
   beatName: document.querySelector("#score-beat"),
   beatTelemetry: document.querySelector("#beat-telemetry"),
+  beatLock: document.querySelector("#beat-lock"),
   beatToggle: document.querySelector("#beat-toggle"),
   beatMutate: document.querySelector("#beat-mutate"),
   beatGrid: document.querySelector("#beat-grid"),
@@ -399,21 +522,25 @@ const elements = {
   boneBeatTelemetry: document.querySelector("#bone-beat-telemetry"),
   bassName: document.querySelector("#score-bass"),
   bassTelemetry: document.querySelector("#bass-telemetry"),
+  bassLock: document.querySelector("#bass-lock"),
   bassToggle: document.querySelector("#bass-toggle"),
   bassMutate: document.querySelector("#bass-mutate"),
   bassGrid: document.querySelector("#bass-grid"),
   harmonyName: document.querySelector("#score-harmony"),
   harmonyTelemetry: document.querySelector("#harmony-telemetry"),
+  harmonyLock: document.querySelector("#harmony-lock"),
   harmonyToggle: document.querySelector("#harmony-toggle"),
   harmonyMutate: document.querySelector("#harmony-mutate"),
   harmonyGrid: document.querySelector("#harmony-grid"),
   chimeName: document.querySelector("#score-chime"),
   chimeTelemetry: document.querySelector("#chime-telemetry"),
+  chimeLock: document.querySelector("#chime-lock"),
   chimeToggle: document.querySelector("#chime-toggle"),
   chimeMutate: document.querySelector("#chime-mutate"),
   chimeGrid: document.querySelector("#chime-grid"),
   chantName: document.querySelector("#score-chant"),
   chantTelemetry: document.querySelector("#chant-telemetry"),
+  chantLock: document.querySelector("#chant-lock"),
   chantToggle: document.querySelector("#chant-toggle"),
   chantMutate: document.querySelector("#chant-mutate"),
   chantGrid: document.querySelector("#chant-grid"),
@@ -463,6 +590,9 @@ const elements = {
   funMachineEngine: document.querySelector("#fun-machine-engine"),
   funMachineStatus: document.querySelector("#fun-machine-status"),
   funMachineTelemetry: document.querySelector("#fun-machine-telemetry"),
+  funOctaveDown: document.querySelector("#fun-octave-down"),
+  funOctaveUp: document.querySelector("#fun-octave-up"),
+  funOctaveDisplay: document.querySelector("#fun-octave-display"),
   funKeyboard: document.querySelector("#fun-keyboard"),
   cabinetSwitch: document.querySelector("#cabinet-switch"),
   cabinetSwitchText: document.querySelector("#cabinet-switch-text"),
@@ -527,6 +657,14 @@ let currentBeat = null;
 let currentBoneBeat = null;
 let boneBeatModel = createBoneBeatModel();
 let sporeHarpModel = createSporeHarpModel();
+let liveRecorder = createLiveRecorder({
+  sampleRate: 44100,
+  onStateChange: (...args) => updateLiveRecUI(...args),
+  onTakeComplete: (...args) => handleLiveTakeComplete(...args),
+});
+let liveCaptureProcessor = null;
+let liveCaptureSilentGain = null;
+let lastLiveTake = null;
 let currentBass = null;
 let currentHarmony = null;
 let currentChimes = null;
@@ -536,12 +674,13 @@ let rawBass = null;
 let rawHarmony = null;
 let rawChimes = null;
 let rawChant = null;
-let mixerState = createMixerState();
+let mixerState = setMuted(createMixerState(), "harp", true);
 let beatMutation = 0;
 let bassMutation = 0;
 let harmonyMutation = 0;
 let chimeMutation = 0;
 let chantMutation = 0;
+let partLockState = createPartLockState();
 let activeBeatStep = -1;
 let transportState = createTransportState();
 let audioContext = null;
@@ -570,14 +709,27 @@ let thereminModel = createThereminModel();
 let thereminVoice = null;
 let thereminMasterGain = null;
 let lastThereminFrameAt = 0;
+let lastThereminLoggedMidi = null;
+let lastThereminLoggedTime = 0;
+
+function updateThereminRouting() {
+  if (!thereminMasterGain || !audioContext) return;
+  try {
+    thereminMasterGain.disconnect();
+  } catch {}
+  const target = currentTransport?.output || audioContext.destination;
+  try {
+    thereminMasterGain.connect(target);
+  } catch {}
+}
 
 function getThereminDestination(context) {
   if (!thereminMasterGain || thereminMasterGain.context !== context) {
     thereminMasterGain = context.createGain();
     const gainValue = muted || !localControlEnabled ? 0 : masterGainFor(masterVolume);
     thereminMasterGain.gain.setValueAtTime(gainValue, context.currentTime);
-    thereminMasterGain.connect(context.destination);
   }
+  updateThereminRouting();
   return thereminMasterGain;
 }
 
@@ -595,6 +747,36 @@ function updateThereminUI(frequency = null) {
   elements.thereminStatus.textContent = formatThereminTelemetry(thereminModel, frequency);
   elements.thereminStatus.classList.toggle("is-stuck", thereminModel.isStuck);
   elements.thereminStatus.classList.toggle("is-calcifying", thereminModel.status === "CALCIFYING" && !thereminModel.isStuck);
+}
+
+let muscariaModel = createMuscariaModel();
+let lastMuscariaFrameAt = 0;
+
+function updateMuscariaUI() {
+  if (!elements.muscariaToggle) return;
+  const isDormant = muscariaModel.mode === "DORMANT";
+  const isPulse = muscariaModel.mode === "BIO_PULSE";
+  const isTrippy = muscariaModel.mode === "HALLUCINATING";
+
+  elements.muscariaToggle.setAttribute("aria-pressed", String(!isDormant));
+  elements.muscariaBar?.classList.toggle("is-pulse", isPulse);
+  elements.muscariaBar?.classList.toggle("is-hallucinating", isTrippy);
+
+  if (isDormant) {
+    elements.muscariaToggle.innerHTML = '<span class="muscaria-glyph" aria-hidden="true">🍄</span> MUSCARIA: DORMANT';
+  } else if (isPulse) {
+    elements.muscariaToggle.innerHTML = '<span class="muscaria-glyph" aria-hidden="true">⚡</span> PLANTWAVE: BIO-PULSE';
+  } else {
+    elements.muscariaToggle.innerHTML = '<span class="muscaria-glyph" aria-hidden="true">🌀</span> MUSCARIA: HALLUCINATING';
+  }
+
+  if (elements.muscariaTripDepth) {
+    elements.muscariaTripDepth.textContent = `TRIP: ${muscariaModel.tripDepth}`;
+  }
+
+  if (elements.muscariaTelemetry) {
+    elements.muscariaTelemetry.textContent = formatMuscariaTelemetry(muscariaModel);
+  }
 }
 let activeHeldFunKey = null;
 let activeFunPerformance = null;
@@ -656,6 +838,7 @@ function setLocalControl(enabled) {
 }
 
 function setMasterVolume(value) {
+  const options = arguments[1] || {};
   masterVolume = Math.max(0, Math.min(100, Number(value)));
   elements.volumeValue.value = `${Math.round(masterVolume)}%`;
   if (audioContext && funMachineDryGain) {
@@ -668,10 +851,14 @@ function setMasterVolume(value) {
     thereminMasterGain.gain.cancelScheduledValues(now);
     thereminMasterGain.gain.setTargetAtTime(muted || !localControlEnabled ? 0 : masterGainFor(masterVolume), now, 0.018);
   }
-  if (!audioContext || !currentTransport) return;
-  const now = audioContext.currentTime;
-  currentTransport.output.gain.cancelScheduledValues(now);
-  currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.output.gain.cancelScheduledValues(now);
+    currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  }
+  if (!options.fromMidi) {
+    sendMidiFeedback("master:volume", masterVolume);
+  }
 }
 
 function musicalPocketBpm(pulse) {
@@ -682,6 +869,7 @@ function musicalPocketBpm(pulse) {
 }
 
 function setTempoBpm(value) {
+  const options = arguments[1] || {};
   activeTempoBpm = Math.max(36, Math.min(208, Math.round(Number(value))));
   if (elements.tempo) elements.tempo.value = String(activeTempoBpm);
   if (elements.tempoValue) elements.tempoValue.value = `${activeTempoBpm} BPM`;
@@ -696,6 +884,9 @@ function setTempoBpm(value) {
     currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm) && delayTime, audioContext.currentTime, 0.08);
   }
   if (midiClockMode === "master") updateMidiClockStatus();
+  if (!options.fromMidi) {
+    sendMidiFeedback("master:tempo", activeTempoBpm);
+  }
 }
 
 const stageContainer = elements.canvas.closest(".vision-stage");
@@ -763,10 +954,18 @@ function updateAudioInteraction() {
       interaction.thereminStuck = thereminModel.isStuck;
       interaction.thereminFrequency = pitchInfo.frequency;
 
+      const roundedMidi = Math.round(pitchInfo.midi);
+      if (gain > 0.08 && currentTransport && (roundedMidi !== lastThereminLoggedMidi || (now - lastThereminLoggedTime > 0.35))) {
+        logNote(currentTransport, "theremin", roundedMidi, now, Math.max(0.12, dt * 4), gain);
+        lastThereminLoggedMidi = roundedMidi;
+        lastThereminLoggedTime = now;
+      }
+
       updateThereminUI(pitchInfo.frequency);
     }
   } else {
     lastThereminFrameAt = 0;
+    lastThereminLoggedMidi = null;
     if (thereminVoice && interaction.thereminActive) {
       thereminVoice.silence(now);
       interaction.thereminActive = false;
@@ -775,6 +974,16 @@ function updateAudioInteraction() {
       updateThereminModel(thereminModel, { isInteracting: false });
       updateThereminUI(null);
     }
+  }
+
+  // PlantWave Amanita Muscaria Transducer & Hallucination step
+  const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+  const muscariaDt = lastMuscariaFrameAt ? Math.min(0.1, (nowMs - lastMuscariaFrameAt) / 1000) : 0.016;
+  lastMuscariaFrameAt = nowMs;
+  stepMuscariaModel(muscariaModel, muscariaDt, { hold: interaction.hold });
+  interaction.muscariaModel = muscariaModel;
+  if (elements.muscariaTelemetry) {
+    elements.muscariaTelemetry.textContent = formatMuscariaTelemetry(muscariaModel);
   }
 
   if (!currentTransport || muted) return;
@@ -795,9 +1004,11 @@ function updateAudioInteraction() {
   const targetQ = Math.min(8.5, creature.q + field.radius * 1.6 + interaction.tap * 0.7 + ((interaction.agitation || 0) * 1.8) + ((interaction.retaliationPitchDrop || 0) * 4.2));
   const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12) * (1 - ((interaction.sulk || 0) * 0.45));
   const baseFeedback = 0.14 + score.bloom / 650;
-  const targetFeedback = Math.min(0.68, baseFeedback + field.radius * 0.14 + ((interaction.agitation || 0) * 0.24));
+  const tripBoost = (muscariaModel.mode === "HALLUCINATING" && transport.feedback)
+    ? (0.16 * (muscariaModel.tripDepth === "TRANSCENDENT" ? 1.75 : (muscariaModel.tripDepth === "DEEP" ? 1.0 : 0.5)))
+    : 0;
+  const targetFeedback = Math.min(0.74, baseFeedback + field.radius * 0.14 + ((interaction.agitation || 0) * 0.24) + tripBoost);
 
-  const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
   const isRetaliating = nowMs < (interaction.retaliateUntil || 0);
 
   transport.filter.frequency.setTargetAtTime(targetCutoff, now, 0.045);
@@ -830,7 +1041,8 @@ function updateAudioInteraction() {
     const baseDetune = [-5, 4, -3][index] || 0;
     const phaseBeating = Math.sin(field.angle + index * 2.094) * (10 + 16 * field.radius);
     const agitationDetuneJitter = ((Math.sin(now * 19.3 + index * 2.1) + Math.cos(now * 43.7)) * 38 * ((interaction.agitation || 0) ** 1.4));
-    const totalDetune = baseDetune + pitchBendCents + phaseBeating + agitationVibrato + agitationDetuneJitter + retaliationDetune + sulkDetune;
+    const muscariaDroneWarp = muscariaModel.mode === "HALLUCINATING" ? muscariaModel.warpCents : 0;
+    const totalDetune = baseDetune + pitchBendCents + phaseBeating + agitationVibrato + agitationDetuneJitter + retaliationDetune + sulkDetune + muscariaDroneWarp;
     drone.detune.setTargetAtTime(totalDetune, now, 0.04);
     if (transport.droneGains?.[index]) {
       transport.droneGains[index].gain.setTargetAtTime(targetDroneGains[index] ?? 0.03, now, 0.05);
@@ -864,18 +1076,38 @@ function triggerSporePuff(strength = 1, atTime = null) {
     muted,
   });
   if (sporeHarpModel.enabled && sporeHarpModel.strings?.length > 0 && !muted) {
-    const hitIdx = Math.floor(Math.random() * sporeHarpModel.strings.length);
-    const pluck = pluckHyphalString(sporeHarpModel, hitIdx, 0.45 * Math.min(1.5, strength));
+    let hitIdx = Math.floor(Math.random() * sporeHarpModel.strings.length);
+    const chord = currentConductedSpine?.[currentTransport?.audibleStep % activeGridSteps] || null;
+    if (chord?.pitchClasses?.length) {
+      const matches = sporeHarpModel.strings
+        .map((str, idx) => ({ idx, pc: str.midi % 12 }))
+        .filter((s) => chord.pitchClasses.includes(s.pc));
+      if (matches.length > 0) {
+        hitIdx = matches[Math.floor(Math.random() * matches.length)].idx;
+      }
+    }
+    const pluck = pluckHyphalString(sporeHarpModel, hitIdx, 0.35 * Math.min(1.2, strength));
     if (pluck && audioContext) {
       const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
+      const at = atTime || audioContext.currentTime;
       triggerHyphalPluck(audioContext, dest, pluck.frequency, pluck.velocity, {
         symbiosis: sporeHarpModel.symbiosis,
         sporeDensity: pluck.sporeDensity,
-        atTime: atTime || audioContext.currentTime,
+        atTime: at,
       });
+      if (currentTransport) {
+        const soundedMidi = Math.round(pluck.midi + 12 * Math.log2(sporeHarpModel.tension || 1.0));
+        logNote(currentTransport, "harp", soundedMidi, at, 0.45, pluck.velocity);
+      }
       if (elements.sporeHarpTelemetry) {
         elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
       }
+    }
+  }
+  if (muscariaModel.enabled) {
+    stimulateMuscaria(muscariaModel, 0.8 * Math.min(1.5, strength));
+    if (elements.muscariaTelemetry) {
+      elements.muscariaTelemetry.textContent = formatMuscariaTelemetry(muscariaModel);
     }
   }
 }
@@ -896,9 +1128,14 @@ function stopCurrentSound() {
   interaction.thereminActive = false;
   interaction.thereminSlag = 0;
   interaction.thereminStuck = false;
+  if (liveRecorder && liveRecorder.getState() !== LIVE_REC_STATES.IDLE) {
+    liveRecorder.forceFinalize(audioContext?.currentTime);
+  }
+  detachLiveAudioTap();
   if (!currentTransport || !audioContext) return null;
   const transport = currentTransport;
   currentTransport = null;
+  updateThereminRouting();
   window.clearInterval(transport.timer);
   if (transport.timeouts) {
     for (const tid of transport.timeouts) window.clearTimeout(tid);
@@ -971,6 +1208,7 @@ function silenceExternalMidi() {
 
 function logNote(transport, channel, midi, at, duration, peak, voice = null) {
   transport?.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak, ...(voice ? { voice } : {}) });
+  liveRecorder?.logNote({ channel, midi: Math.round(midi), at, duration, peak, ...(voice ? { voice } : {}) });
   if (midiBroadcastActive && audioContext && transport && transport === currentTransport) {
     broadcastLiveMidiNote(channel, midi, at, duration, peak);
   }
@@ -985,11 +1223,12 @@ function midiVoiceOf(voice) {
   return { key: voice.id, label, program: voice.program };
 }
 
-function scheduleNote(context, transport, score, step, at, duration) {
+function scheduleNote(context, transport, score, step, at, duration, options = {}) {
   scheduleLeadNote(context, transport, score, step, at, duration, {
     currentTransport,
     activeHeldFunKey,
     logNote,
+    ...options,
   });
 }
 
@@ -1016,6 +1255,9 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
       stepBoneBeat(activeModel, stepData, { dt: stepDuration });
       const dest = transport.forgeBus || transport.beatBus;
       scheduleBoneBeatStep(context, dest, activeModel, stepData, at, stepDuration);
+      if (stepData.heavy) logNote(transport, "forge", 35, at, 0.14, 0.9);
+      else if (stepData.stone) logNote(transport, "forge", 47, at, 0.20, 0.75);
+      else if (stepData.kinetic) logNote(transport, "forge", 56, at, 0.08, 0.70);
       if (!transport.isOffline && elements.boneBeatTelemetry) {
         elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(activeModel);
       }
@@ -1047,11 +1289,12 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   });
 }
 
-function scheduleChantStep(context, transport, score, stepIndex, at, stepDuration) {
+function scheduleChantStep(context, transport, score, stepIndex, at, stepDuration, options = {}) {
   scheduleShakespeareChantStep(context, transport, score, stepIndex, at, stepDuration, {
     currentChant,
     engaged: transportEngages(transport, "chant"),
     logNote,
+    ...options,
   });
 }
 
@@ -1064,9 +1307,27 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
   if (activeModel?.enabled && activeModel.autoStrum && harpEngaged) {
     const chord = transport.conductedSpine?.[stepIndex] || currentConductedSpine?.[stepIndex] || null;
     const dest = transport.sporeHarpBus || transport.fungalBus;
-    scheduleSporeHarpStep(context, dest, activeModel, stepIndex, at, stepDuration, { chord });
+    scheduleSporeHarpStep(context, dest, activeModel, stepIndex, at, stepDuration, {
+      chord,
+      logNote: (midi, start, dur, vel) => logNote(transport, "harp", midi, start, dur, vel),
+    });
     if (!transport.isOffline && elements.sporeHarpTelemetry) {
       elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(activeModel);
+    }
+  }
+  const activeMuscaria = transport.muscariaModel || muscariaModel;
+  const fungalEngaged = transportEngages(transport, "fungal");
+  if (activeMuscaria?.enabled && fungalEngaged) {
+    const chord = transport.conductedSpine?.[stepIndex] || currentConductedSpine?.[stepIndex] || null;
+    const dest = transport.fungalBus;
+    scheduleMuscariaStep(context, dest, activeMuscaria, stepIndex, at, stepDuration, {
+      score,
+      chord,
+      stepsCount: activeGridSteps,
+      logNote: (midi, start, dur, vel) => logNote(transport, "fungal", midi, start, dur, vel),
+    });
+    if (!transport.isOffline && elements.muscariaTelemetry) {
+      elements.muscariaTelemetry.textContent = formatMuscariaTelemetry(activeMuscaria);
     }
   }
 }
@@ -1384,6 +1645,7 @@ function applyCellCycle(id, index, times = 1) {
 function cyclePlateCell(id, index) {
   applyCellCycle(id, index);
   plateCellCycles[id][index] += 1;
+  recordHistoryAction(`Cycle ${id} Cell ${index + 1}`);
 }
 
 function plateMutation(id) {
@@ -1752,10 +2014,47 @@ function updateBandstandStatus() {
   }
 }
 
+let funMachineOctave = 0; // -2..+2, default 0
+
+const OCTAVE_REGISTERS = Object.freeze({
+  "-2": "OCT −2 · REG C1–C3",
+  "-1": "OCT −1 · REG C2–C4",
+  "0":  "OCT 0 · REG C3–C5",
+  "1":  "OCT +1 · REG C4–C6",
+  "2":  "OCT +2 · REG C5–C7",
+});
+
+function updateFunOctaveUI() {
+  if (elements.funOctaveDisplay) {
+    elements.funOctaveDisplay.textContent = OCTAVE_REGISTERS[String(funMachineOctave)] || `OCT ${funMachineOctave}`;
+  }
+  if (elements.funOctaveDown) {
+    elements.funOctaveDown.disabled = funMachineOctave <= -2;
+  }
+  if (elements.funOctaveUp) {
+    elements.funOctaveUp.disabled = funMachineOctave >= 2;
+  }
+}
+
+function setFunOctave(newOctave) {
+  const clamped = Math.max(-2, Math.min(2, Math.trunc(newOctave) || 0));
+  if (funMachineOctave === clamped) return;
+  funMachineOctave = clamped;
+  updateFunOctaveUI();
+  if (elements.funMachineTelemetry) {
+    elements.funMachineTelemetry.textContent = `OCTAVE ${funMachineOctave >= 0 ? "+" : ""}${funMachineOctave} · ${OCTAVE_REGISTERS[String(funMachineOctave)]}`;
+  }
+  if (activeHeldFunKey !== null) {
+    const held = activeHeldFunKey;
+    activeHeldFunKey = null;
+    triggerFunKey(held, true);
+  }
+}
+
 function updateFunKeyboardChordLabels() {
   // Key colours come from the Inform 7 rulebooks; the labels fill in once they load.
   if (!rulebooksInstalled()) return;
-  for (let semitone = 0; semitone <= 12; semitone += 1) {
+  for (let semitone = 0; semitone <= 24; semitone += 1) {
     const el = document.querySelector(`#fun-chord-${semitone}`);
     if (!el) continue;
     el.textContent = chordText(buildFunChord(semitone, "auto", activeGenre, currentScore ? currentScore.root : 0));
@@ -1778,7 +2077,9 @@ function loopStepDuration(score, step) {
 
 function funKeyLabel(semitone) {
   const keyInfo = FUN_KEY_MAP[semitone];
-  return keyInfo ? `[${keyInfo.displayKey}] ${keyInfo.note}` : `KEY #${semitone}`;
+  if (!keyInfo) return `KEY #${semitone}`;
+  const shortcut = keyInfo.displayKey ? `[${keyInfo.displayKey}] ` : "";
+  return `${shortcut}${keyInfo.note}`;
 }
 
 /**
@@ -1790,7 +2091,7 @@ function funKeyLabel(semitone) {
 async function triggerFunKey(semitone, isKeyDown = true) {
   // The accompanist plays genre colours, so the manual is silent until the rulebooks load.
   if (semitone === null || semitone === undefined || !rulebooksInstalled()) return;
-  const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
+  const normSemi = Math.max(0, Math.min(24, Math.trunc(semitone) || 0));
   const keyBtn = elements.funKeyboard?.querySelector(`.fun-key[data-semitone="${normSemi}"]`);
 
   if (!isKeyDown) {
@@ -1820,7 +2121,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
 
   if (currentTransport?.activeTakeLanding) {
     const audible = ((currentTransport.audibleStep % activeGridSteps) + activeGridSteps) % activeGridSteps;
-    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId, funMachineOctave);
     const { loopIndex, layerIndex } = currentTransport.activeTakeLanding;
     song = setLoopSlot(song, loopIndex, layerIndex, audible, liveSlot);
     renderLooper();
@@ -1828,17 +2129,17 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     const audible = ((currentTransport.audibleStep % activeGridSteps) + activeGridSteps) % activeGridSteps;
     // Downbeat anticipation grace: if audible step is the last step and take[0] is still empty, latch onto step 0
     const curStep = (audible === activeGridSteps - 1 && recorder.take && recorder.take[0] === null) ? 0 : audible;
-    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId, funMachineOctave);
     recorder = recorderReduce(recorder, { type: "slot", step: curStep, slot: liveSlot }).recorder;
     renderLooper();
   } else if (recorder.mode === "armed") {
     // Downbeat anticipation latching during count-in
-    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId, funMachineOctave);
     recorder = recorderReduce(recorder, { type: "anticipate", slot: liveSlot }).recorder;
     renderLooper();
   } else if (selectedStepIndex !== null) {
     // Step Sequencer: program the selected step
-    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId, funMachineOctave);
     song = setLoopSlot(song, selectedLoop ?? 0, null, selectedStepIndex, liveSlot);
     if (selectedLoop === null) selectedLoop = 0;
     const noteName = FUN_KEY_MAP[normSemi]?.note ?? normSemi;
@@ -1950,11 +2251,61 @@ function arrangementPlays(channel, step) {
 // in the live scheduler. The INTERCAL 1972 dynamic arrangement mask controls
 // channel breathing across Exposition, Antiphony, Tutti, and Breakdown.
 function scheduleEnsembleStep(context, transport, score, step, at, stepDuration, soundingDuration) {
+  const activeMuscaria = transport.muscariaModel || muscariaModel;
+  if (activeMuscaria?.mode === "HALLUCINATING" && transport.delay && transport.filter) {
+    try {
+      const livePulse = activeTempoBpm || score.pulse;
+      const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(score, activeGenre), activeGridSteps, barLock44);
+      const unit = stepUnitSeconds(livePulse, rhythm, barLock44, activeGridSteps);
+      const baseDelayTime = delayTimeFor(score, 60 / (unit * 2), effectiveRhythmIndex(score, activeGenre), unit);
+      const modDelay = Math.max(0.02, Math.min(1.4, baseDelayTime + (activeMuscaria.delayModMs / 1000)));
+      try {
+        transport.delay.delayTime.setTargetAtTime(modDelay, at, 0.08);
+      } catch {}
+      if (transport.feedback) {
+        const baseFeedback = 0.14 + (score.bloom || 0) / 650;
+        const modFeedback = Math.min(0.68, baseFeedback + (activeMuscaria.feedbackSwell || 0));
+        try {
+          transport.feedback.gain.setTargetAtTime(modFeedback, at, 0.08);
+        } catch {}
+      }
+      const creature = creatureFilter(score);
+      const modCutoff = Math.max(120, Math.min(18000, creature.cutoff * activeMuscaria.filterModRatio));
+      try {
+        transport.filter.frequency.setTargetAtTime(modCutoff, at, 0.08);
+      } catch {}
+      if (transport.parlorReverbSend) {
+        const baseReverb = parlorSendLevels({
+          enabled: parlorAcousticsEnabled,
+          reverbEnabled: parlorReverbEnabled,
+          crackleEnabled: parlorCrackleEnabled,
+          level: parlorAcousticsLevel,
+        }).reverb;
+        const modReverb = baseReverb * (activeMuscaria.reverbSwell || 1.0);
+        try {
+          transport.parlorReverbSend.gain.setTargetAtTime(modReverb, at, 0.08);
+        } catch {}
+      }
+      if (transport.drones) {
+        const warp = activeMuscaria.warpCents || 0;
+        transport.drones.forEach((drone, idx) => {
+          try {
+            drone.detune.setTargetAtTime((DRONE_DETUNE[idx] || 0) + warp, at, 0.08);
+          } catch {}
+        });
+      }
+    } catch (error) {
+      console.error("Muscaria hallucinatory modulation error:", error);
+    }
+  }
+
   const mask = activeArrangement()?.channelMasks[step % activeGridSteps];
   const bypassArrangement = !mask;
 
   if (bypassArrangement || mask.lead) {
-    scheduleNote(context, transport, score, step, at, soundingDuration);
+    scheduleNote(context, transport, score, step, at, soundingDuration, {
+      tripWarpCents: activeMuscaria?.mode === "HALLUCINATING" ? activeMuscaria.warpCents : 0,
+    });
   }
   if (bypassArrangement || mask.beat) {
     scheduleBeatStep(context, transport, score, step, at, stepDuration);
@@ -1969,7 +2320,9 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
     scheduleChimeStep(context, transport, score, step, at, stepDuration);
   }
   if (bypassArrangement || mask.chant) {
-    scheduleChantStep(context, transport, score, step, at, stepDuration);
+    scheduleChantStep(context, transport, score, step, at, stepDuration, {
+      formantMultiplier: activeMuscaria?.mode === "HALLUCINATING" ? activeMuscaria.filterModRatio : 1.0,
+    });
   }
   if (bypassArrangement || mask.fungal) {
     scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
@@ -2135,6 +2488,10 @@ async function playScore(score, { cursor = 0 } = {}) {
     audibleStep: cursor - 1,
   };
   currentTransport = transport;
+  updateThereminRouting();
+  if (liveRecorder && liveRecorder.getState() !== LIVE_REC_STATES.IDLE) {
+    attachLiveAudioTap();
+  }
 
   const scheduleAhead = () => {
     if (currentTransport !== transport) return;
@@ -2242,6 +2599,7 @@ async function playScore(score, { cursor = 0 } = {}) {
         if (currentStep % activeGridSteps === 0) {
           transport.audiblePosition = songPosition(song, currentStep, activeGridSteps);
           updateCasioUI();
+          liveRecorder?.onDownbeat(context.currentTime, currentStep % activeGridSteps);
         }
         if ((stepIsLast && stepCasioRole !== null) || stepIsLastSongOutro) {
           audibleCasioSection = null;
@@ -2345,11 +2703,81 @@ function syncTransportUI() {
   elements.transportDeck?.setAttribute("data-state", state);
   // Buttons stay enabled while ready so a keyboard user never loses focus to a
   // control that disables itself; pressed state carries the transport state.
-  for (const button of [elements.transportPlay, elements.transportPause, elements.transportStop]) {
+  for (const button of [elements.transportPlay, elements.transportPause, elements.transportStop, elements.transportLiveRec]) {
     if (button) button.disabled = !ready;
   }
   elements.transportPlay?.setAttribute("aria-pressed", String(state === TRANSPORT_STATES.PLAYING));
   elements.transportPause?.setAttribute("aria-pressed", String(state === TRANSPORT_STATES.PAUSED));
+}
+
+function updateLiveRecUI(state, telemetry) {
+  if (elements.transportRecStatus) {
+    elements.transportRecStatus.textContent = telemetry;
+  }
+  if (elements.transportLiveRec) {
+    elements.transportLiveRec.classList.toggle("is-armed", state === LIVE_REC_STATES.ARMED_START);
+    elements.transportLiveRec.classList.toggle("is-recording", state === LIVE_REC_STATES.RECORDING);
+    elements.transportLiveRec.classList.toggle("is-stopping", state === LIVE_REC_STATES.ARMED_STOP);
+    elements.transportLiveRec.setAttribute("aria-pressed", state !== LIVE_REC_STATES.IDLE ? "true" : "false");
+  }
+}
+
+function attachLiveAudioTap() {
+  if (!liveCaptureProcessor && audioContext && currentTransport?.output) {
+    try {
+      liveCaptureProcessor = audioContext.createScriptProcessor(4096, 2, 2);
+      liveCaptureSilentGain = audioContext.createGain();
+      liveCaptureSilentGain.gain.setValueAtTime(0, audioContext.currentTime);
+      currentTransport.output.connect(liveCaptureProcessor);
+      liveCaptureProcessor.connect(liveCaptureSilentGain).connect(audioContext.destination);
+      liveCaptureProcessor.onaudioprocess = (event) => {
+        const ch0 = event.inputBuffer.getChannelData(0);
+        const ch1 = event.inputBuffer.getChannelData(1);
+        liveRecorder?.processAudioBlock(ch0, ch1, audioContext.currentTime);
+      };
+      if (!currentTransport.noteLog) currentTransport.noteLog = [];
+    } catch {
+      // Non-fatal fallback
+    }
+  }
+}
+
+function detachLiveAudioTap() {
+  if (liveCaptureProcessor) {
+    try {
+      currentTransport?.output?.disconnect(liveCaptureProcessor);
+      liveCaptureProcessor.disconnect();
+      liveCaptureSilentGain?.disconnect();
+    } catch {}
+    liveCaptureProcessor = null;
+    liveCaptureSilentGain = null;
+  }
+}
+
+function handleLiveTakeComplete(take) {
+  detachLiveAudioTap();
+  if (!take || take.frames === 0 || !currentScore) return;
+  try {
+    const bitDepth = elements.exportBitDepth?.value || "24";
+    const wavBytes = buildLiveTakeWav(take, currentScore, { bitDepth });
+    const format = elements.exportMidiFormat?.value || "clean";
+    const midiBytes = buildLiveTakeMidi(take, currentScore, { format });
+    lastLiveTake = { take, wavBytes, midiBytes };
+
+    if (elements.exportLiveWav) elements.exportLiveWav.disabled = false;
+    if (elements.exportLiveMidi) elements.exportLiveMidi.disabled = false;
+
+    const key = keyLabelFor(currentScore.root, currentScore.scale);
+    const wavName = exportFilename(currentScore, { bpm: take.bpm, keyAscii: key.ascii, suffix: "live-take", extension: "wav" });
+    const midiName = exportFilename(currentScore, { bpm: take.bpm, keyAscii: key.ascii, suffix: "live-take", extension: "mid" });
+
+    if (wavBytes) downloadBlob(new Blob([wavBytes], { type: "audio/wav" }), wavName);
+    if (midiBytes) downloadBlob(new Blob([midiBytes], { type: "audio/midi" }), midiName);
+
+    elements.status.textContent = `LIVE TAKE SAVED · ${take.bars} BARS (${take.duration.toFixed(1)}s) · WAV & MIDI`;
+  } catch {
+    elements.status.textContent = "LIVE RECORDING ENCODE FAILED";
+  }
 }
 
 // The single path for starting, pausing, and stopping the loop. Audio runs only
@@ -2451,8 +2879,8 @@ function updateKapellmeisterUI() {
     elements.kapellmeisterGenreMotto.textContent = unwritten ? "Summon a creature and it writes its own rulebook from its scale." : book.motto;
   }
   if (elements.kapellmeisterVariation) {
-    const text = !genreVaried ? "VARIATION: AS WRITTEN (SWITCHED)"
-      : !book.variation?.length ? "VARIATION: THIS RULEBOOK PLAYS AS WRITTEN"
+    const text = !genreVaried ? "VARIATION: AS WRITTEN (CREATURE MOVES BYPASSED)"
+      : !book.variation?.length ? "VARIATION: THIS RULEBOOK PLAYS AS WRITTEN (NO MOVES PERMITTED)"
       : currentVariation.length ? `VARIATION: ${currentVariation.join(" · ")}`
       : "VARIATION: NONE FOR THIS CREATURE";
     elements.kapellmeisterVariation.textContent = text;
@@ -2461,6 +2889,10 @@ function updateKapellmeisterUI() {
   if (elements.kapellmeisterAsWritten) {
     elements.kapellmeisterAsWritten.setAttribute("aria-pressed", String(!genreVaried));
     elements.kapellmeisterAsWritten.classList.toggle("is-active", !genreVaried);
+    elements.kapellmeisterAsWritten.textContent = !genreVaried ? "AS WRITTEN [ON]" : "AS WRITTEN [OFF]";
+    elements.kapellmeisterAsWritten.title = !genreVaried
+      ? "Playing strictly AS WRITTEN (canonical unvaried textbook changes). Click to re-enable creature variations."
+      : "Creature variations ACTIVE. Click to bypass variations and play strictly AS WRITTEN.";
   }
   if (elements.kapellmeisterTelemetry) {
     const chord0 = currentConductedSpine?.[0];
@@ -2563,12 +2995,14 @@ function showScore(rawScore) {
   showCreatureVoice(score);
   // Each creature writes its own rulebook from its scale (D-043).
   if (rulebooksInstalled()) installCreatureBook(buildCreatureBook(score, compiledRulebooks()));
-  beatMutation = 0;
-  bassMutation = 0;
-  harmonyMutation = 0;
-  chimeMutation = 0;
-  chantMutation = 0;
-  for (const id of Object.keys(plateCellCycles)) plateCellCycles[id] = Array(activeGridSteps).fill(0);
+  if (!partLockState.beat) beatMutation = 0;
+  if (!partLockState.bass) bassMutation = 0;
+  if (!partLockState.harmony) harmonyMutation = 0;
+  if (!partLockState.chime) chimeMutation = 0;
+  if (!partLockState.chant) chantMutation = 0;
+  for (const id of Object.keys(plateCellCycles)) {
+    if (!partLockState[id]) plateCellCycles[id] = Array(activeGridSteps).fill(0);
+  }
   if (beatSource) {
     rawBeat = composeBeat(beatSource, score, beatMutation, activeGridSteps);
     currentBeat = rawBeat;
@@ -2636,6 +3070,8 @@ function showScore(rawScore) {
   if (elements.sporeHarpTelemetry) {
     elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
   }
+  interaction.muscariaModel = muscariaModel;
+  updateMuscariaUI();
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();
   renderLooper();
@@ -2660,6 +3096,7 @@ function showScore(rawScore) {
   syncSessionButtons();
   syncHerbariumButtons();
   renderHerbarium();
+  syncPartLockUI();
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
   if (elements.exportWav) elements.exportWav.disabled = false;
@@ -2682,7 +3119,12 @@ async function summon(phrase, { playAudio = true } = {}) {
   }
 
   try {
-    const score = composeScore(oracleSource, phrase);
+    const candidateScore = composeScore(oracleSource, phrase);
+    const lockCounts = countActiveLocks(partLockState);
+    const score = (currentScore && lockCounts.isAnyLocked)
+      ? buildChimeraScore(currentScore, candidateScore, partLockState)
+      : candidateScore;
+
     if (currentScore && song.loops.length) {
       // Loops follow the key the band will actually play, overrides included (P8-04).
       song = transposeSectionLoops(song, currentScore.root, applyScoreOverrides(score, { rootOverride, scaleOverride }).root);
@@ -2698,6 +3140,15 @@ async function summon(phrase, { playAudio = true } = {}) {
       updateTransportPosition(null);
       elements.status.textContent = "OMEN RESTORED FROM LINK · PRESS SUMMON OR REPLAY FOR SOUND";
     }
+    if (score.chimera?.isChimera) {
+      elements.status.textContent = `CHIMERA SUMMONED: ${score.name}`;
+    }
+    if (!historyState.present) {
+      historyState = initHistory(historyState, captureSession(), `Summon: ${score.name}`);
+    } else if (!isHistoryRestoring) {
+      recordHistoryAction(`Summon: ${score.name}`);
+    }
+    syncHistoryUI();
   } catch (error) {
     elements.status.textContent = "THE ORACLE COUGHED";
     console.error(error);
@@ -2892,6 +3343,7 @@ async function renderEnsembleLoop(score, {
     isOffline: true,
     boneBeatModel: createBoneBeatModel(boneBeatModel),
     sporeHarpModel: createSporeHarpModel(sporeHarpModel),
+    muscariaModel: createMuscariaModel(muscariaModel),
     melody: currentConductedMelody || melodyFor(score, activeGridSteps),
     engageAll,
     clockTicks,
@@ -3215,6 +3667,378 @@ function updateMidiClockStatus(extra = null) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Web MIDI Learn & Controller CC Mapping (P12-02, D-104)
+// ---------------------------------------------------------------------------
+
+let midiLearnState = loadMidiMapFromStorage(window.localStorage);
+
+function sendMidiFeedback(targetId, domainValue, options = {}) {
+  if (options.fromMidi) return;
+  if (!midiLearnState || !midiLearnState.feedbackEnabled) return;
+  if (!midiAccess || !midiOutPortId || midiOutPortId === "none") return;
+  const msg = computeOutboundCC(midiLearnState, targetId, domainValue);
+  if (!msg) return;
+  const bytes = makeControlChange(msg.channel, msg.controller, msg.value);
+  sendMidiMessage(midiAccess, midiOutPortId, bytes);
+}
+
+function setCreatureFilterCutoff(cutoffPercent, options = {}) {
+  const pct = Math.max(0, Math.min(100, Number(cutoffPercent) || 0));
+  if (audioContext && currentTransport && currentTransport.ensembleFilter) {
+    const now = audioContext.currentTime;
+    const freq = 120 * Math.pow(16000 / 120, pct / 100);
+    currentTransport.ensembleFilter.frequency.setTargetAtTime(freq, now, 0.025);
+  }
+  if (!options.fromMidi) {
+    sendMidiFeedback("master:filterCutoff", pct);
+  }
+}
+
+function applyResolvedMidiTarget(targetId, domainValue, options = {}) {
+  const def = TARGET_DEFINITIONS[targetId];
+  if (!def) return;
+
+  if (targetId.startsWith("fader:")) {
+    const ch = def.channel;
+    updateMixer(setFader(mixerState, ch, domainValue), options);
+    recordHistoryAction(`Fader: ${ch}`, { immediate: false });
+    return;
+  }
+
+  if (targetId.startsWith("mute:")) {
+    const ch = def.channel;
+    if (domainValue) {
+      updateMixer(toggleMute(mixerState, ch), options);
+      recordHistoryAction(`Mute: ${ch}`);
+    }
+    return;
+  }
+
+  if (targetId === "master:volume") {
+    setMasterVolume(domainValue, options);
+    if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
+    recordHistoryAction(`Master Volume: ${Math.round(masterVolume)}%`, { immediate: false });
+    return;
+  }
+
+  if (targetId === "master:tempo") {
+    setTempoBpm(domainValue, options);
+    recordHistoryAction(`Tempo: ${activeTempoBpm} BPM`, { immediate: false });
+    return;
+  }
+
+  if (targetId === "master:filterCutoff") {
+    setCreatureFilterCutoff(domainValue, options);
+    recordHistoryAction("Filter Cutoff", { immediate: false });
+    return;
+  }
+
+  if (targetId === "master:strictness") {
+    activeStrictness = domainValue;
+    if (elements.kapellmeisterStrictness) {
+      elements.kapellmeisterStrictness.value = String(activeStrictness);
+    }
+    applyEnsembleConductor();
+    if (!options.fromMidi) sendMidiFeedback("master:strictness", activeStrictness);
+    recordHistoryAction(`Strictness: ${activeStrictness}`, { immediate: false });
+    return;
+  }
+
+  // Somatic targets
+  if (targetId === "somatic:bone_beat_toggle") {
+    if (domainValue) updateMixer(toggleMute(mixerState, "forge"), options);
+    return;
+  }
+  if (targetId === "somatic:bone_beat_strike") {
+    if (domainValue) elements.boneBeatStrike?.click();
+    return;
+  }
+  if (targetId === "somatic:bone_beat_quench") {
+    if (domainValue) elements.boneBeatQuench?.click();
+    return;
+  }
+
+  if (targetId === "somatic:spore_harp_toggle") {
+    if (domainValue) updateMixer(toggleMute(mixerState, "harp"), options);
+    return;
+  }
+  if (targetId === "somatic:spore_harp_strum") {
+    if (domainValue) elements.sporeHarpStrum?.click();
+    return;
+  }
+  if (targetId === "somatic:spore_harp_symbiosis") {
+    if (domainValue) elements.sporeHarpSymbiosis?.click();
+    return;
+  }
+  if (targetId === "somatic:spore_harp_tension") {
+    if (domainValue) elements.sporeHarpTension?.click();
+    return;
+  }
+
+  if (targetId === "somatic:muscaria_toggle") {
+    if (domainValue) {
+      cycleMuscariaMode(muscariaModel);
+      updateMuscariaUI();
+    }
+    return;
+  }
+  if (targetId === "somatic:muscaria_stimulate") {
+    if (domainValue) elements.muscariaStimulate?.click();
+    return;
+  }
+  if (targetId === "somatic:muscaria_trip_depth") {
+    if (domainValue) {
+      cycleTripDepth(muscariaModel);
+      updateMuscariaUI();
+    }
+    return;
+  }
+
+  if (targetId === "somatic:theremin_toggle") {
+    if (domainValue) elements.thereminToggle?.click();
+    return;
+  }
+  if (targetId === "somatic:theremin_scale_snap") {
+    if (domainValue) elements.thereminScaleSnap?.click();
+    return;
+  }
+}
+
+function syncMidiLearnUI() {
+  const isLearning = Boolean(midiLearnState.learning);
+  document.body.classList.toggle("is-midi-learning", isLearning);
+
+  if (elements.midiLearnMixerBtn) {
+    elements.midiLearnMixerBtn.classList.toggle("is-active", isLearning);
+    elements.midiLearnMixerBtn.setAttribute("aria-pressed", String(isLearning));
+    elements.midiLearnMixerBtn.innerHTML = isLearning
+      ? 'LEARNING... <span class="hotkey-pill">[L]</span> <span aria-hidden="true">●</span>'
+      : 'MIDI LEARN <span class="hotkey-pill">[L]</span> <span aria-hidden="true">🎛</span>';
+  }
+
+  if (elements.midiLearnStudioBtn) {
+    elements.midiLearnStudioBtn.classList.toggle("is-active", isLearning);
+    elements.midiLearnStudioBtn.setAttribute("aria-pressed", String(isLearning));
+    elements.midiLearnStudioBtn.innerHTML = isLearning
+      ? 'LEARNING... [L] <span aria-hidden="true">●</span>'
+      : 'MIDI LEARN [L] <span aria-hidden="true">🎛</span>';
+  }
+
+  if (elements.midiFeedbackToggle) {
+    elements.midiFeedbackToggle.checked = midiLearnState.feedbackEnabled;
+  }
+
+  // Update armed states and mapped attributes on DOM
+  const targets = document.querySelectorAll("[data-midi-target]");
+  for (const el of targets) {
+    const tid = el.dataset.midiTarget;
+    const isArmed = isLearning && midiLearnState.armedTargetId === tid;
+    el.classList.toggle("is-midi-armed", isArmed);
+    const hasCustom = Boolean(midiLearnState.customMap[tid]);
+    if (hasCustom) {
+      el.setAttribute("data-midi-mapped", "true");
+    } else {
+      el.removeAttribute("data-midi-mapped");
+    }
+  }
+
+  // Update status readout
+  if (elements.midiLearnStatus) {
+    if (!isLearning) {
+      const count = Object.keys(midiLearnState.customMap).length;
+      elements.midiLearnStatus.textContent = count > 0
+        ? `LEARN: IDLE (${count} MAPPED)`
+        : "LEARN: INACTIVE";
+    } else if (midiLearnState.armedTargetId) {
+      const def = TARGET_DEFINITIONS[midiLearnState.armedTargetId];
+      elements.midiLearnStatus.textContent = `ARMED: ${def?.label || midiLearnState.armedTargetId} ➔ MOVE HW CC`;
+    } else {
+      elements.midiLearnStatus.textContent = "LEARN ACTIVE · CLICK ANY CONTROL TO ARM";
+    }
+  }
+
+  // Render summary chips
+  if (elements.midiMapSummary) {
+    elements.midiMapSummary.innerHTML = "";
+    const entries = Object.entries(midiLearnState.customMap);
+    if (entries.length === 0) {
+      const empty = document.createElement("span");
+      empty.className = "midi-map-empty";
+      empty.textContent = "No custom CC mappings. Factory FM-1 CC profile active (CC 70–75, CC 1/2/7/11/64).";
+      elements.midiMapSummary.appendChild(empty);
+    } else {
+      for (const [targetId, binding] of entries) {
+        const def = TARGET_DEFINITIONS[targetId];
+        const chip = document.createElement("span");
+        chip.className = "midi-map-chip";
+
+        const label = document.createElement("span");
+        label.className = "midi-map-chip-target";
+        label.textContent = def?.label || targetId;
+
+        const ccText = document.createElement("span");
+        ccText.className = "midi-map-chip-cc";
+        ccText.textContent = binding.channel === "omni"
+          ? `CC ${binding.controller}`
+          : `CH ${binding.channel} · CC ${binding.controller}`;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "midi-map-chip-remove";
+        removeBtn.title = `Unmap ${def?.label || targetId}`;
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          unmapTarget(midiLearnState, targetId);
+          saveMidiMapToStorage(window.localStorage, midiLearnState);
+          syncMidiLearnUI();
+        });
+
+        chip.append(label, ccText, removeBtn);
+        elements.midiMapSummary.appendChild(chip);
+      }
+    }
+  }
+}
+
+function toggleMidiLearnMode() {
+  toggleLearnMode(midiLearnState);
+  syncMidiLearnUI();
+}
+
+// ---------------------------------------------------------------------------
+// Global Action History & Transactional Undo/Redo (P12-03, D-105)
+// ---------------------------------------------------------------------------
+
+let historyState = createHistoryState();
+let isHistoryRestoring = false;
+let pendingHistoryTimer = null;
+let pendingHistoryLabel = null;
+
+function syncHistoryUI() {
+  const summary = getHistorySummary(historyState);
+  const undoDisabled = !summary.canUndo;
+  const redoDisabled = !summary.canRedo;
+
+  if (elements.transportUndo) {
+    elements.transportUndo.disabled = undoDisabled;
+    elements.transportUndo.title = summary.canUndo
+      ? `Undo last action: ${historyState.present?.label || ""} [Ctrl+Z]`
+      : "Nothing to undo";
+  }
+  if (elements.transportRedo) {
+    elements.transportRedo.disabled = redoDisabled;
+    elements.transportRedo.title = summary.canRedo
+      ? `Redo next action: ${historyState.future[0]?.label || ""} [Ctrl+Y or Ctrl+Shift+Z]`
+      : "Nothing to redo";
+  }
+  if (elements.studioUndoBtn) elements.studioUndoBtn.disabled = undoDisabled;
+  if (elements.studioRedoBtn) elements.studioRedoBtn.disabled = redoDisabled;
+
+  if (elements.studioHistoryStatus) {
+    elements.studioHistoryStatus.textContent = `HISTORY: ${summary.currentLabel.toUpperCase()} (${summary.undoCount} UNDO / ${summary.redoCount} REDO)`;
+  }
+
+  if (elements.studioHistoryBreadcrumbs) {
+    elements.studioHistoryBreadcrumbs.innerHTML = "";
+    const pastSlice = historyState.past.slice(-5);
+    for (const item of pastSlice) {
+      const span = document.createElement("span");
+      span.className = "history-crumb";
+      span.textContent = item.label;
+      elements.studioHistoryBreadcrumbs.appendChild(span);
+    }
+    if (historyState.present) {
+      const span = document.createElement("span");
+      span.className = "history-crumb history-crumb-present";
+      span.textContent = `▶ ${historyState.present.label}`;
+      elements.studioHistoryBreadcrumbs.appendChild(span);
+    }
+    const futureSlice = historyState.future.slice(0, 4);
+    for (const item of futureSlice) {
+      const span = document.createElement("span");
+      span.className = "history-crumb history-crumb-future";
+      span.textContent = item.label;
+      elements.studioHistoryBreadcrumbs.appendChild(span);
+    }
+  }
+}
+
+function flushPendingHistory() {
+  if (pendingHistoryTimer) {
+    clearTimeout(pendingHistoryTimer);
+    pendingHistoryTimer = null;
+  }
+  if (pendingHistoryLabel) {
+    const label = pendingHistoryLabel;
+    pendingHistoryLabel = null;
+    commitHistoryAction(label);
+  }
+}
+
+function commitHistoryAction(label) {
+  if (isHistoryRestoring || !currentScore) return;
+  try {
+    const snapshot = captureSession();
+    historyState = pushHistory(historyState, snapshot, label);
+    syncHistoryUI();
+  } catch {
+    // Session capture guard during transitions
+  }
+}
+
+function recordHistoryAction(label, { immediate = true } = {}) {
+  if (isHistoryRestoring || !currentScore) return;
+  if (immediate) {
+    flushPendingHistory();
+    commitHistoryAction(label);
+  } else {
+    pendingHistoryLabel = label;
+    if (pendingHistoryTimer) clearTimeout(pendingHistoryTimer);
+    pendingHistoryTimer = setTimeout(() => {
+      pendingHistoryTimer = null;
+      if (pendingHistoryLabel) {
+        const l = pendingHistoryLabel;
+        pendingHistoryLabel = null;
+        commitHistoryAction(l);
+      }
+    }, 400);
+  }
+}
+
+function performUndo() {
+  flushPendingHistory();
+  if (!canUndo(historyState)) return;
+  const res = undo(historyState);
+  if (res.snapshot) {
+    historyState = res.state;
+    isHistoryRestoring = true;
+    try {
+      applySession(res.snapshot);
+    } finally {
+      isHistoryRestoring = false;
+    }
+    syncHistoryUI();
+  }
+}
+
+function performRedo() {
+  flushPendingHistory();
+  if (!canRedo(historyState)) return;
+  const res = redo(historyState);
+  if (res.snapshot) {
+    historyState = res.state;
+    isHistoryRestoring = true;
+    try {
+      applySession(res.snapshot);
+    } finally {
+      isHistoryRestoring = false;
+    }
+    syncHistoryUI();
+  }
+}
+
 function handleIncomingMidi(parsed, event) {
   if (!parsed) return;
   // If this note was broadcasted by our own score generator, drop it (suppress loopback echo)
@@ -3268,50 +4092,24 @@ function handleIncomingMidi(parsed, event) {
       break;
     }
     case "cc": {
-      const mapping = parsed.mapping;
-      if (mapping && mapping.target !== "unmapped") {
-        switch (mapping.target) {
-          case "sustain": {
-            midiSustainActive = mapping.active;
-            if (!mapping.active && midiHeldNotes.size === 0 && activeHeldFunKey !== null) {
-              triggerFunKey(activeHeldFunKey, false);
-            }
-            break;
-          }
-          case "modWheel": {
-            interaction.agitation = mapping.agitation;
-            interaction.wakeTime = performance.now();
-            break;
-          }
-          case "volume": {
-            setMasterVolume(mapping.volume);
-            if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
-            break;
-          }
-          case "filterCutoff": {
-            // Cutoff percent (0..100) scales the creature filter sweep smoothly
-            if (audioContext && currentTransport && currentTransport.ensembleFilter) {
-              const now = audioContext.currentTime;
-              const freq = 120 * Math.pow(16000 / 120, mapping.cutoffPercent / 100);
-              currentTransport.ensembleFilter.frequency.setTargetAtTime(freq, now, 0.025);
-            }
-            break;
-          }
-          case "mixerFader": {
-            updateMixer(setFader(mixerState, mapping.channel, mapping.fader));
-            break;
-          }
-          case "strictness": {
-            activeStrictness = mapping.strictness;
-            if (elements.kapellmeisterStrictness) {
-              elements.kapellmeisterStrictness.value = String(activeStrictness);
-            }
-            applyEnsembleConductor();
-            break;
-          }
+      const resolution = resolveMidiCC(midiLearnState, parsed.channel, parsed.controller, parsed.value);
+
+      if (resolution.type === "learned") {
+        saveMidiMapToStorage(window.localStorage, midiLearnState);
+        syncMidiLearnUI();
+        if (elements.status) {
+          elements.status.textContent = `LEARNED CC ${resolution.controller} ➔ ${resolution.definition.label}`;
         }
+        applyResolvedMidiTarget(resolution.targetId, resolution.domainValue, { fromMidi: true });
         break;
       }
+
+      if (resolution.type === "mapped") {
+        applyResolvedMidiTarget(resolution.targetId, resolution.domainValue, { fromMidi: true });
+        break;
+      }
+
+      // Fallbacks for unmapped special standard CCs
       if (parsed.isSustain) {
         const isDown = parsed.value >= 64;
         midiSustainActive = isDown;
@@ -3322,7 +4120,7 @@ function handleIncomingMidi(parsed, event) {
         interaction.agitation = parsed.value / 127;
         interaction.wakeTime = performance.now();
       } else if (parsed.isVolume || parsed.isExpression) {
-        setMasterVolume((parsed.value / 127) * 100);
+        setMasterVolume((parsed.value / 127) * 100, { fromMidi: true });
         if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
       }
       break;
@@ -3595,6 +4393,10 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   if (elements.boneBeatTelemetry) {
     elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
   }
+  if (muscariaModel.enabled) {
+    stimulateMuscaria(muscariaModel, 0.9);
+    updateMuscariaUI();
+  }
 
   // Cross retaliation threshold
   if (interaction.agitation >= 0.85 || interaction.tapStreak >= 6) {
@@ -3679,7 +4481,7 @@ elements.canvas.addEventListener("pointermove", (event) => {
     const currPt = { x: coords.x, y: coords.y };
     for (const str of sporeHarpModel.strings) {
       if (checkStringIntersection(prevPt, currPt, str, 0.045) && (now - str.lastPluckedAt > 110)) {
-        const vel = Math.max(0.2, Math.min(1.0, 0.4 + delta * 4.5));
+        const vel = Math.max(0.2, Math.min(0.72, 0.28 + delta * 3.0));
         const pluck = pluckHyphalString(sporeHarpModel, str.index, vel);
         if (pluck && audioContext) {
           const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
@@ -3688,6 +4490,10 @@ elements.canvas.addEventListener("pointermove", (event) => {
             sporeDensity: pluck.sporeDensity,
             atTime: audioContext.currentTime,
           });
+          if (currentTransport) {
+            const soundedMidi = Math.round(pluck.midi + 12 * Math.log2(sporeHarpModel.tension || 1.0));
+            logNote(currentTransport, "harp", soundedMidi, audioContext.currentTime, 0.45, pluck.velocity);
+          }
           if (elements.sporeHarpTelemetry) {
             elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
           }
@@ -3743,6 +4549,7 @@ elements.thereminToggle?.addEventListener("click", () => {
     interaction.thereminActive = false;
   }
   updateThereminUI(null);
+  recordHistoryAction(thereminModel.enabled ? "Enable Theremin" : "Mute Theremin");
 });
 
 elements.thereminScaleSnap?.addEventListener("click", () => {
@@ -3752,6 +4559,7 @@ elements.thereminScaleSnap?.addEventListener("click", () => {
     ? "SCALE SNAP: ON"
     : "SCALE SNAP: OFF (GLIDE)";
   updateThereminUI(null);
+  recordHistoryAction(`Theremin Scale Snap: ${thereminModel.scaleSnap ? "ON" : "OFF"}`);
 });
 
 // --- The Bone Forge & Crucible Controls (P10-02, D-090) ---------------------
@@ -3760,6 +4568,7 @@ elements.boneBeatToggle?.addEventListener("click", () => {
   if (elements.boneBeatTelemetry) {
     elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
   }
+  recordHistoryAction("Toggle Bone Forge Mute");
 });
 
 elements.boneBeatStrike?.addEventListener("click", async () => {
@@ -3796,13 +4605,17 @@ elements.sporeHarpToggle?.addEventListener("click", () => {
   if (elements.sporeHarpTelemetry) {
     elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
   }
+  recordHistoryAction("Toggle Spore Harp Mute");
 });
 
 elements.sporeHarpStrum?.addEventListener("click", async () => {
   if (audioContext && audioContext.state === "suspended") {
     await audioContext.resume();
   }
-  const plucks = strumHarp(sporeHarpModel, { direction: 1, velocity: 0.88, staggerMs: 36 });
+  if (!sporeHarpModel.enabled) {
+    updateMixer(setMuted(mixerState, "harp", false));
+  }
+  const plucks = strumHarp(sporeHarpModel, { direction: 1, velocity: 0.65, staggerMs: 36 });
   if (audioContext) {
     const dest = currentTransport?.sporeHarpBus || currentTransport?.fungalBus || audioContext.destination;
     for (const p of plucks) {
@@ -3812,6 +4625,10 @@ elements.sporeHarpStrum?.addEventListener("click", async () => {
         sporeDensity: p.sporeDensity,
         atTime: at,
       });
+      if (currentTransport) {
+        const soundedMidi = Math.round(p.midi + 12 * Math.log2(sporeHarpModel.tension || 1.0));
+        logNote(currentTransport, "harp", soundedMidi, at, 0.45, p.velocity);
+      }
     }
   }
   if (elements.sporeHarpTelemetry) {
@@ -3825,6 +4642,48 @@ elements.sporeHarpSymbiosis?.addEventListener("click", () => {
   if (elements.sporeHarpTelemetry) {
     elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
   }
+  recordHistoryAction(`Symbiosis: ${sym}`);
+});
+
+elements.sporeHarpTension?.addEventListener("click", () => {
+  cycleTension(sporeHarpModel);
+  elements.sporeHarpTension.textContent = `TENSION: ${formatTensionLabel(sporeHarpModel.tension)}`;
+  if (elements.sporeHarpTelemetry) {
+    elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+  }
+  recordHistoryAction(`Tension: ${formatTensionLabel(sporeHarpModel.tension)}`);
+});
+
+// --- PlantWave Amanita Muscaria Transducer Controls (P10-04, D-095) ---------
+elements.muscariaToggle?.addEventListener("click", () => {
+  cycleMuscariaMode(muscariaModel);
+  updateMuscariaUI();
+  recordHistoryAction(`Muscaria: ${muscariaModel.mode}`);
+});
+
+elements.muscariaStimulate?.addEventListener("click", async () => {
+  await ensureAudioContext();
+  stimulateMuscaria(muscariaModel, 1.4);
+  updateMuscariaUI();
+  if (currentTransport && !muted && audioContext) {
+    const step = currentTransport.audibleStep ?? 0;
+    const chord = currentTransport.conductedSpine?.[step] || currentConductedSpine?.[step] || null;
+    scheduleMuscariaStep(
+      audioContext,
+      currentTransport.fungalBus,
+      muscariaModel,
+      step,
+      audioContext.currentTime,
+      0.25,
+      { score: currentScore || vision.score, chord, stepsCount: activeGridSteps }
+    );
+  }
+});
+
+elements.muscariaTripDepth?.addEventListener("click", () => {
+  cycleTripDepth(muscariaModel);
+  updateMuscariaUI();
+  recordHistoryAction(`Trip Depth: ${muscariaModel.tripDepth}`);
 });
 
 // --- Parlor mixing console (P5-19) ---------------------------------------
@@ -3846,12 +4705,24 @@ function channelEngaged(id) {
   return !mixerState.channels[id].muted;
 }
 
-function updateMixer(nextState) {
+function updateMixer(nextState, options = {}) {
+  const prevState = mixerState;
   mixerState = nextState;
   applyMixerToTransport();
   syncMixerConsole();
   syncPlateToggles();
   updateBandstandStatus();
+
+  if (!options.fromMidi) {
+    for (const { id } of MIXER_CHANNELS) {
+      if (prevState?.channels?.[id]?.fader !== mixerState?.channels?.[id]?.fader) {
+        sendMidiFeedback(`fader:${id}`, mixerState.channels[id].fader);
+      }
+      if (prevState?.channels?.[id]?.muted !== mixerState?.channels?.[id]?.muted) {
+        sendMidiFeedback(`mute:${id}`, !mixerState.channels[id].muted);
+      }
+    }
+  }
 }
 
 function applyMixerToTransport() {
@@ -3972,6 +4843,7 @@ function renderMixerConsole() {
     fader.type = "range";
     fader.className = "mixer-fader";
     fader.id = `mixer-fader-${id}`;
+    fader.dataset.midiTarget = `fader:${id}`;
     fader.min = "0";
     fader.max = "100";
     fader.step = "1";
@@ -4001,6 +4873,7 @@ function renderMixerConsole() {
     const mute = document.createElement("button");
     mute.type = "button";
     mute.className = "mixer-switch mixer-mute";
+    mute.dataset.midiTarget = `mute:${id}`;
     mute.textContent = "M";
     mute.setAttribute("aria-label", `Mute ${label}`);
     const solo = document.createElement("button");
@@ -4008,14 +4881,41 @@ function renderMixerConsole() {
     solo.className = "mixer-switch mixer-solo";
     solo.textContent = "S";
     solo.setAttribute("aria-label", `Solo ${label}`);
-    switches.append(mute, solo);
+    const lock = document.createElement("button");
+    lock.type = "button";
+    lock.className = "mixer-switch mixer-lock";
+    lock.textContent = "🔓";
+    lock.setAttribute("aria-label", `Lock ${label}`);
+    lock.title = `Freeze ${label} during re-rolls and mutations`;
+    switches.append(mute, solo, lock);
 
-    fader.addEventListener("input", () => updateMixer(setFader(mixerState, id, fader.value)));
-    fader.addEventListener("dblclick", () => updateMixer(setFader(mixerState, id, FADER_UNITY)));
-    pan.addEventListener("input", () => updateMixer(setPan(mixerState, id, pan.value)));
-    pan.addEventListener("dblclick", () => updateMixer(setPan(mixerState, id, 0)));
-    mute.addEventListener("click", () => updateMixer(toggleMute(mixerState, id)));
-    solo.addEventListener("click", () => updateMixer(toggleSolo(mixerState, id)));
+    fader.addEventListener("input", () => {
+      updateMixer(setFader(mixerState, id, fader.value));
+      recordHistoryAction(`Fader: ${label}`, { immediate: false });
+    });
+    fader.addEventListener("change", () => recordHistoryAction(`Fader: ${label}`, { immediate: true }));
+    fader.addEventListener("dblclick", () => {
+      updateMixer(setFader(mixerState, id, FADER_UNITY));
+      recordHistoryAction(`Reset Fader: ${label}`);
+    });
+    pan.addEventListener("input", () => {
+      updateMixer(setPan(mixerState, id, pan.value));
+      recordHistoryAction(`Pan: ${label}`, { immediate: false });
+    });
+    pan.addEventListener("change", () => recordHistoryAction(`Pan: ${label}`, { immediate: true }));
+    pan.addEventListener("dblclick", () => {
+      updateMixer(setPan(mixerState, id, 0));
+      recordHistoryAction(`Center Pan: ${label}`);
+    });
+    mute.addEventListener("click", () => {
+      updateMixer(toggleMute(mixerState, id));
+      recordHistoryAction(`Mute: ${label}`);
+    });
+    solo.addEventListener("click", () => {
+      updateMixer(toggleSolo(mixerState, id));
+      recordHistoryAction(`Solo: ${label}`);
+    });
+    lock.addEventListener("click", () => toggleLock(id));
 
     const tacet = document.createElement("span");
     tacet.className = "mixer-tacet";
@@ -4025,9 +4925,10 @@ function renderMixerConsole() {
 
     strip.append(name, bay, db, pan, panValue, switches);
     elements.mixerStrips.append(strip);
-    mixerStripElements[id] = { strip, fader, db, pan, panValue, mute, solo, tacet };
+    mixerStripElements[id] = { strip, fader, db, pan, panValue, mute, solo, lock, tacet };
   }
   syncMixerConsole();
+  syncPartLockUI();
 }
 
 // VU meters read each strip's post-fader analyser once per frame: fast attack,
@@ -4075,8 +4976,130 @@ function setBandPlayersEnabled(nextState) {
   updateMixer(setMuted(mixerState, ACCOMPANIMENT_CHANNEL_IDS, !nextState));
 }
 
+function toggleLock(id) {
+  partLockState = togglePartLock(partLockState, id);
+  syncPartLockUI();
+  recordHistoryAction(`Toggle Lock: ${id}`);
+}
+
+function syncPartLockUI() {
+  const counts = countActiveLocks(partLockState);
+
+  for (const id of MIXER_PART_IDS) {
+    const refs = mixerStripElements[id];
+    if (refs && refs.lock) {
+      const isLocked = Boolean(partLockState[id]);
+      refs.lock.textContent = isLocked ? "🔒" : "🔓";
+      refs.lock.setAttribute("aria-pressed", String(isLocked));
+      refs.lock.classList.toggle("is-locked", isLocked);
+      refs.strip.classList.toggle("is-part-locked", isLocked);
+    }
+  }
+
+  const plateButtons = {
+    beat: elements.beatLock,
+    bass: elements.bassLock,
+    harmony: elements.harmonyLock,
+    chime: elements.chimeLock,
+    chant: elements.chantLock,
+  };
+  for (const [plateId, button] of Object.entries(plateButtons)) {
+    if (button) {
+      const isLocked = Boolean(partLockState[plateId]);
+      button.textContent = isLocked ? "LOCKED 🔒" : "LOCK 🔓";
+      button.setAttribute("aria-pressed", String(isLocked));
+      button.classList.toggle("is-locked", isLocked);
+    }
+  }
+
+  if (elements.partLockVisuals) {
+    const isLocked = Boolean(partLockState.visuals);
+    elements.partLockVisuals.textContent = isLocked ? "BODY 🔒" : "BODY 🔓";
+    elements.partLockVisuals.setAttribute("aria-pressed", String(isLocked));
+    elements.partLockVisuals.classList.toggle("is-locked", isLocked);
+  }
+  if (elements.partLockTonality) {
+    const isLocked = Boolean(partLockState.tonality);
+    elements.partLockTonality.textContent = isLocked ? "KEY 🔒" : "KEY 🔓";
+    elements.partLockTonality.setAttribute("aria-pressed", String(isLocked));
+    elements.partLockTonality.classList.toggle("is-locked", isLocked);
+  }
+
+  if (elements.partLockToggleAll) {
+    elements.partLockToggleAll.textContent = counts.isAnyLocked ? "UNLOCK ALL 🔓" : "LOCK ALL 🔒";
+    elements.partLockToggleAll.title = counts.isAnyLocked ? "Unlock all frozen instruments" : "Lock all instruments";
+  }
+
+  if (elements.partLockSummary) {
+    elements.partLockSummary.textContent = counts.isAnyLocked
+      ? `${counts.locked} LOCKED · ${counts.free} FREE`
+      : "ALL PARTS FREE";
+  }
+}
+
+function mutateUnlockedParts() {
+  if (!currentScore) return;
+  const counts = countActiveLocks(partLockState);
+  if (counts.locked === counts.total) {
+    elements.status.textContent = "ALL PARTS LOCKED · UNLOCK TO MUTATE";
+    return;
+  }
+
+  if (!partLockState.beat) {
+    beatMutation += 1;
+    recomposePlate("beat");
+  }
+  if (!partLockState.bass) {
+    bassMutation += 1;
+    recomposePlate("bass");
+  }
+  if (!partLockState.harmony) {
+    harmonyMutation += 1;
+    recomposePlate("harmony");
+  }
+  if (!partLockState.chime) {
+    chimeMutation += 1;
+    recomposePlate("chime");
+  }
+  if (!partLockState.chant) {
+    chantMutation += 1;
+    recomposePlate("chant");
+  }
+
+  if (!partLockState.forge && boneBeatModel) {
+    currentBoneBeat = composeBoneBeat(currentScore, activeGridSteps, beatMutation);
+    if (elements.boneBeatTelemetry) {
+      elements.boneBeatTelemetry.textContent = formatBoneBeatTelemetry(boneBeatModel);
+    }
+  }
+
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+
+  elements.status.textContent = `UNLOCKED ENSEMBLE MUTATED IN-PLACE · ${counts.free} VOICES RE-SEEDED`;
+  recordHistoryAction("Mutate Unlocked Parts");
+
+  if (elements.partLockMutate) {
+    elements.partLockMutate.classList.add("is-active");
+    setTimeout(() => elements.partLockMutate?.classList.remove("is-active"), 200);
+  }
+}
+
+async function rerollUnlockedParts() {
+  const currentPhrase = (currentScore?.phrase || "").toLowerCase();
+  const pool = SURPRISES.filter((s) => s.toLowerCase() !== currentPhrase);
+  const nextPhrase = pool[Math.floor(Math.random() * pool.length)] || SURPRISES[0];
+  if (elements.phrase) elements.phrase.value = nextPhrase;
+  await summon(nextPhrase, { playAudio: true });
+}
+
 elements.beatToggle?.addEventListener("click", () => {
   updateMixer(toggleMute(mixerState, "beat"));
+  recordHistoryAction("Toggle Beat Mute");
 });
 
 elements.beatMutate?.addEventListener("click", () => {
@@ -4086,10 +5109,12 @@ elements.beatMutate?.addEventListener("click", () => {
   applyEnsembleConductor();
   updateBeatGrid();
   updateBassGrid();
+  recordHistoryAction("Mutate Beat Plate");
 });
 
 elements.bassToggle?.addEventListener("click", () => {
   updateMixer(toggleMute(mixerState, "bass"));
+  recordHistoryAction("Toggle Bass Mute");
 });
 
 elements.bassMutate?.addEventListener("click", () => {
@@ -4098,10 +5123,12 @@ elements.bassMutate?.addEventListener("click", () => {
   recomposePlate("bass");
   applyEnsembleConductor();
   updateBassGrid();
+  recordHistoryAction("Mutate Bass Plate");
 });
 
 elements.harmonyToggle?.addEventListener("click", () => {
   updateMixer(toggleMute(mixerState, "harmony"));
+  recordHistoryAction("Toggle Harmony Mute");
 });
 
 elements.harmonyMutate?.addEventListener("click", () => {
@@ -4113,10 +5140,12 @@ elements.harmonyMutate?.addEventListener("click", () => {
   updateBassGrid();
   updateChimeGrid();
   updateChantGrid();
+  recordHistoryAction("Mutate Harmony Plate");
 });
 
 elements.chimeToggle?.addEventListener("click", () => {
   updateMixer(toggleMute(mixerState, "chime"));
+  recordHistoryAction("Toggle Chimes Mute");
 });
 
 elements.chimeMutate?.addEventListener("click", () => {
@@ -4125,10 +5154,12 @@ elements.chimeMutate?.addEventListener("click", () => {
   recomposePlate("chime");
   applyEnsembleConductor();
   updateChimeGrid();
+  recordHistoryAction("Mutate Chimes Plate");
 });
 
 elements.chantToggle?.addEventListener("click", () => {
   updateMixer(toggleMute(mixerState, "chant"));
+  recordHistoryAction("Toggle Chant Mute");
 });
 
 elements.chantMutate?.addEventListener("click", () => {
@@ -4137,11 +5168,30 @@ elements.chantMutate?.addEventListener("click", () => {
   recomposePlate("chant");
   applyEnsembleConductor();
   updateChantGrid();
+  recordHistoryAction("Mutate Chant Plate");
 });
 
 elements.mixerReset?.addEventListener("click", () => {
-  updateMixer(createMixerState());
+  updateMixer(setMuted(createMixerState(), "harp", true));
+  recordHistoryAction("Reset Mixer");
 });
+
+elements.partLockMutate?.addEventListener("click", () => mutateUnlockedParts());
+elements.partLockReroll?.addEventListener("click", () => rerollUnlockedParts());
+elements.partLockToggleAll?.addEventListener("click", () => {
+  const counts = countActiveLocks(partLockState);
+  partLockState = setAllLocks(partLockState, !counts.isAnyLocked);
+  syncPartLockUI();
+  recordHistoryAction("Toggle All Locks");
+});
+elements.partLockVisuals?.addEventListener("click", () => toggleLock("visuals"));
+elements.partLockTonality?.addEventListener("click", () => toggleLock("tonality"));
+
+elements.beatLock?.addEventListener("click", () => toggleLock("beat"));
+elements.bassLock?.addEventListener("click", () => toggleLock("bass"));
+elements.harmonyLock?.addEventListener("click", () => toggleLock("harmony"));
+elements.chimeLock?.addEventListener("click", () => toggleLock("chime"));
+elements.chantLock?.addEventListener("click", () => toggleLock("chant"));
 
 renderMixerConsole();
 syncPlateToggles();
@@ -4175,6 +5225,7 @@ function captureSession() {
     funMachine: {
       style: funMachineStyle,
       voice: funVoiceId,
+      octave: funMachineOctave,
     },
     song,
     plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
@@ -4182,6 +5233,32 @@ function captureSession() {
       cellCycles: [...plateCellCycles[id]],
     }])),
     mixer: Object.fromEntries(MIXER_CHANNEL_IDS.map((id) => [id, { ...mixerState.channels[id] }])),
+    somatic: {
+      sporeHarp: {
+        symbiosis: (sporeHarpModel?.symbiosis || "silk").toLowerCase(),
+        tension: sporeHarpModel?.tension ?? 1.0,
+      },
+      muscaria: {
+        targetMode: (muscariaModel?.mode || "dormant").toLowerCase(),
+        tripDepth: (muscariaModel?.tripDepth || "deep").toLowerCase(),
+      },
+      theremin: {
+        scaleSnap: Boolean(thereminModel?.scaleSnap ?? true),
+      },
+    },
+    recorder: {
+      wavBitDepth: 16,
+      autoMidi: true,
+    },
+    herbarium: (() => {
+      const herbStore = readHerbariumStore();
+      const match = herbStore.specimens.find((s) => s.phrase === currentScore.phrase);
+      return {
+        pinned: Boolean(match),
+        specimen: match ? { ...match } : null,
+      };
+    })(),
+    locks: { ...partLockState },
   };
 }
 
@@ -4215,6 +5292,7 @@ function syncSessionControls() {
   updateAcousticsStatus();
   setFunStyle(funMachineStyle);
   setFunVoice(funVoiceId);
+  updateFunOctaveUI();
   if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
 }
 
@@ -4237,6 +5315,7 @@ function applySession(session) {
   }
   funMachineStyle = session.funMachine.style;
   funVoiceId = session.funMachine.voice;
+  setFunOctave(session.funMachine.octave ?? 0);
   // Files from before variation existed open AS WRITTEN (D-043).
   genreVaried = session.varied;
   // The loop machine's song travels with the session (v4); older files bring none.
@@ -4275,6 +5354,54 @@ function applySession(session) {
   syncSessionControls();
   updateMixer(mixerStateFromChannels(session.mixer));
   renderLooper();
+
+  // Bio-somatic restoration (D-101)
+  if (session.somatic) {
+    if (session.somatic.sporeHarp) {
+      sporeHarpModel.symbiosis = (session.somatic.sporeHarp.symbiosis || "silk").toUpperCase();
+      sporeHarpModel.tension = session.somatic.sporeHarp.tension ?? 1.0;
+      if (elements.sporeHarpSymbiosis) {
+        elements.sporeHarpSymbiosis.textContent = `SYMBIOSIS: ${sporeHarpModel.symbiosis}`;
+      }
+      if (elements.sporeHarpTension) {
+        elements.sporeHarpTension.textContent = `TENSION: ${formatTensionLabel(sporeHarpModel.tension)}`;
+      }
+      if (elements.sporeHarpTelemetry) {
+        elements.sporeHarpTelemetry.textContent = formatSporeHarpTelemetry(sporeHarpModel);
+      }
+    }
+    if (session.somatic.muscaria) {
+      // Requirement 1: Load dormant until activated!
+      muscariaModel.mode = "DORMANT";
+      muscariaModel.tripDepth = (session.somatic.muscaria.tripDepth || "deep").toUpperCase();
+      muscariaModel.targetMode = (session.somatic.muscaria.targetMode || "bio_pulse").toUpperCase();
+      updateMuscariaUI();
+    }
+    if (session.somatic.theremin) {
+      thereminModel.scaleSnap = Boolean(session.somatic.theremin.scaleSnap ?? true);
+      if (elements.thereminScaleSnap) {
+        elements.thereminScaleSnap.setAttribute("aria-pressed", String(thereminModel.scaleSnap));
+        elements.thereminScaleSnap.textContent = thereminModel.scaleSnap
+          ? "SCALE SNAP: ON (QUANTIZED)"
+          : "SCALE SNAP: OFF (FREE GLIDE)";
+      }
+      updateThereminUI(null);
+    }
+  }
+
+  // Herbarium specimen restoration (D-101)
+  if (session.herbarium?.pinned && session.herbarium?.specimen) {
+    const herbStore = readHerbariumStore();
+    if (!herbStore.specimens.some((s) => s.phrase === session.herbarium.specimen.phrase)) {
+      writeHerbariumStore(pinSpecimen(herbStore, session.herbarium.specimen));
+      renderHerbarium();
+      syncHerbariumButtons();
+    }
+  }
+
+  // Part lock restoration (P12-01, D-102)
+  partLockState = createPartLockState(session.locks || {});
+  syncPartLockUI();
 
   if (transportState.state === TRANSPORT_STATES.PLAYING && !muted) {
     runTransportCommand("restart");
@@ -4320,7 +5447,7 @@ function setSessionTelemetry(text) {
 
 function renderPresetList(selectName = null) {
   const list = elements.sessionPresetList;
-  if (!list) return;
+  if (!list || !rulebooksInstalled()) return;
   const { presets } = readPresetStore();
   list.replaceChildren();
   if (!presets.length) {
@@ -4337,15 +5464,37 @@ function renderPresetList(selectName = null) {
   }
   if (selectName) list.value = selectName;
   list.disabled = !presets.length;
-  if (elements.sessionLoadPreset) elements.sessionLoadPreset.disabled = !presets.length;
-  if (elements.sessionDeletePreset) elements.sessionDeletePreset.disabled = !presets.length;
+  syncSessionButtons();
 }
 
 function syncSessionButtons() {
   const ready = Boolean(currentScore);
+  if (!rulebooksInstalled()) {
+    if (elements.sessionSavePreset) elements.sessionSavePreset.disabled = !ready;
+    if (elements.sessionUpdatePreset) elements.sessionUpdatePreset.disabled = true;
+    if (elements.sessionLoadPreset) elements.sessionLoadPreset.disabled = true;
+    if (elements.sessionClonePreset) elements.sessionClonePreset.disabled = true;
+    if (elements.sessionRenamePreset) elements.sessionRenamePreset.disabled = true;
+    if (elements.sessionDeletePreset) elements.sessionDeletePreset.disabled = true;
+    if (elements.sessionSaveFile) elements.sessionSaveFile.disabled = !ready;
+    if (elements.sessionExportBank) elements.sessionExportBank.disabled = true;
+    return;
+  }
+  const store = readPresetStore();
+  const hasPresets = Boolean(store.presets.length);
+  const hasSelected = Boolean(elements.sessionPresetList?.value);
+
   if (elements.sessionSavePreset) elements.sessionSavePreset.disabled = !ready;
+  if (elements.sessionUpdatePreset) elements.sessionUpdatePreset.disabled = !ready || !hasSelected;
+  if (elements.sessionLoadPreset) elements.sessionLoadPreset.disabled = !hasSelected;
+  if (elements.sessionClonePreset) elements.sessionClonePreset.disabled = !hasSelected;
+  if (elements.sessionRenamePreset) elements.sessionRenamePreset.disabled = !hasSelected;
+  if (elements.sessionDeletePreset) elements.sessionDeletePreset.disabled = !hasSelected;
   if (elements.sessionSaveFile) elements.sessionSaveFile.disabled = !ready;
+  if (elements.sessionExportBank) elements.sessionExportBank.disabled = !hasPresets;
 }
+
+elements.sessionPresetList?.addEventListener("change", syncSessionButtons);
 
 function describeSessionError(error) {
   return error?.name === "SessionError" ? error.path.replace(/^session\.?/, "").toUpperCase() || "FILE" : "UNREADABLE";
@@ -4367,6 +5516,24 @@ elements.sessionSavePreset?.addEventListener("click", () => {
   }
 });
 
+// Instant overwrite (D-101)
+elements.sessionUpdatePreset?.addEventListener("click", () => {
+  if (!currentScore) return;
+  const name = elements.sessionPresetList?.value;
+  if (!name) return;
+  try {
+    const store = upsertPreset(readPresetStore(), name, captureSession(), new Date().toISOString(), { overwrite: true });
+    if (!writePresetStore(store)) {
+      setSessionTelemetry("BROWSER STORAGE UNAVAILABLE · SAVE A .FUN FILE INSTEAD");
+      return;
+    }
+    renderPresetList(name);
+    setSessionTelemetry(`PRESET UPDATED IN THIS BROWSER · ${name.toUpperCase()}`);
+  } catch (error) {
+    setSessionTelemetry(`PRESET NOT UPDATED · ${describeSessionError(error)}`);
+  }
+});
+
 elements.sessionLoadPreset?.addEventListener("click", () => {
   const name = elements.sessionPresetList?.value;
   const preset = readPresetStore().presets.find((entry) => entry.name === name);
@@ -4376,6 +5543,7 @@ elements.sessionLoadPreset?.addEventListener("click", () => {
   }
   try {
     applySession(preset.session);
+    recordHistoryAction(`Load Preset: ${preset.name}`);
     const engineWarning = preset.session.engineVersion !== ENGINE_VERSION
       ? ` · WARNING: ENGINE v${preset.session.engineVersion} ≠ CURRENT v${ENGINE_VERSION}`
       : "";
@@ -4383,6 +5551,44 @@ elements.sessionLoadPreset?.addEventListener("click", () => {
   } catch (error) {
     console.error(error);
     setSessionTelemetry("PRESET COULD NOT BE LOADED");
+  }
+});
+
+// Clone / Duplicate preset (D-101)
+elements.sessionClonePreset?.addEventListener("click", () => {
+  const sourceName = elements.sessionPresetList?.value;
+  if (!sourceName) return;
+  const newName = window.prompt("Duplicate preset name:", `${sourceName} Copy`);
+  if (!newName) return;
+  try {
+    const store = duplicatePreset(readPresetStore(), sourceName, newName);
+    if (!writePresetStore(store)) {
+      setSessionTelemetry("BROWSER STORAGE UNAVAILABLE · CANNOT CLONE PRESET");
+      return;
+    }
+    renderPresetList(newName.trim());
+    setSessionTelemetry(`PRESET DUPLICATED · ${newName.trim().toUpperCase()}`);
+  } catch (error) {
+    setSessionTelemetry(`PRESET NOT CLONED · ${describeSessionError(error)}`);
+  }
+});
+
+// Rename preset (D-101)
+elements.sessionRenamePreset?.addEventListener("click", () => {
+  const oldName = elements.sessionPresetList?.value;
+  if (!oldName) return;
+  const newName = window.prompt("Rename preset:", oldName);
+  if (!newName || newName.trim() === oldName) return;
+  try {
+    const store = renamePreset(readPresetStore(), oldName, newName.trim());
+    if (!writePresetStore(store)) {
+      setSessionTelemetry("BROWSER STORAGE UNAVAILABLE · CANNOT RENAME PRESET");
+      return;
+    }
+    renderPresetList(newName.trim());
+    setSessionTelemetry(`PRESET RENAMED · ${newName.trim().toUpperCase()}`);
+  } catch (error) {
+    setSessionTelemetry(`PRESET NOT RENAMED · ${describeSessionError(error)}`);
   }
 });
 
@@ -4422,6 +5628,7 @@ elements.sessionFileInput?.addEventListener("change", async () => {
   try {
     const parsed = parseSession(await file.text());
     applySession(parsed);
+    recordHistoryAction(`Open Session: ${file.name}`);
     const engineWarning = parsed.engineVersion !== ENGINE_VERSION
       ? ` · WARNING: ENGINE v${parsed.engineVersion} ≠ CURRENT v${ENGINE_VERSION}`
       : "";
@@ -4432,7 +5639,54 @@ elements.sessionFileInput?.addEventListener("change", async () => {
   }
 });
 
-syncSessionButtons();
+// Export Preset Bank (.funbank, D-101)
+elements.sessionExportBank?.addEventListener("click", () => {
+  const store = readPresetStore();
+  if (!store.presets.length) return;
+  try {
+    const text = serializePresetBank(store);
+    downloadBlob(new Blob([text], { type: "application/json" }), `whimsy-bank-${new Date().toISOString().slice(0, 10)}.${BANK_FILE_EXTENSION}`);
+    setSessionTelemetry(`PRESET BANK EXPORTED · ${store.presets.length} PRESETS`);
+  } catch (error) {
+    setSessionTelemetry(`BANK EXPORT FAILED · ${describeSessionError(error)}`);
+  }
+});
+
+// Open Preset Bank (.funbank, D-101)
+elements.sessionOpenBank?.addEventListener("click", () => {
+  elements.sessionBankInput?.click();
+});
+
+elements.sessionBankInput?.addEventListener("change", async () => {
+  const input = elements.sessionBankInput;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  if (file.size > MAX_BANK_BYTES) {
+    setSessionTelemetry("BANK REJECTED · FILE TOO LARGE");
+    return;
+  }
+  try {
+    const text = await file.text();
+    // User confirmed decision: Ask whether to merge or replace!
+    const merge = window.confirm(
+      "Merge presets into this browser?\n\n• Click OK to MERGE (add new presets alongside existing ones)\n• Click Cancel to REPLACE ALL existing presets with this bank"
+    );
+    const updatedStore = parsePresetBank(text, {
+      mergeMode: merge ? "merge" : "replace",
+      existingStore: readPresetStore(),
+    });
+    if (!writePresetStore(updatedStore)) {
+      setSessionTelemetry("BROWSER STORAGE UNAVAILABLE · CANNOT STORE BANK");
+      return;
+    }
+    renderPresetList(updatedStore.presets[0]?.name);
+    setSessionTelemetry(`BANK INSTALLED · ${updatedStore.presets.length} PRESETS (${merge ? "MERGED" : "REPLACED"})`);
+  } catch (error) {
+    if (error?.name !== "SessionError") console.error(error);
+    setSessionTelemetry(`BANK REJECTED · ${describeSessionError(error)}`);
+  }
+});
 
 // --- Keep Wing Segmented Decks (P8-16, D-082) -------------------------------
 
@@ -4856,6 +6110,73 @@ buildDrawers();
 renderCabinet();
 
 // ---------------------------------------------------------------------------
+// Compact Parlor Console & Grand Workbench View Modes (P12-04, D-103)
+
+let viewMode = readViewMode();
+
+function readViewMode() {
+  try {
+    return parseViewMode(window.localStorage.getItem(VIEW_MODE_STORAGE_KEY));
+  } catch {
+    return DEFAULT_VIEW_MODE;
+  }
+}
+
+function writeViewMode(mode) {
+  try {
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch {
+    // Storage can be blocked; view mode still works for this visit.
+  }
+}
+
+function applyViewMode(mode) {
+  viewMode = mode;
+  writeViewMode(mode);
+  const isSalon = isSalonMode(mode);
+  const cabinet = document.querySelector(".oracle-cabinet");
+  if (cabinet) {
+    cabinet.classList.toggle("is-salon-view", isSalon);
+    cabinet.classList.toggle("is-workbench-view", !isSalon);
+  }
+  if (elements.viewModeToggle) {
+    elements.viewModeToggle.setAttribute("aria-pressed", String(!isSalon));
+    elements.viewModeToggle.setAttribute("title", isSalon ? "Switch to Grand Workbench [Hotkey V]" : "Switch to Parlor Salon [Hotkey V]");
+  }
+  if (elements.viewModeText) {
+    elements.viewModeText.textContent = viewModeLabel(mode);
+  }
+  if (elements.workbenchUnfold) {
+    elements.workbenchUnfold.setAttribute("aria-expanded", String(!isSalon));
+  }
+  const labels = unfoldButtonLabels(mode);
+  if (elements.unfoldIcon) elements.unfoldIcon.textContent = labels.icon;
+  if (elements.unfoldText) elements.unfoldText.textContent = labels.text;
+  if (elements.unfoldHint) elements.unfoldHint.textContent = labels.hint;
+
+  // Accessibility: mark deep machinery inert/aria-hidden in salon mode
+  for (const id of ["wing-mix", "wing-band", "wing-keep", "kapellmeister-engine", "looper", "somatic-rack"]) {
+    const el = document.getElementById(id);
+    if (el) {
+      if (isSalon) {
+        el.setAttribute("aria-hidden", "true");
+      } else {
+        el.removeAttribute("aria-hidden");
+      }
+    }
+  }
+}
+
+elements.viewModeToggle?.addEventListener("click", () => {
+  applyViewMode(toggleViewMode(viewMode));
+});
+elements.workbenchUnfold?.addEventListener("click", () => {
+  applyViewMode(toggleViewMode(viewMode));
+});
+
+applyViewMode(viewMode);
+
+// ---------------------------------------------------------------------------
 // The loop machine (D-039, P5-26). `song` is the visitor's arrangement of
 // recorded takes, kept across summons; the recorder turns held keys into a
 // take one step at a time, from the same moment the live accompanist reads.
@@ -4872,8 +6193,9 @@ function performanceFor(slot, pass = null, position = currentTransport?.songPosi
   const isSection = slot.style === "intro" || slot.style === "bridge" || slot.style === "outro";
   const sectionPass = isSection && pass === null ? sectionPassForLoop(song, position?.loopIndex, position?.repeat) : null;
   const effectivePass = pass !== null ? pass : (sectionPass !== null ? sectionPass : currentHarmonicPass);
-  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${effectivePass}:${genreVaried}:${currentScore?.seed}:${activeGridSteps}`;
-  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style, effectivePass, activeGridSteps));
+  const slotOct = slot.octave ?? 0;
+  const key = `${slot.key}:${slotOct}:${slot.style}:${activeGenre}:${tonic}:${effectivePass}:${genreVaried}:${currentScore?.seed}:${activeGridSteps}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style, effectivePass, activeGridSteps, slotOct));
   return performanceCache.get(key);
 }
 
@@ -4881,7 +6203,8 @@ function performanceFor(slot, pass = null, position = currentTransport?.songPosi
  * A key's performance on this pass of the harmonic cycle (D-044), varied by
  * this creature unless AS WRITTEN is pressed (D-043).
  */
-function performanceOf(key, style, pass = null, steps = activeGridSteps) {
+function performanceOf(rawKey, style, pass = null, steps = activeGridSteps, octave = null) {
+  const key = rawKey + ((octave !== null ? octave : funMachineOctave) * 12);
   if (pass !== null) {
     return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
       pass,
@@ -4904,7 +6227,7 @@ function performanceOf(key, style, pass = null, steps = activeGridSteps) {
  */
 function harmonicPassAt(absoluteStep, steps = activeGridSteps) {
   const pos = songPosition(song, absoluteStep, steps);
-  if (pos) {
+  if (pos && activeHeldFunKey === null) {
     const secPass = sectionPassForLoop(song, pos.loopIndex, pos.repeat);
     if (secPass !== null) return secPass;
   }
@@ -4971,6 +6294,7 @@ function landTake({ kind, loopIndex, take }) {
   selectedLoop = kind === "new" ? song.loops.length - 1 : loopIndex;
   announceLooper(kind === "new" ? `LOOP ${song.loops.length} ADDED TO THE SONG` : `LAYER ADDED TO LOOP ${loopIndex + 1}`);
   unlockDrawer("change");
+  recordHistoryAction(kind === "new" ? `Record Loop ${song.loops.length}` : `Record Layer in Loop ${loopIndex + 1}`);
   return selectedLoop;
 }
 
@@ -5082,6 +6406,7 @@ function clearSong() {
   if (activeHeldFunKey === null) applyEnsembleConductor();
   announceLooper("THE SONG IS CLEARED");
   renderLooper();
+  recordHistoryAction("Clear All Loops");
 }
 
 function updateCasioUI() {
@@ -5487,6 +6812,7 @@ function editSong(next, { selection = selectedLoop, done, refused }) {
   if (!song.loops.length && activeHeldFunKey === null) applyEnsembleConductor();
   announceLooper(done);
   renderLooper();
+  recordHistoryAction(done || "Edit Song");
 }
 
 function renderLooper() {
@@ -5729,17 +7055,20 @@ elements.kapellmeisterKeyOverride?.addEventListener("change", (e) => {
   const val = e.target.value;
   rootOverride = val === "native" ? null : Number(val);
   refreshScoreOverrides();
+  recordHistoryAction(`Key Override: ${rootOverride === null ? "Native" : rootOverride}`);
 });
 
 elements.kapellmeisterScaleOverride?.addEventListener("change", (e) => {
   const val = e.target.value;
   scaleOverride = val === "native" ? null : Number(val);
   refreshScoreOverrides();
+  recordHistoryAction(`Scale Override: ${scaleOverride === null ? "Native" : scaleOverride}`);
 });
 
 elements.kapellmeisterTuningA4?.addEventListener("change", (e) => {
   setReferencePitch(Number(e.target.value));
   refreshScoreOverrides();
+  recordHistoryAction(`Tuning Reference: ${referencePitch()} Hz`);
 });
 
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
@@ -5758,6 +7087,7 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   updateChantGrid();
   updateFunKeyboardChordLabels();
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
+  recordHistoryAction(`Rulebook: ${activeGenre}`);
 });
 
 // AS WRITTEN (D-043): the genre's own changes, without this creature's moves.
@@ -5771,11 +7101,17 @@ elements.kapellmeisterAsWritten?.addEventListener("click", () => {
     applyEnsembleConductor();
   }
   updateKapellmeisterUI();
+  if (elements.kapellmeisterTelemetry) {
+    elements.kapellmeisterTelemetry.textContent = !genreVaried
+      ? "AS WRITTEN [ON] · BYPASSING CREATURE VARIATIONS"
+      : "VARIATION [ON] · PLAYING CREATURE'S OWN MOVES";
+  }
   updateBassGrid();
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
+  recordHistoryAction(genreVaried ? "Enable Variations" : "As Written");
 });
 
 elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
@@ -5790,6 +7126,11 @@ elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
+  recordHistoryAction(`Strictness: ${activeStrictness}`, { immediate: false });
+});
+
+elements.kapellmeisterStrictness?.addEventListener("change", () => {
+  recordHistoryAction(`Strictness: ${activeStrictness}`, { immediate: true });
 });
 
 // --- The Kapellmeister's Manuscript live Inform 7 sandbox (P5-36, D-071) ---
@@ -5895,6 +7236,7 @@ for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
       activeHeldFunKey = null;
       triggerFunKey(held, true);
     }
+    recordHistoryAction(`Accompaniment Style: ${chip.dataset.style}`);
   });
 }
 
@@ -5930,8 +7272,19 @@ for (const chip of document.querySelectorAll(".fun-chip[data-voice]")) {
       activeHeldFunKey = null;
       triggerFunKey(held, true);
     }
+    recordHistoryAction(`Accompaniment Voice: ${chip.dataset.voice}`);
   });
 }
+
+elements.funOctaveDown?.addEventListener("click", () => {
+  setFunOctave(funMachineOctave - 1);
+  recordHistoryAction(`Keyboard Octave: ${funMachineOctave}`);
+});
+
+elements.funOctaveUp?.addEventListener("click", () => {
+  setFunOctave(funMachineOctave + 1);
+  recordHistoryAction(`Keyboard Octave: ${funMachineOctave}`);
+});
 
 if (elements.funKeyboard) {
   let lastPointerTriggerTime = 0;
@@ -5980,6 +7333,10 @@ document.addEventListener("focusin", (event) => {
 });
 
 window.addEventListener("keydown", (event) => {
+  if (midiLearnState.learning && event.code === "Escape") {
+    exitLearnMode(midiLearnState);
+    syncMidiLearnUI();
+  }
   const transportCommand = transportCommandForKey(event, { pointerFocused: pointerFocusedControl });
   if (transportCommand && currentScore) {
     event.preventDefault();
@@ -5994,8 +7351,45 @@ window.addEventListener("keydown", (event) => {
   ) {
     return;
   }
+  // Global Action History Undo: Ctrl+Z / Cmd+Z
+  if ((event.ctrlKey || event.metaKey) && !event.altKey && event.code === "KeyZ" && !event.shiftKey) {
+    event.preventDefault();
+    performUndo();
+    return;
+  }
+  // Global Action History Redo: Ctrl+Y / Cmd+Y or Ctrl+Shift+Z / Cmd+Shift+Z
+  if ((event.ctrlKey || event.metaKey) && !event.altKey && ((event.code === "KeyZ" && event.shiftKey) || event.code === "KeyY")) {
+    event.preventDefault();
+    performRedo();
+    return;
+  }
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.repeat) return;
+  if (event.code === "KeyZ") {
+    event.preventDefault();
+    setFunOctave(funMachineOctave - 1);
+    return;
+  }
+  if (event.code === "KeyX") {
+    event.preventDefault();
+    setFunOctave(funMachineOctave + 1);
+    return;
+  }
+  if (event.code === "KeyM") {
+    event.preventDefault();
+    mutateUnlockedParts();
+    return;
+  }
+  if (event.code === "KeyL") {
+    event.preventDefault();
+    toggleMidiLearnMode();
+    return;
+  }
+  if (event.code === "KeyV") {
+    event.preventDefault();
+    applyViewMode(toggleViewMode(viewMode));
+    return;
+  }
   const mapped = FUN_KEY_BY_CODE[event.code] || (event.key ? FUN_KEY_BY_KEY[event.key.toUpperCase()] : null);
   if (mapped) {
     event.preventDefault();
@@ -6054,6 +7448,9 @@ elements.transportStop?.addEventListener("click", () => {
   runTransportCommand("stop");
 });
 
+elements.transportUndo?.addEventListener("click", () => performUndo());
+elements.transportRedo?.addEventListener("click", () => performRedo());
+
 elements.transportBarLock?.addEventListener("click", () => {
   barLock44 = !barLock44;
   elements.transportBarLock.setAttribute("aria-pressed", String(barLock44));
@@ -6066,6 +7463,7 @@ elements.transportBarLock?.addEventListener("click", () => {
   elements.status.textContent = barLock44
     ? "4/4 BAR LOCK ENGAGED · EACH 12-STEP PASS FITS ONE 4/4 BAR"
     : "4/4 BAR LOCK RELEASED · NATIVE PARLOR PULSE";
+  recordHistoryAction(barLock44 ? "Enable 4/4 Bar Lock" : "Release 4/4 Bar Lock");
 });
 
 elements.transportGridSteps?.addEventListener("click", () => {
@@ -6093,6 +7491,30 @@ elements.transportGridSteps?.addEventListener("click", () => {
   elements.status.textContent = activeGridSteps === 16
     ? "16-STEP GRID ENGAGED · 4/4 STRAIGHT SIXTEENTH NOTES"
     : "12-STEP GRID ENGAGED · VINTAGE PARLOR SHUFFLE";
+  recordHistoryAction(activeGridSteps === 16 ? "Grid: 16 Steps (4/4)" : "Grid: 12 Steps (Triplet)");
+});
+
+elements.transportLiveRec?.addEventListener("click", async () => {
+  if (!currentScore) return;
+  await ensureAudioContext();
+  if (transportState.state !== TRANSPORT_STATES.PLAYING) {
+    await runTransportCommand("play");
+  }
+  if (!liveRecorder) return;
+  if (liveRecorder.getState() === LIVE_REC_STATES.IDLE) {
+    if (audioContext) liveRecorder.setSampleRate(audioContext.sampleRate);
+    const bpm = activeTempoBpm || currentScore.pulse;
+    liveRecorder.arm({ bpm, gridSteps: activeGridSteps, contextTime: audioContext?.currentTime ?? 0 });
+    attachLiveAudioTap();
+    elements.status.textContent = "LIVE REC ARMED · WILL BEGIN CAPTURE ON NEXT DOWNBEAT";
+  } else if (liveRecorder.getState() === LIVE_REC_STATES.ARMED_START) {
+    liveRecorder.requestStop();
+    detachLiveAudioTap();
+    elements.status.textContent = "LIVE REC DISARMED";
+  } else if (liveRecorder.getState() === LIVE_REC_STATES.RECORDING) {
+    liveRecorder.requestStop();
+    elements.status.textContent = "LIVE REC STOPPING · WILL FINISH CAPTURE ON NEXT DOWNBEAT";
+  }
 });
 
 elements.shareLink?.addEventListener("click", () => {
@@ -6113,6 +7535,22 @@ elements.exportStems?.addEventListener("click", () => {
 
 elements.exportMidi?.addEventListener("click", () => {
   exportSpecimenMidi();
+});
+
+elements.exportLiveWav?.addEventListener("click", () => {
+  if (!lastLiveTake?.wavBytes || !currentScore) return;
+  const key = keyLabelFor(currentScore.root, currentScore.scale);
+  const wavName = exportFilename(currentScore, { bpm: lastLiveTake.take.bpm, keyAscii: key.ascii, suffix: "live-take", extension: "wav" });
+  downloadBlob(new Blob([lastLiveTake.wavBytes], { type: "audio/wav" }), wavName);
+  elements.status.textContent = "DOWNLOADED LIVE WAV TAKE ☊";
+});
+
+elements.exportLiveMidi?.addEventListener("click", () => {
+  if (!lastLiveTake?.midiBytes || !currentScore) return;
+  const key = keyLabelFor(currentScore.root, currentScore.scale);
+  const midiName = exportFilename(currentScore, { bpm: lastLiveTake.take.bpm, keyAscii: key.ascii, suffix: "live-take", extension: "mid" });
+  downloadBlob(new Blob([lastLiveTake.midiBytes], { type: "audio/midi" }), midiName);
+  elements.status.textContent = "DOWNLOADED LIVE MIDI TAKE ♪";
 });
 
 elements.midiConnectBtn?.addEventListener("click", async () => {
@@ -6208,6 +7646,63 @@ elements.studioLocalControlBtn?.addEventListener("click", () => {
   setLocalControl(!localControlEnabled);
 });
 
+elements.midiLearnStudioBtn?.addEventListener("click", () => {
+  toggleMidiLearnMode();
+});
+
+elements.midiLearnMixerBtn?.addEventListener("click", () => {
+  toggleMidiLearnMode();
+});
+
+elements.midiMapClearBtn?.addEventListener("click", () => {
+  clearAllMappings(midiLearnState);
+  saveMidiMapToStorage(window.localStorage, midiLearnState);
+  syncMidiLearnUI();
+});
+
+elements.midiMapResetBtn?.addEventListener("click", () => {
+  resetToBuiltinDefaults(midiLearnState);
+  saveMidiMapToStorage(window.localStorage, midiLearnState);
+  syncMidiLearnUI();
+});
+
+elements.midiFeedbackToggle?.addEventListener("change", (e) => {
+  midiLearnState.feedbackEnabled = e.target.checked;
+  saveMidiMapToStorage(window.localStorage, midiLearnState);
+});
+
+elements.studioUndoBtn?.addEventListener("click", () => {
+  performUndo();
+});
+
+elements.studioRedoBtn?.addEventListener("click", () => {
+  performRedo();
+});
+
+elements.studioHistoryClearBtn?.addEventListener("click", () => {
+  if (!currentScore) return;
+  historyState = clearHistory(historyState);
+  syncHistoryUI();
+});
+
+document.addEventListener("click", (event) => {
+  if (!midiLearnState.learning) return;
+  const targetEl = event.target?.closest?.("[data-midi-target]");
+  if (!targetEl) return;
+  if (event.target?.closest?.(".midi-map-chip-remove, #midi-learn-mixer-btn, #midi-learn-studio-btn, #midi-map-clear-btn, #midi-map-reset-btn")) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const targetId = targetEl.dataset.midiTarget;
+  if (midiLearnState.armedTargetId === targetId) {
+    disarmTarget(midiLearnState);
+  } else {
+    armTarget(midiLearnState, targetId);
+  }
+  syncMidiLearnUI();
+}, true);
+
 window.addEventListener("hashchange", () => {
   const hashPhrase = decodeOmenHash(window.location.hash);
   if (hashPhrase && (!currentScore || currentScore.phrase !== hashPhrase)) {
@@ -6242,15 +7737,26 @@ elements.sound.addEventListener("click", () => {
 
 elements.volume.addEventListener("input", (event) => {
   setMasterVolume(event.currentTarget.value);
+  recordHistoryAction(`Master Volume: ${Math.round(masterVolume)}%`, { immediate: false });
+});
+
+elements.volume.addEventListener("change", () => {
+  recordHistoryAction(`Master Volume: ${Math.round(masterVolume)}%`, { immediate: true });
 });
 
 elements.tempo?.addEventListener("input", (event) => {
   setTempoBpm(event.currentTarget.value);
+  recordHistoryAction(`Tempo: ${activeTempoBpm} BPM`, { immediate: false });
+});
+
+elements.tempo?.addEventListener("change", () => {
+  recordHistoryAction(`Tempo: ${activeTempoBpm} BPM`, { immediate: true });
 });
 
 elements.tempo?.addEventListener("dblclick", () => {
   if (currentScore) {
     setTempoBpm(musicalPocketBpm(currentScore.pulse));
+    recordHistoryAction(`Reset Tempo: ${activeTempoBpm} BPM`);
   }
 });
 
@@ -6301,6 +7807,8 @@ try {
   renderHerbarium();
   syncHerbariumButtons();
   refreshAudioOutputDevices();
+  syncMidiLearnUI();
+  syncHistoryUI();
   if (typeof navigator !== "undefined" && navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === "function") {
     navigator.mediaDevices.addEventListener("devicechange", () => refreshAudioOutputDevices());
   }

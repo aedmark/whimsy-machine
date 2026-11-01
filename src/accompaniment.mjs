@@ -78,8 +78,8 @@ export function soundingPitchClasses(chord) {
  */
 export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null, score = null, varied = false, stepsCount = 12 } = {}) {
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
-  const position = Math.max(0, Math.min(12, Math.trunc(keySemitone) || 0));
-  const key = position % 12;
+  const position = Math.max(-24, Math.min(48, Math.trunc(keySemitone) || 0));
+  const key = ((position % 12) + 12) % 12;
   const lift = position;
   let chords;
   let leadPitches = Array(stepsCount).fill(null);
