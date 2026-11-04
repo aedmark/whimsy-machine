@@ -4,23 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-31, session 107, on `main`._
+_Last updated: 2026-11-04, session 109, on `main`._
 
 - Phases 1–11 Complete: Esoteric engines (Plates I–VI), 22 Inform 7 rulebooks, FM-1 hardware, studio exports, autopoietic dynamics (D-001–D-088), 25-Key Manual (P11-01, D-098), Live Stream Audio & MIDI Recording (P11-02, D-099), and Preset Memory Schema v9 (P11-03, D-101).
 - Phase 8 Extensibility: Native CLAP Instrument Plugin (`P8-13`, `D-080`) complete: pure C ABI (C11) in isolated `plugin-clap/`, 23 automatable parameters, sample-accurate DAW beat/tempo synchronization, Session v9 project state recall, 9-bus stereo multi-out audio routing, and test suite verified via `test_clap.c` and `tests/clap.test.mjs`.
 - Phase 10: BoneAmanita Resonances (P10-01–P10-04, D-089–D-095) complete: Aetheric Bone Theremin, Bone Forge, Spore Harp, and PlantWave Muscaria Transducer.
 - QA Performance Audit, Firefox Gecko/SWGL Stabilization, and QoL Polish (D-096, D-097, D-100): Canvas 2D rasterization guardrails, Web Audio node pruning, scale snapping, and modal consonance.
-- Phase 12 Production & Live Performance (P12-01–P12-04, D-102–D-105) complete: P12-01 part locks/chimeras, P12-04 Parlor Salon console, P12-02 Web MIDI Learn with bidirectional CC feedback, and P12-03 Global Action History stack.
+- Phase 12 Production & Live Performance (P12-01–P12-06, D-102–D-107) complete: P12-01 part locks/chimeras, P12-04 Parlor Salon console, P12-02 Web MIDI Learn with bidirectional CC feedback, P12-03 Global Action History stack, P12-05 Creature Temperaments with multi-archetype vitrine tap dynamics, and P12-06 Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-13, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10 (P10-01 through P10-04), Musicological Alignment, Firefox Stabilization (D-096), Spore Harp Calibration (D-097), 25-Key Manual Expansion (P11-01, D-098), Downbeat-Quantized Live Stream Audio & MIDI Recording Engine (P11-02, D-099), Polish & QoL Pass (D-100), Preset Memory Schema v9 (P11-03, D-101), Part Lock & Chimeras (P12-01, D-102), Production View / Salon Console (P12-04, D-103), Web MIDI Learn (P12-02, D-104), and Global Undo/Redo Action History Stack (P12-03, D-105) are fully implemented and verified! Version 1.5.0. 338/339 tests passing (338 passed, 1 skipped). Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-13, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10 (P10-01 through P10-04), Musicological Alignment, Firefox Stabilization (D-096), Spore Harp Calibration (D-097), 25-Key Manual Expansion (P11-01, D-098), Downbeat-Quantized Live Stream Audio & MIDI Recording Engine (P11-02, D-099), Polish & QoL Pass (D-100), Preset Memory Schema v9 (P11-03, D-101), Part Lock & Chimeras (P12-01, D-102), Production View / Salon Console (P12-04, D-103), Web MIDI Learn (P12-02, D-104), Global Undo/Redo Action History Stack (P12-03, D-105), Creature Temperaments & Multi-Archetype Vitrine Tap Dynamics (P12-05, D-106), and Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (P12-06, D-107) are fully implemented and verified! Version 1.5.0. 353/354 tests passing (353 passed, 1 skipped). Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-31, session 107, local Linux environment)
+**Verified** (2026-11-04, session 109, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **338/339 behavioral and structural checks passed (1 skipped)** |
+| `node --test tests/*.test.mjs` | **353/354 behavioral and structural checks passed (1 skipped)** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 47 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 49 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -91,6 +91,64 @@ _Last updated: 2026-10-31, session 107, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 109 (2026-11-04): Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (P12-06, D-107)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address user feedback regarding seed sensitivity (seeds differing by 1 character causing radical avalanche changes under FNV-1a): enable melodic takes and variations via `#` opus delimiters (e.g. `seed # 1` vs `seed # 2`), direct `[⚄ TWEAK NOTES]` calling-slip action, and `[FLAVOR: PINNED 🔒]` species lock, keeping the creature's exact species, color palette, visual morphology, and musical flavor intact while deterministically tweaking melodic notes (D-107). Also resolve frozen score extensibility runtime error in `showScore`.
+
+**Done:** All components implemented and verified under D-107. P12-06 complete. 353/354 tests pass (1 skipped), documentation check 0 errors/0 warnings.
+
+**Changed:**
+1. Runtime Extensibility Fix (`src/score.mjs`, `src/temperament.mjs`, `src/app.mjs`):
+   - Resolved `TypeError: Cannot add property temperament, object is not extensible` by embedding `temperament: deriveTemperament(values)` inside frozen score construction in `parseScore()`.
+   - Enhanced `deriveTemperament` to accept both raw values and wrapped scores safely, removing mutable assignments in `app.mjs`.
+2. Functional Opus & Take Syntax (`src/score.mjs`, `tests/seed-variation.test.mjs`):
+   - Implemented `parseVariationPhrase(phrase)` recognizing supported delimiters (`#`, `~`, `//`, `:`, `(...)`, and ` - take/opus/var`).
+   - Implemented `deriveScoreVariation(baseScore, phrase, variationKey, opusLabel)` applying bounded melodic degree perturbations in $[-2, +2]$ across all 12 steps and shifting `melodyTurn`, strictly preserving scale, root, voice, rhythm, pulse, beat mode, bass mode, harmony mode, chimes, choir, hue, palette, symmetry, shape, eyes, fungal form, bell jar, and temperament.
+   - Appended engraved opus badge (e.g. `THE VELVET MOTH (OPUS 2)`) to the ceremonial name.
+3. Calling Slip UI & Flavor Pinning (`index.html`, `styles.css`, `src/app.mjs`):
+   - Added `[⚄ TWEAK NOTES]` quick-action button on the Calling Slip (`#calling-slip-tweak`) to increment through sequential opus takes (`# 2`, `# 3`, `# 4`...) with a single click.
+   - Added `[FLAVOR: FREE / PINNED 🔒]` toggle button (`#calling-slip-pin`) to freeze the current specimen's genus so that subsequent phrase entries (including single-character variations) explore melodic takes of the pinned creature.
+   - Added dynamic hint `#calling-slip-hint` explaining variation syntax and pinned mode status.
+4. Documentation & Verification:
+   - Added ADR D-107 in `docs/DECISIONS.md`.
+   - Updated Entry 4 in `docs/manual.json` (49 entries, 0 errors, 0 warnings) and rebuilt `manual.html`.
+   - Updated `ROADMAP.md`, `AGENTS.md`, `docs/ARCHITECTURE.md`, and `docs/HANDOFF.md`.
+   - Moved Session 98 to `docs/archive/sessions.md` to maintain the 10-session handoff window.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 353/354 behavioral and structural checks passed (1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 49 entries, 0 errors, 0 warnings.
+- D-003 phrase determinism contract and zero-dependency boundary fully preserved.
+
+### Session 108 (2026-11-04): Creature Temperaments & Multi-Archetype Vitrine Tap Dynamics (P12-05, D-106)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Phase 12 Candidate 5 (P12-05, D-106): deterministically derive 5 distinct creature temperaments (The Retaliator, The Timid Hermit, The Playful Musician, The Chromatophore, and The Stoic Clockwork) from creature score traits; diversify vitrine interaction so creatures retreat into the shadows without hitting the glass, play responsive musical scale notes, pulse bioluminescent colors, ignore/tick stoically, or lunge and crack the glass based on personality.
+
+**Done:** All parts implemented and verified under D-106. P12-05 marked complete. 348/349 tests pass (1 skipped).
+
+**Changed:**
+1. Pure Temperament Model (`src/temperament.mjs`, `tests/temperament.test.mjs`):
+   - Created zero-dependency pure model defining 5 distinct somatic and psychological temperaments (`TEMPERAMENT_IDS` and `TEMPERAMENTS`).
+   - Mapped all 64 ceremonial adjectives and morphological score traits deterministically to temperaments via `deriveTemperament(score)`.
+   - Added `formatTemperamentBadge()` for human-readable catalog and specimen identification.
+2. Web Audio Synthesis Schedulers (`src/schedulers.mjs`):
+   - Expanded `triggerPercussion(kind, ...)` to synthesize 7 new sound models: `"flutter"` (delicate muffled chime with breath), `"hush"` (whispering filtered noise sigh), `"melody_burst"` (responsive 2-note scale micro-arpeggios), `"cadenza"` (virtuosic 5-note rapid arpeggio run), `"shimmer"` (crystalline overtone dispersion), `"bioluminescent_pulse"` (resonant harmonic sweep), and `"clockwork_tick"` (crisp brass escapement click).
+3. Canvas Vitrine Staging & Interaction Physics (`src/vitrine-canvas.mjs`, `src/app.mjs`):
+   - Added `retreat`, `chromaticShift`, `bioluminescentFlash`, `cadenzaFlurry`, and `temperament` to `interaction`.
+   - Updated `paletteFor(score, chromaticShift)` to support dynamic iridescent hue shifts.
+   - Guarded glass stress fractures to render only for violent retaliators, keeping the bell jar pristine for gentle, musical, chromatophoric, and stoic specimens.
+   - Added timid shadow retreat physics (depth scaling, opacity dimming, and audio ducking), musician golden harmonic standing wave rings, and chromatophore prismatic auroral veils.
+   - Updated `#stage-caption`, `#status`, and `#folio-readout` with context-aware, temperament-aligned copy.
+4. Assets, Manual, and Documentation:
+   - Added `src/temperament.mjs` to import map `MODULES` in `index.html` and restamped `ASSET_VERSION` (`59756b720f27`).
+   - Added Entry 48 (`creature-temperaments`) to `docs/manual.json` and compiled `manual.html`.
+   - Recorded Decision D-106 in `docs/DECISIONS.md`, updated `ROADMAP.md` (P12-05), `AGENTS.md`, `docs/ARCHITECTURE.md`, and `docs/HANDOFF.md`.
 
 ### Session 106 (2026-10-30): Global Undo/Redo Action History Stack (P12-03, D-105)
 
@@ -381,71 +439,6 @@ _Last updated: 2026-10-31, session 107, on `main`._
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 - Zero-dependency boundary and phrase determinism contracts fully preserved.
 
-### Session 98 (2026-10-29): QA Performance Audit, Firefox Gecko/SWGL 2D Canvas Stabilization, and Web Audio Node Lifecycle Pruning (D-096)
 
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Diagnose and resolve severe browser freezing and high resource consumption reported when running the application in Firefox ("almost crashed their firefox").
-
-**Done:** All root causes identified, remediated, verified with unit and regression test suite, and documented. 294/295 tests passing (1 skipped).
-
-**Changed:**
-1. Canvas 2D Gecko & Software Skia Rasterization Guardrails (`src/vitrine-canvas.mjs`):
-   - Eliminated Gaussian blur context leaks in `drawCellularAppendage`: clamped outer hull `shadowBlur` to $\le 10\text{px}$ and explicitly reset `ctx.shadowBlur = 0;` immediately after outer hull fill/stroke across all 10 appendage archetypes.
-   - Enforced an explicit `ctx.shadowBlur = 0;` reset at the entry of `drawAppendageOrganelle`.
-   - Clamped creature body bloom `shadowBlur` from `score.bloom * 0.62` down to `this.reducedMotion ? 0 : Math.min(18, score.bloom * 0.28)`.
-   - Pre-computed `particleColors` array outside the 145-particle attractor loop, eliminating 145 string allocations and CSS color parses per frame.
-   - Batched 24 individual pedestal lichen arc fills into a single path and fill.
-   - Replaced per-frame `ctx.createRadialGradient` allocations in `drawMuscariaTransducer` action-potential spark rendering with layered alpha glow fills.
-   - Capped chromatic aberration ghost vertices to $\min(120, points)$.
-2. Web Audio Node Lifecycle Pruning & Zombie Graph Elimination (`src/schedulers.mjs`, `src/voices.mjs`, `src/spore-harp.mjs`, `src/bone-beat.mjs`, `src/muscaria.mjs`, `src/theremin.mjs`):
-   - Implemented `cleanupOnEnded(source, ...nodes)` helper attaching an `onended` handler to transient audio sources to disconnect all intermediate nodes (`GainNode`, `BiquadFilterNode`, `StereoPannerNode`, `DelayNode`, `OscillatorNode`) once sound playback completes.
-   - Wired lifecycle pruning across all 10 ensemble channels, the parlor escapement clockwork ticks, vitrine impacts, spore puffs, theremin tine shatters, and Fun Machine synths.
-   - Completely resolved Gecko `AudioNodeEngine` retention of dead nodes, eliminating audio thread starvation and browser freezes.
-3. Automated QA Performance Test Suite (`tests/qa-performance.test.mjs`):
-   - Verified that 100% of transient audio sources attach `onended` cleanup and simulate disconnects on playback completion.
-   - Verified Canvas 2D rasterization guardrails in source and runtime behavior.
-   - Stress-tested continuous playback at 240 BPM across 7 diverse phrases without producing NaN or infinite values.
-4. Documentation & Decision:
-   - Recorded D-096 in `docs/DECISIONS.md`.
-   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
-   - Restamped asset version (`tools/stamp_assets.mjs`).
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-- Zero-dependency boundary and phrase determinism contracts fully preserved.
-
-### Session 97 (2026-10-28): Musicological Dynamic Alignment, "The Creature's Own" Modal Preservation, and Creature Lead Synthesis
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Address three musicological and acoustic issues raised by user testing:
-1. Fun Machine chord progression alignment with ensemble and key stability when keys are held long enough.
-2. Distinct dynamic rulebook generation and melodic modal diversity for "THE CREATURE'S OWN".
-3. Lead voice timbral diversity between phrases.
-4. Clarify the role, state, and visual indicators of the "AS WRITTEN" toggle.
-
-**Done:** All 4 areas investigated, implemented, and verified. 291/292 tests passing (1 skipped).
-
-**Changed:**
-1. Dynamic Fun Machine Progression Derivation (`src/creature-rulebook.mjs`, `src/conductor.mjs`):
-   - Implemented dynamic `customProgressions` generation in `buildCreatureBook` mapping `progressionByInterval` to the creature's own 4 regions and scale rather than inheriting the borrowed character's tables.
-   - Preserves exact harmonic alignment across all 4 passes when holding a key in progression style on the manual.
-   - Updated `harmonicPassAt()` in `src/app.mjs` so live held keys walk the 4-pass harmonic cycle smoothly across downbeats without getting locked to pass 0 when a single loop exists in `song`.
-2. Modal Melody Tone Preservation for "The Creature's Own" (`src/conductor.mjs`, `src/creature-rulebook.mjs`):
-   - Enabled scale tone preservation on passing beats (`allowPassing && book.code === CREATURE_GENRE`) in `projectWithinGenre()` when consonant under Euler Gradus ($G \le 8$) and not an avoid note against the chord (`avoidNoteResolution(pc, chord) === null`).
-   - Restored distinct phrase scales and modal colors (Dorian 6ths, Phrygian flat-2nds, Lydian sharp-4ths, Mixolydian 7ths, Blues blue notes) that were previously collapsed into identical `[0, 3, 7]` triad arpeggios.
-   - Broadened candidate root selection in `buildCreatureBook()` using `score.harmonySwap` and `score.harmonyBorrow`, yielding 118 distinct progressions over 200 creatures.
-3. Creature Lead Timbre & Voice Synthesis Overhaul (`src/schedulers.mjs`):
-   - Upgraded `scheduleNote()` to dynamically read and synthesize the creature's assigned voice patch via `creatureVoice(score).lead`.
-   - Connected dynamic ADSR envelopes (attack, sustain ratio, sustainTau), voice filter cutoff and Q, vocal formant bandpass filters (Æther Choir), delayed operatic vibrato LFO, and detune spread scaling (`score.funSpread`).
-4. "AS WRITTEN" UX and Telemetry Clarification (`src/app.mjs`):
-   - Updated the "AS WRITTEN" toggle to explicitly display `AS WRITTEN [ON]` when variations are bypassed and `AS WRITTEN [OFF]` when creature variations are active.
-   - Updated tooltips and telemetry announcing whether canonical rulebook changes are sounding or creature variation moves are active.
-5. Assets & Documentation:
-   - Restamped `ASSET_VERSION` to `30ed23078c6d` via `tools/stamp_assets.mjs`.
-   - Archived Sessions 87 and 88 to `docs/archive/sessions.md` to maintain the 10-session handoff window.
 
 

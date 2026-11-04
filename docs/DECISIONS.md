@@ -2401,6 +2401,60 @@ Musicians performing live or integrating The Whimsy Machine with external hardwa
 - Live performance flow is never interrupted by undo/redo operations.
 - 100% of automated checks pass (336 passed, 1 skipped). Zero external dependencies added.
 
+## D-106 Creature Temperaments & Multi-Archetype Vitrine Tap Dynamics (2026-11-04, status: accepted)
+
+**Context:**
+Prior to this decision, every summoned specimen responded to vitrine taps with an identical script: a generic multi-partial glass strike and spore puff, escalating on the 6th rapid tap to a violent glass-shattering retaliation lunge and sub-bass boom, followed by 3.4 seconds of sulking. Playtesting feedback noted that this uniform reaction was counterintuitive—creatures with vastly different names, forms, and timbres (e.g. "THE SLEEPY PUDDLE" vs. "THE FURIOUS ANVIL") felt identical under physical interaction, and users wished for diverse behaviors such as responsive musical note playing, timid retreats into the shadows without hitting the glass, bioluminescent color changes, or indifferent stoic ticking.
+
+**Decision:**
+1. **Pure Temperament State Model (`src/temperament.mjs`, `tests/temperament.test.mjs`):**
+   - Provide five distinct psychological and somatic temperaments (`TEMPERAMENT_IDS`):
+     - `retaliator` (`THE RETALIATOR`, Aggressive / Defensive): Defends its bell jar fiercely; rapid tapping provokes violent lunges, stress fractures in the glass, and sub-bass resonance.
+     - `timid` (`THE TIMID HERMIT`, Shy / Melancholy): Shies from physical contact; taps emit soft fluttering chimes (`"flutter"`); repeated strikes cause it to retreat into the shadows (`"hush"`) with depth scaling, opacity reduction, and volume ducking without cracking the glass.
+     - `musician` (`THE PLAYFUL MUSICIAN`, Responsive / Melodic): Sings in response to contact; taps voice responsive 2-note micro-arpeggios from the active scale/chord (`"melody_burst"`); escalation unleashes a virtuosic 5-note cadenza run (`"cadenza"`) with golden standing wave ripples.
+     - `chromatophore` (`THE CHROMATOPHORE`, Bioluminescent / Iridescent): Photosensitive; taps dynamically excite its skin cells with traveling hue shifts (`interaction.chromaticShift`); escalation discharges a radiant prismatic auroral flare (`"bioluminescent_pulse"`).
+     - `stoic` (`THE STOIC CLOCKWORK`, Indifferent / Mechanical): Unfazed by mortal disturbance; taps produce crisp brass escapement clicks (`"clockwork_tick"`); heavy damping keeps agitation low, and it never lunges, flees, or breaks glass.
+   - Deterministically derive each creature's temperament via `deriveTemperament(score)`, mapping all 64 ceremonial adjectives and morphological score traits with balanced distribution.
+2. **Web Audio Synthesis Schedulers (`src/schedulers.mjs`):**
+   - Expanded `triggerPercussion(kind, ...)` to synthesize seven new zero-dependency sound models: `"flutter"`, `"hush"`, `"melody_burst"`, `"cadenza"`, `"shimmer"`, `"bioluminescent_pulse"`, and `"clockwork_tick"`.
+3. **Canvas Vitrine Staging & Dynamic Captions (`src/vitrine-canvas.mjs`, `src/app.mjs`):**
+   - Integrated `interaction.retreat`, `interaction.chromaticShift`, `interaction.bioluminescentFlash`, and `interaction.cadenzaFlurry` into the 60fps render loop and interaction decay step.
+   - Guarded glass stress fractures to render only when fractures are present (`retaliator`), keeping the glass pristine for non-violent creatures.
+   - Displayed the creature's temperament in the catalog folio readout (`elements.folioReadout`) and context-aware status/caption strings.
+4. **Preservation of Core Contracts:**
+   - Fully preserves D-003 phrase determinism (the base score remains immutable and identical).
+   - Fully honors D-012 (vitrine gestures modulate transient live expression without permanently mutating the score).
+   - Zero external runtime or build dependencies added.
+
+**Consequences:**
+- Every creature now feels physically alive with an innate temperament matching its identity.
+- Visitors experience five distinct audiovisual tap and escalation mechanics.
+- 100% of automated checks pass (348 passed, 1 skipped). Zero runtime dependencies added.
+
+## D-107 Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (2026-11-04, status: accepted)
+
+**Context:**
+Visitors and musicians entering seeds differing by only one character (e.g. `seed #1` vs `seed #2` or exploring takes of an omen) expected related musical behavior. Because FNV-1a (D-003) is an avalanche hash, a 1-character difference flipped nearly half the bits, randomizing tempo, key, scale, voice, hue, morphology, and name. Users asked for a mechanism that keeps close hash within a color/style/music flavor and tweaks the notes.
+
+**Decision:**
+1. **Functional Opus & Take Syntax (`src/score.mjs`, `tests/seed-variation.test.mjs`):**
+   - Implemented `parseVariationPhrase(phrase)` supporting delimiters (`#`, `~`, `//`, `:`, `(...)`, and ` - take/opus/var`).
+   - When a variation delimiter is present, `basePhrase` generates the base score, strictly pinning species identity: scale, root, voice, rhythm, pulse, beat mode, bass mode, harmony mode, chimes, choir, hue, palette, symmetry, shape, eyes, fungal form, bell jar, and temperament.
+   - `deriveScoreVariation(baseScore, phrase, variationKey, opusLabel)` applies deterministic degree perturbations in $[-2, +2]$ across all 12 steps and shifts `melodyTurn`, ensuring all steps stay within $[0, 8]$.
+   - Appends an engraved opus badge (e.g. `THE VELVET MOTH (OPUS 2)`) to the creature's ceremonial name.
+2. **Calling Slip Direct Tweak Action (`index.html`, `src/app.mjs`):**
+   - Added `[⚄ TWEAK NOTES]` right on the Calling Slip. Clicking it increments the opus take (`# 2`, `# 3`, `# 4`...), re-summoning immediate melodic variations of the current creature with one click.
+3. **Species Flavor Pinning (`index.html`, `src/app.mjs`):**
+   - Added `[FLAVOR: FREE / PINNED 🔒]` on the Calling Slip. When active, any subsequent phrase typed into the Calling Slip (including single-character edits like `seed1` to `seed2` or `cat` to `cats`) derives an alternate melodic take of the pinned creature without altering its color, style, or visual form.
+4. **Contract Preservation:**
+   - 100% backwards-compatible with D-003: standard phrases without variation delimiters produce the exact same byte-for-byte scores.
+   - Zero external dependencies. Fully shareable via `#omen=...` URL fragments and `.fun` session exports.
+
+**Consequences:**
+- Phrases differing by 1 character (e.g. `seed # 1` vs `seed # 2`) preserve the specimen's exact color, style, and music flavor, tweaking only the notes.
+- Calling Slip provides one-click melodic take exploration directly from the main view.
+- 100% of automated tests pass (353 passed, 1 skipped). Zero runtime dependencies added.
+
 
 
 

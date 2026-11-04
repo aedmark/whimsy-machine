@@ -2543,6 +2543,74 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 
+### Session 97 (2026-10-28): Musicological Dynamic Alignment, "The Creature's Own" Modal Preservation, and Creature Lead Synthesis
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address three musicological and acoustic issues raised by user testing:
+1. Fun Machine chord progression alignment with ensemble and key stability when keys are held long enough.
+2. Distinct dynamic rulebook generation and melodic modal diversity for "THE CREATURE'S OWN".
+3. Lead voice timbral diversity between phrases.
+4. Clarify the role, state, and visual indicators of the "AS WRITTEN" toggle.
+
+**Done:** All 4 areas investigated, implemented, and verified. 291/292 tests passing (1 skipped).
+
+**Changed:**
+1. Dynamic Fun Machine Progression Derivation (`src/creature-rulebook.mjs`, `src/conductor.mjs`):
+   - Implemented dynamic `customProgressions` generation in `buildCreatureBook` mapping `progressionByInterval` to the creature's own 4 regions and scale rather than inheriting the borrowed character's tables.
+   - Preserves exact harmonic alignment across all 4 passes when holding a key in progression style on the manual.
+   - Updated `harmonicPassAt()` in `src/app.mjs` so live held keys walk the 4-pass harmonic cycle smoothly across downbeats without getting locked to pass 0 when a single loop exists in `song`.
+2. Modal Melody Tone Preservation for "The Creature's Own" (`src/conductor.mjs`, `src/creature-rulebook.mjs`):
+   - Enabled scale tone preservation on passing beats (`allowPassing && book.code === CREATURE_GENRE`) in `projectWithinGenre()` when consonant under Euler Gradus ($G \le 8$) and not an avoid note against the chord (`avoidNoteResolution(pc, chord) === null`).
+   - Restored distinct phrase scales and modal colors (Dorian 6ths, Phrygian flat-2nds, Lydian sharp-4ths, Mixolydian 7ths, Blues blue notes) that were previously collapsed into identical `[0, 3, 7]` triad arpeggios.
+   - Broadened candidate root selection in `buildCreatureBook()` using `score.harmonySwap` and `score.harmonyBorrow`, yielding 118 distinct progressions over 200 creatures.
+3. Creature Lead Timbre & Voice Synthesis Overhaul (`src/schedulers.mjs`):
+   - Upgraded `scheduleNote()` to dynamically read and synthesize the creature's assigned voice patch via `creatureVoice(score).lead`.
+   - Connected dynamic ADSR envelopes (attack, sustain ratio, sustainTau), voice filter cutoff and Q, vocal formant bandpass filters (Æther Choir), delayed operatic vibrato LFO, and detune spread scaling (`score.funSpread`).
+4. "AS WRITTEN" UX and Telemetry Clarification (`src/app.mjs`):
+   - Updated the "AS WRITTEN" toggle to explicitly display `AS WRITTEN [ON]` when variations are bypassed and `AS WRITTEN [OFF]` when creature variations are active.
+   - Updated tooltips and telemetry announcing whether canonical rulebook changes are sounding or creature variation moves are active.
+5. Assets & Documentation:
+   - Restamped `ASSET_VERSION` to `30ed23078c6d` via `tools/stamp_assets.mjs`.
+   - Archived Sessions 87 and 88 to `docs/archive/sessions.md` to maintain the 10-session handoff window.
+
+### Session 98 (2026-10-29): QA Performance Audit, Firefox Gecko/SWGL 2D Canvas Stabilization, and Web Audio Node Lifecycle Pruning (D-096)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Diagnose and resolve severe browser freezing and high resource consumption reported when running the application in Firefox ("almost crashed their firefox").
+
+**Done:** All root causes identified, remediated, verified with unit and regression test suite, and documented. 294/295 tests passing (1 skipped).
+
+**Changed:**
+1. Canvas 2D Gecko & Software Skia Rasterization Guardrails (`src/vitrine-canvas.mjs`):
+   - Eliminated Gaussian blur context leaks in `drawCellularAppendage`: clamped outer hull `shadowBlur` to $\le 10\text{px}$ and explicitly reset `ctx.shadowBlur = 0;` immediately after outer hull fill/stroke across all 10 appendage archetypes.
+   - Enforced an explicit `ctx.shadowBlur = 0;` reset at the entry of `drawAppendageOrganelle`.
+   - Clamped creature body bloom `shadowBlur` from `score.bloom * 0.62` down to `this.reducedMotion ? 0 : Math.min(18, score.bloom * 0.28)`.
+   - Pre-computed `particleColors` array outside the 145-particle attractor loop, eliminating 145 string allocations and CSS color parses per frame.
+   - Batched 24 individual pedestal lichen arc fills into a single path and fill.
+   - Replaced per-frame `ctx.createRadialGradient` allocations in `drawMuscariaTransducer` action-potential spark rendering with layered alpha glow fills.
+   - Capped chromatic aberration ghost vertices to $\min(120, points)$.
+2. Web Audio Node Lifecycle Pruning & Zombie Graph Elimination (`src/schedulers.mjs`, `src/voices.mjs`, `src/spore-harp.mjs`, `src/bone-beat.mjs`, `src/muscaria.mjs`, `src/theremin.mjs`):
+   - Implemented `cleanupOnEnded(source, ...nodes)` helper attaching an `onended` handler to transient audio sources to disconnect all intermediate nodes (`GainNode`, `BiquadFilterNode`, `StereoPannerNode`, `DelayNode`, `OscillatorNode`) once sound playback completes.
+   - Wired lifecycle pruning across all 10 ensemble channels, the parlor escapement clockwork ticks, vitrine impacts, spore puffs, theremin tine shatters, and Fun Machine synths.
+   - Completely resolved Gecko `AudioNodeEngine` retention of dead nodes, eliminating audio thread starvation and browser freezes.
+3. Automated QA Performance Test Suite (`tests/qa-performance.test.mjs`):
+   - Verified that 100% of transient audio sources attach `onended` cleanup and simulate disconnects on playback completion.
+   - Verified Canvas 2D rasterization guardrails in source and runtime behavior.
+   - Stress-tested continuous playback at 240 BPM across 7 diverse phrases without producing NaN or infinite values.
+4. Documentation & Decision:
+   - Recorded D-096 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Zero-dependency boundary and phrase determinism contracts fully preserved.
+
+
 
 
 

@@ -111,7 +111,7 @@ Never force-push or rewrite shared history.
 | `src/midi-learn.mjs` | Web MIDI Learn state model, priority CC overlay, bidirectional feedback, and target registry (P12-02, D-104) |
 | `src/history.mjs` | Global action history stack, transactional multi-level undo/redo, and continuous parameter coalescing (P12-03, D-105) |
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
-| `src/score.mjs` | Phrase hashing, score validation, and naming |
+| `src/score.mjs` | Phrase hashing, score validation, opus variations, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/theremin.mjs` | The Aetheric Bone Theremin model, BoneAmanita physics transitions, and heterodyne synth voice (P10-01, D-089) |
 | `src/bone-beat.mjs` | The Bone Forge & Crucible Beat Machine, physical percussion synth, and somatic engine (P10-02, D-090) |
@@ -124,6 +124,7 @@ Never force-push or rewrite shared history.
 | `src/tuning.mjs` | Concert pitch A4 tuning reference, score key/mode overrides, 4/4 bar lock, and native 16-step straight grid metre (P8-04, P8-05, D-078, D-079) |
 | `src/version.mjs` | Product application version, engine versioning, and score/fixture fingerprint (P8-03, D-077) |
 | `src/view-mode.mjs` | Dual presentation view mode state model, parlor salon vs grand workbench transitions, and persistence (P12-04, D-103) |
+| `src/temperament.mjs` | Creature temperaments (5 archetypes), tap dynamics, and escalation models (P12-05, D-106) |
 | `src/inspector.mjs` | "Under the Parlor Glass" live esoteric VM step inspector for Plates I–V in Wing III (P5-34, D-069) |
 | `src/herbarium.mjs` | "The Naturalist's Herbarium" on-device curio gallery, miniature SVG portrait geometry, and side-by-side trait comparator (P5-35, D-070) |
 | `src/manuscript.mjs` | "The Kapellmeister's Manuscript" live Inform 7 custom rulebook sandbox compiler and line-numbered diagnostic adapter (P5-36, D-071) |

@@ -30,6 +30,11 @@ export const interaction = {
   retaliationPitchDrop: 0,
   lunge: 0,
   sulk: 0,
+  retreat: 0,
+  chromaticShift: 0,
+  bioluminescentFlash: 0,
+  cadenzaFlurry: 0,
+  temperament: null,
   retaliationPoint: { x: 0, y: 0 },
   retaliationFractures: [],
   thereminActive: false,
@@ -55,7 +60,7 @@ export function wrapHue(hue) {
   return ((hue % 360) + 360) % 360;
 }
 
-export function paletteFor(score) {
+export function paletteFor(score, chromaticShift = 0) {
   const shifts = [
     [0, score.hueShift, 180],
     [0, -score.hueShift, score.hueShift],
@@ -66,7 +71,7 @@ export function paletteFor(score) {
     [0, score.hueShift / 2, score.hueShift],
     [0, 90, 180],
   ][score.palette];
-  return shifts.map((shift) => wrapHue(score.hue + shift));
+  return shifts.map((shift) => wrapHue(score.hue + shift + chromaticShift));
 }
 
 export function shapeFamilyRadius(shape, symmetry, edge, twist, angle) {
@@ -2067,10 +2072,19 @@ export function stepInteraction(timestamp, reducedMotion, { stageContainer = nul
   interaction.retaliationFlash *= Math.exp(-dt * 3.4);
   interaction.retaliationPitchDrop *= Math.exp(-dt * 2.4);
 
-  // Sulk recovery during cooldown
+  // Temperament dynamics: retreat, chromaticShift, bioluminescentFlash, cadenzaFlurry decay
+  interaction.chromaticShift *= Math.exp(-dt * 2.8);
+  interaction.bioluminescentFlash *= Math.exp(-dt * 3.2);
+  interaction.cadenzaFlurry *= Math.exp(-dt * 2.8);
+
+  // Sulk / retreat recovery during cooldown
   const isCooldown = timestamp < interaction.cooldownUntil;
-  const targetSulk = isCooldown ? 1 : 0;
+  const isTimid = interaction.temperament?.id === "timid";
+  const targetSulk = (isCooldown && !isTimid) ? 1 : 0;
   interaction.sulk += (targetSulk - interaction.sulk) * Math.min(1, dt * (isCooldown ? 4.5 : 1.2));
+
+  const targetRetreat = (isCooldown && isTimid) ? 1 : 0;
+  interaction.retreat += (targetRetreat - interaction.retreat) * Math.min(1, dt * (isCooldown ? 4.2 : 1.2));
 
   // Sync vitrine stage CSS classes
   const isRetaliating = timestamp < interaction.retaliateUntil;
@@ -2084,7 +2098,7 @@ export function stepInteraction(timestamp, reducedMotion, { stageContainer = nul
     } else {
       stageContainer.classList.remove("is-retaliating", "is-agitated");
     }
-    if (interaction.sulk > 0.05) {
+    if (interaction.sulk > 0.05 || interaction.retreat > 0.05) {
       stageContainer.classList.add("is-sulking");
     } else {
       stageContainer.classList.remove("is-sulking");
@@ -2093,14 +2107,55 @@ export function stepInteraction(timestamp, reducedMotion, { stageContainer = nul
 
   // Dynamic stage caption
   if (stageCaption) {
+    const t = interaction.temperament;
     if (isRetaliating) {
-      stageCaption.textContent = "RETALIATION! · THE SPECIMEN STRUCK THE GLASS!";
-    } else if (interaction.sulk > 0.15) {
-      stageCaption.textContent = "SPECIMEN SULKING · RECOVERING IN DARKNESS";
+      if (t?.id === "musician") {
+        stageCaption.textContent = "VIRTUOSIC CADENZA! · HARMONIC FLURRY";
+      } else if (t?.id === "chromatophore") {
+        stageCaption.textContent = "PRISMATIC AURORAL DISCHARGE!";
+      } else if (t?.id === "timid") {
+        stageCaption.textContent = "SPECIMEN HAS FLED INTO THE SHADOWS";
+      } else if (t?.id === "stoic") {
+        stageCaption.textContent = "SPECIMEN REMAINS UNMOVED";
+      } else {
+        stageCaption.textContent = "RETALIATION! · THE SPECIMEN STRUCK THE GLASS!";
+      }
+    } else if (interaction.sulk > 0.15 || interaction.retreat > 0.15) {
+      if (t?.id === "timid") {
+        stageCaption.textContent = "SPECIMEN HIDDEN · AVOIDS THE PERIMETER";
+      } else if (t?.id === "musician") {
+        stageCaption.textContent = "SPECIMEN CATCHING BREATH · MOTIF WHISPERS";
+      } else if (t?.id === "chromatophore") {
+        stageCaption.textContent = "CHROMATOPHORES RESTING · PHOSPHOR COOLING";
+      } else if (t?.id === "stoic") {
+        stageCaption.textContent = "SPECIMEN INDIFFERENT TO STRIKES";
+      } else {
+        stageCaption.textContent = "SPECIMEN SULKING · RECOVERING IN DARKNESS";
+      }
     } else if (interaction.agitation >= 0.55) {
-      stageCaption.textContent = "WARNING: ORGANISM AGITATED · CEASE TAPPING!";
+      if (t?.id === "musician") {
+        stageCaption.textContent = "SPECIMEN HARMONIZING WITH TAPS";
+      } else if (t?.id === "chromatophore") {
+        stageCaption.textContent = "BIOLUMINESCENT GLOW SURGING";
+      } else if (t?.id === "timid") {
+        stageCaption.textContent = "SPECIMEN COWERING · RETREATING FROM PERIMETER";
+      } else if (t?.id === "stoic") {
+        stageCaption.textContent = "SPECIMEN DISPASSIONATE · DRY ESCAPEMENT";
+      } else {
+        stageCaption.textContent = "WARNING: ORGANISM AGITATED · CEASE TAPPING!";
+      }
     } else if (interaction.agitation >= 0.25) {
-      stageCaption.textContent = "ECTOPLASMIC APPARITION · IRRITATION RISING";
+      if (t?.id === "musician") {
+        stageCaption.textContent = "SPECIMEN VOICING HARMONIC RESPONSE";
+      } else if (t?.id === "chromatophore") {
+        stageCaption.textContent = "CHROMATOPHORES EXCITED · HUE SHIFTING";
+      } else if (t?.id === "timid") {
+        stageCaption.textContent = "SPECIMEN FLINCHES · SENSITIVE TO VIBRATION";
+      } else if (t?.id === "stoic") {
+        stageCaption.textContent = "SPECIMEN UNMOVED · CLOCKWORK TICK";
+      } else {
+        stageCaption.textContent = "ECTOPLASMIC APPARITION · IRRITATION RISING";
+      }
     } else {
       stageCaption.textContent = "ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE";
     }
@@ -2431,7 +2486,7 @@ export class OracleVision {
     const width = this.width;
     const height = this.height;
     const elapsed = this.reducedMotion ? 1.25 : (timestamp - this.startedAt) / 1000;
-    const colors = paletteFor(score);
+    const colors = paletteFor(score, interaction.chromaticShift || 0);
     const naturalGrowth = this.reducedMotion ? 1.0 : Math.min(1.0, elapsed / 10.0);
     const growth = Math.min(1.0, naturalGrowth + interaction.hold * 0.35 + interaction.tap * 0.25);
 
@@ -2468,11 +2523,14 @@ export class OracleVision {
     const lungeShiftY = this.reducedMotion ? 0 : (interaction.retaliationPoint.y * height * 0.22 * interaction.lunge);
     const agitationShudder = this.reducedMotion ? 0 : (interaction.agitation * Math.sin(elapsed * 48) * 3);
     const sulkRetreatY = interaction.sulk * height * 0.06;
-    const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX + lungeShiftX + agitationShudder;
-    const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY + lungeShiftY + sulkRetreatY;
+    const timidRetreatX = -(interaction.smoothX || 0) * width * 0.16 * (interaction.retreat || 0);
+    const timidRetreatY = -height * 0.14 * (interaction.retreat || 0);
+    const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX + lungeShiftX + agitationShudder + timidRetreatX;
+    const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY + lungeShiftY + sulkRetreatY + timidRetreatY;
     const lungeScale = this.reducedMotion ? (interaction.lunge * 0.18) : (interaction.lunge * 0.42);
     const sulkScale = interaction.sulk * 0.2;
-    const sizeFactor = (0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22)) * (1 + lungeScale - sulkScale);
+    const retreatScale = (interaction.retreat || 0) * 0.38;
+    const sizeFactor = (0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22)) * (1 + lungeScale - sulkScale - retreatScale);
     const base = Math.min(width, height) * sizeFactor;
     const points = Math.max(120, score.symmetry * 28);
     const dragDist = Math.hypot(interaction.smoothX, interaction.smoothY);
@@ -2484,6 +2542,9 @@ export class OracleVision {
     const aspectY = [1, 1, 0.92, 1, 1.12, 0.88, 0.72, 1, 1.08, 1.25][score.shape] * stretchY;
 
     ctx.save();
+    if (interaction.retreat > 0.02) {
+      ctx.globalAlpha = Math.max(0.28, 1 - interaction.retreat * 0.62);
+    }
     ctx.translate(centerX, centerY);
     const direction = score.kineticTilt % 2 ? 1 : -1;
     ctx.rotate(this.reducedMotion ? 0.16 : (elapsed * (0.004 + score.kineticSpeed / 12000) + interaction.morphPhase * 0.14) * direction);
@@ -2629,6 +2690,38 @@ export class OracleVision {
           }
           ctx.stroke();
         }
+      }
+      ctx.restore();
+    }
+
+    if (interaction.bioluminescentFlash > 0.01) {
+      ctx.save();
+      const rx = (interaction.retaliationPoint.x * 0.5 + 0.5) * width;
+      const ry = (interaction.retaliationPoint.y * 0.5 + 0.5) * height;
+      const bioGrad = ctx.createRadialGradient(rx, ry, 0, rx, ry, Math.max(width, height) * 0.85);
+      const flashHue = wrapHue(score.hue + (interaction.chromaticShift || 0) + 180);
+      bioGrad.addColorStop(0, `hsla(${flashHue} 100% 92% / ${interaction.bioluminescentFlash * 0.7})`);
+      bioGrad.addColorStop(0.35, `hsla(${wrapHue(flashHue + 60)} 95% 70% / ${interaction.bioluminescentFlash * 0.45})`);
+      bioGrad.addColorStop(0.7, `hsla(${wrapHue(flashHue + 140)} 90% 50% / ${interaction.bioluminescentFlash * 0.2})`);
+      bioGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = bioGrad;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+    }
+
+    if (interaction.cadenzaFlurry > 0.01) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const flurryStrength = interaction.cadenzaFlurry;
+      const rings = 4;
+      for (let r = 0; r < rings; r += 1) {
+        const ringPhase = ((elapsed * 2.5 + r / rings) % 1.0);
+        const rRad = base * (0.35 + ringPhase * 1.6);
+        ctx.strokeStyle = `hsla(45 100% 80% / ${(1 - ringPhase) * flurryStrength * 0.65})`;
+        ctx.lineWidth = 2.2 * (1 - ringPhase);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, rRad, 0, Math.PI * 2);
+        ctx.stroke();
       }
       ctx.restore();
     }

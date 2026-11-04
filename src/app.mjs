@@ -22,7 +22,7 @@ import { compileRulebooks } from "./inform.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
-import { composeScore, WAVEFORMS } from "./score.mjs";
+import { composeScore, deriveScoreVariation, parseVariationPhrase, WAVEFORMS } from "./score.mjs";
 import {
   LIVE_REC_STATES,
   buildLiveTakeMidi,
@@ -237,6 +237,7 @@ import {
   getHistorySummary,
 } from "./history.mjs";
 import { OracleVision, interaction } from "./vitrine-canvas.mjs";
+import { TEMPERAMENTS, deriveTemperament } from "./temperament.mjs";
 import {
   createThereminModel,
   createThereminVoice,
@@ -412,6 +413,9 @@ const elements = {
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
+  callingSlipTweak: document.querySelector("#calling-slip-tweak"),
+  callingSlipPin: document.querySelector("#calling-slip-pin"),
+  callingSlipHint: document.querySelector("#calling-slip-hint"),
   replay: document.querySelector("#replay"),
   shareLink: document.querySelector("#share-link"),
   exportPng: document.querySelector("#export-png"),
@@ -644,6 +648,8 @@ let conductorSource = "";
 let canonicalRulebooksSource = "";
 let baseScore = null;
 let currentScore = null;
+let callingSlipFlavorPin = false;
+let pinnedFlavorScore = null;
 let rootOverride = null;
 let scaleOverride = null;
 let barLock44 = false;
@@ -2990,6 +2996,7 @@ function showScore(rawScore) {
   baseScore = rawScore;
   const score = applyScoreOverrides(baseScore, { rootOverride, scaleOverride });
   currentScore = score;
+  interaction.temperament = currentScore.temperament || deriveTemperament(currentScore);
   // A new creature starts its harmonic cycle at home (D-044).
   currentHarmonicPass = 0;
   showCreatureVoice(score);
@@ -3085,13 +3092,26 @@ function showScore(rawScore) {
   updateBandstandStatus();
   elements.name.textContent = score.name;
   if (elements.stageBellJar) elements.stageBellJar.textContent = score.bellJar;
-  if (elements.folioReadout) elements.folioReadout.textContent = `${score.folioId} · ${score.curiosaClass}`;
+  if (elements.folioReadout) {
+    elements.folioReadout.textContent = score.temperament?.name
+      ? `${score.folioId} · ${score.curiosaClass} · ${score.temperament.name}`
+      : `${score.folioId} · ${score.curiosaClass}`;
+  }
   setTempoBpm(musicalPocketBpm(score.pulse));
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
   elements.melody.textContent = MELODY_NAMES[score.melodyMode];
   if (elements.fungal) elements.fungal.textContent = score.fungalName;
   elements.replay.disabled = false;
+  if (elements.callingSlipHint) {
+    if (callingSlipFlavorPin && pinnedFlavorScore) {
+      elements.callingSlipHint.textContent = `FLAVOR PINNED: "${pinnedFlavorScore.name}" · NOTES TWEAK WITH EACH INPUT`;
+    } else if (score.isVariation) {
+      elements.callingSlipHint.textContent = `OPUS VARIATION: ${score.opusLabel} · SAME COLOR & FLAVOR, ALTERNATE MELODY`;
+    } else {
+      elements.callingSlipHint.textContent = 'IDENTICAL WORDS SUMMON THE IDENTICAL SPECIMEN · USE "# 2" FOR OPUS VARIATIONS.';
+    }
+  }
   syncTransportUI();
   syncSessionButtons();
   syncHerbariumButtons();
@@ -3119,7 +3139,12 @@ async function summon(phrase, { playAudio = true } = {}) {
   }
 
   try {
-    const candidateScore = composeScore(oracleSource, phrase);
+    let candidateScore;
+    if (callingSlipFlavorPin && pinnedFlavorScore) {
+      candidateScore = deriveScoreVariation(pinnedFlavorScore, phrase, phrase);
+    } else {
+      candidateScore = composeScore(oracleSource, phrase);
+    }
     const lockCounts = countActiveLocks(partLockState);
     const score = (currentScore && lockCounts.isAnyLocked)
       ? buildChimeraScore(currentScore, candidateScore, partLockState)
@@ -3142,6 +3167,8 @@ async function summon(phrase, { playAudio = true } = {}) {
     }
     if (score.chimera?.isChimera) {
       elements.status.textContent = `CHIMERA SUMMONED: ${score.name}`;
+    } else if (score.isVariation) {
+      elements.status.textContent = `VARIATION SUMMONED: ${score.name}`;
     }
     if (!historyState.present) {
       historyState = initHistory(historyState, captureSession(), `Summon: ${score.name}`);
@@ -4350,13 +4377,136 @@ function triggerRetaliation(normX, normY) {
   }
 }
 
+function triggerTimidRetreat(normX, normY) {
+  const now = performance.now();
+  interaction.retreat = 1.0;
+  interaction.cooldownUntil = now + 3400;
+  interaction.retaliateUntil = now + 750;
+  interaction.agitation = 0;
+  interaction.tapStreak = 0;
+  interaction.lunge = 0;
+  interaction.retaliationFlash = 0;
+  interaction.retaliationFractures = [];
+  interaction.retaliationPoint = { x: normX, y: normY };
+
+  interaction.ripples.push({
+    x: normX,
+    y: normY,
+    bornAt: now,
+    duration: 1100,
+    strength: 1.2,
+    isRetaliation: false,
+  });
+
+  vision.burstSpores(1.2);
+  triggerSporePuff(0.9);
+  triggerPercussion("hush", normX, normY, 1.0);
+
+  if (currentTransport && audioContext) {
+    const actxTime = audioContext.currentTime;
+    currentTransport.mix.gain.cancelScheduledValues(actxTime);
+    currentTransport.mix.gain.setValueAtTime(0.06, actxTime);
+    currentTransport.mix.gain.exponentialRampToValueAtTime(0.35, actxTime + 3.0);
+  }
+
+  if (stageContainer) {
+    stageContainer.classList.add("is-sulking");
+    stageContainer.classList.remove("is-agitated", "is-retaliating");
+  }
+
+  if (elements.stageCaption) {
+    elements.stageCaption.textContent = "SPECIMEN HAS FLED INTO THE SHADOWS";
+  }
+  if (!muted) {
+    elements.status.textContent = "SPECIMEN FLEES FROM CONTACT · HIDING IN DARKNESS";
+  }
+}
+
+function triggerMusicianCadenza(normX, normY) {
+  const now = performance.now();
+  interaction.cadenzaFlurry = 1.0;
+  interaction.cooldownUntil = now + 2400;
+  interaction.retaliateUntil = now + 750;
+  interaction.agitation = 0;
+  interaction.tapStreak = 0;
+  interaction.lunge = 0;
+  interaction.retaliationFlash = 0;
+  interaction.retaliationFractures = [];
+  interaction.retaliationPoint = { x: normX, y: normY };
+
+  interaction.ripples.push({
+    x: normX,
+    y: normY,
+    bornAt: now,
+    duration: 1600,
+    strength: 2.5,
+    isRetaliation: false,
+  });
+
+  vision.burstSpores(2.8);
+  triggerSporePuff(2.2);
+  triggerPercussion("cadenza", normX, normY, 1.2);
+
+  if (stageContainer) {
+    stageContainer.classList.remove("is-agitated", "is-retaliating", "is-sulking");
+  }
+
+  if (elements.stageCaption) {
+    elements.stageCaption.textContent = "VIRTUOSIC CADENZA! · HARMONIC FLURRY";
+  }
+  if (!muted) {
+    elements.status.textContent = "SPECIMEN IMPROVISING CADENZA";
+  }
+}
+
+function triggerChromatophoreDischarge(normX, normY) {
+  const now = performance.now();
+  interaction.bioluminescentFlash = 1.0;
+  interaction.chromaticShift = (interaction.chromaticShift || 0) + 120;
+  interaction.cooldownUntil = now + 2600;
+  interaction.retaliateUntil = now + 750;
+  interaction.agitation = 0;
+  interaction.tapStreak = 0;
+  interaction.lunge = 0;
+  interaction.retaliationFlash = 0;
+  interaction.retaliationFractures = [];
+  interaction.retaliationPoint = { x: normX, y: normY };
+
+  interaction.ripples.push({
+    x: normX,
+    y: normY,
+    bornAt: now,
+    duration: 1500,
+    strength: 2.8,
+    isRetaliation: false,
+  });
+
+  vision.burstSpores(3.4);
+  triggerSporePuff(2.6);
+  triggerPercussion("bioluminescent_pulse", normX, normY, 1.2);
+
+  if (stageContainer) {
+    stageContainer.classList.remove("is-agitated", "is-retaliating", "is-sulking");
+  }
+
+  if (elements.stageCaption) {
+    elements.stageCaption.textContent = "PRISMATIC AURORAL DISCHARGE!";
+  }
+  if (!muted) {
+    elements.status.textContent = "BIOLUMINESCENT DISCHARGE · HUE IRIDESCENCE";
+  }
+}
+
 elements.canvas.addEventListener("pointerdown", async (event) => {
   if (event.button !== undefined && event.button !== 0) return;
   await ensureAudioContext();
   const coords = vitrineCoordinates(event);
   const now = performance.now();
 
-  // If organism is in sulk recovery, it refuses contact with a dull, hollow thud
+  const temperament = currentScore?.temperament || (currentScore ? deriveTemperament(currentScore) : TEMPERAMENTS.retaliator);
+  interaction.temperament = temperament;
+
+  // If organism is in sulk / cooldown recovery, it refuses contact with a temperament-specific response
   if (now < interaction.cooldownUntil) {
     interaction.active = true;
     interaction.pointerId = event.pointerId;
@@ -4369,9 +4519,20 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
     interaction.dragDistance = 0;
     interaction.pitchBend = -coords.y * 0.3;
     interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: 0.35 });
-    triggerPercussion("dull_thud", coords.x, coords.y, 0.5);
+
+    const cooldownSound = temperament.id === "timid"
+      ? "flutter"
+      : temperament.id === "musician"
+      ? "melody_burst"
+      : temperament.id === "chromatophore"
+      ? "shimmer"
+      : temperament.id === "stoic"
+      ? "clockwork_tick"
+      : "dull_thud";
+
+    triggerPercussion(cooldownSound, coords.x, coords.y, 0.5);
     if (!muted) {
-      elements.status.textContent = "SPECIMEN SULKING · REFUSES CONTACT";
+      elements.status.textContent = temperament.cooldownLabel;
     }
     try {
       elements.canvas.setPointerCapture(event.pointerId);
@@ -4379,15 +4540,15 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
     return;
   }
 
-  // Track tap streak and annoyance escalation
+  // Track tap streak and annoyance escalation tailored to temperament
   const timeSinceLast = (now - interaction.lastTapAt) / 1000;
   interaction.lastTapAt = now;
   if (timeSinceLast < 1.8) {
     interaction.tapStreak += 1;
-    interaction.agitation = Math.min(1.0, interaction.agitation + 0.18 + interaction.tapStreak * 0.04);
+    interaction.agitation = Math.min(1.0, interaction.agitation + (temperament.agitationRate || 0.18) + interaction.tapStreak * 0.04);
   } else {
     interaction.tapStreak = 1;
-    interaction.agitation = Math.min(1.0, Math.max(0.18, interaction.agitation + 0.15));
+    interaction.agitation = Math.min(1.0, Math.max(0.18, interaction.agitation + (temperament.agitationRate || 0.15)));
   }
   strikeBoneForge(boneBeatModel, { type: "bone", force: 0.8 });
   if (elements.boneBeatTelemetry) {
@@ -4398,9 +4559,25 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
     updateMuscariaUI();
   }
 
-  // Cross retaliation threshold
-  if (interaction.agitation >= 0.85 || interaction.tapStreak >= 6) {
-    triggerRetaliation(coords.x, coords.y);
+  // Cross escalation threshold
+  const isRetaliatorEscalated = interaction.agitation >= 0.85 || interaction.tapStreak >= 6;
+  const isTimidEscalated = temperament.id === "timid" && (interaction.tapStreak >= 4 || interaction.agitation >= 0.7);
+  const isMusicianEscalated = temperament.id === "musician" && (interaction.tapStreak >= 5 || interaction.agitation >= 0.7);
+  const isChromatophoreEscalated = temperament.id === "chromatophore" && (interaction.tapStreak >= 5 || interaction.agitation >= 0.7);
+
+  if ((temperament.id === "retaliator" && (interaction.agitation >= 0.85 || interaction.tapStreak >= 6)) ||
+      (temperament.id === "timid" && isTimidEscalated) ||
+      (temperament.id === "musician" && isMusicianEscalated) ||
+      (temperament.id === "chromatophore" && isChromatophoreEscalated)) {
+    if (temperament.id === "retaliator") {
+      triggerRetaliation(coords.x, coords.y);
+    } else if (temperament.id === "timid") {
+      triggerTimidRetreat(coords.x, coords.y);
+    } else if (temperament.id === "musician") {
+      triggerMusicianCadenza(coords.x, coords.y);
+    } else if (temperament.id === "chromatophore") {
+      triggerChromatophoreDischarge(coords.x, coords.y);
+    }
     return;
   }
 
@@ -4415,6 +4592,11 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   interaction.dragTravel = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
   interaction.dragDistance = 0;
   interaction.pitchBend = -coords.y;
+
+  if (temperament.id === "chromatophore") {
+    interaction.chromaticShift = (interaction.chromaticShift || 0) + 42;
+  }
+
   const rippleStrength = 1 + interaction.agitation * 0.8;
   interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: rippleStrength });
   const sporeMultiplier = 1.2 + interaction.agitation * 1.5;
@@ -4437,12 +4619,17 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   }
 
   updateAudioInteraction();
-  triggerPercussion("strike", coords.x, coords.y, 1 + interaction.agitation * 0.5);
+  const tapSound = temperament.tapSound || "strike";
+  if (tapSound === "strike") {
+    triggerPercussion("strike", coords.x, coords.y, 1 + interaction.agitation * 0.5);
+  } else {
+    triggerPercussion(tapSound, coords.x, coords.y, 1 + interaction.agitation * 0.5);
+  }
   if (!muted) {
-    if (interaction.agitation >= 0.5) {
-      elements.status.textContent = `ORGANISM IRRITATED · TAP COUNT ${interaction.tapStreak}`;
+    if (interaction.agitation >= 0.45) {
+      elements.status.textContent = `${temperament.irritatedLabel} · TAP COUNT ${interaction.tapStreak}`;
     } else {
-      elements.status.textContent = "VITRINE DISTURBED";
+      elements.status.textContent = temperament.calmLabel;
     }
   }
 });
@@ -7030,6 +7217,7 @@ function refreshScoreOverrides() {
   if (!baseScore) return;
   const previousRoot = currentScore ? currentScore.root : baseScore.root;
   currentScore = applyScoreOverrides(baseScore, { rootOverride, scaleOverride });
+  interaction.temperament = currentScore.temperament || deriveTemperament(currentScore);
   if (song.loops.length && previousRoot !== currentScore.root) {
     song = transposeSectionLoops(song, previousRoot, currentScore.root);
     renderLooper();
@@ -7430,6 +7618,45 @@ elements.surprise.addEventListener("click", () => {
   const next = SURPRISES[Math.floor(Math.random() * SURPRISES.length)];
   elements.phrase.value = next;
   summon(next);
+});
+
+elements.callingSlipTweak?.addEventListener("click", () => {
+  const currentPhrase = (elements.phrase?.value || currentScore?.phrase || "the moon owes me five dollars").trim();
+  const parsed = parseVariationPhrase(currentPhrase);
+  let nextPhrase;
+  if (parsed.hasVariation) {
+    if (/^\d+$/.test(parsed.variationKey)) {
+      const nextNum = parseInt(parsed.variationKey, 10) + 1;
+      nextPhrase = `${parsed.basePhrase} # ${nextNum}`;
+    } else {
+      nextPhrase = `${parsed.basePhrase} # 2`;
+    }
+  } else {
+    nextPhrase = `${currentPhrase} # 2`;
+  }
+  if (elements.phrase) elements.phrase.value = nextPhrase;
+  summon(nextPhrase, { playAudio: Boolean(audioContext && !muted) });
+});
+
+elements.callingSlipPin?.addEventListener("click", () => {
+  callingSlipFlavorPin = !callingSlipFlavorPin;
+  if (callingSlipFlavorPin) {
+    pinnedFlavorScore = currentScore || baseScore;
+    elements.callingSlipPin.setAttribute("aria-pressed", "true");
+    elements.callingSlipPin.classList.add("is-pinned");
+    elements.callingSlipPin.textContent = "FLAVOR: PINNED 🔒";
+    if (elements.callingSlipHint && pinnedFlavorScore) {
+      elements.callingSlipHint.textContent = `FLAVOR PINNED: "${pinnedFlavorScore.name}" · NOTES TWEAK WITH EACH INPUT`;
+    }
+  } else {
+    pinnedFlavorScore = null;
+    elements.callingSlipPin.setAttribute("aria-pressed", "false");
+    elements.callingSlipPin.classList.remove("is-pinned");
+    elements.callingSlipPin.textContent = "FLAVOR: FREE 🔓";
+    if (elements.callingSlipHint) {
+      elements.callingSlipHint.textContent = 'IDENTICAL WORDS SUMMON THE IDENTICAL SPECIMEN · USE "# 2" FOR OPUS VARIATIONS.';
+    }
+  }
 });
 
 elements.replay.addEventListener("click", () => {

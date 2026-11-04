@@ -131,8 +131,12 @@
           </button>
         </div>
         <div class="form-foot">
-          <button class="text-button" id="surprise" type="button">✦ DRAW A RANDOM SLIP FROM THE URN</button>
-          <span>IDENTICAL WORDS INVARIABLY SUMMON THE IDENTICAL SPECIMEN.</span>
+          <div class="calling-slip-actions">
+            <button class="text-button" id="surprise" type="button">✦ DRAW A RANDOM SLIP FROM THE URN</button>
+            <button class="calling-slip-action-btn" id="calling-slip-tweak" type="button" title="Advance to the next melodic opus variation of this creature [keeps color, style &amp; mood]">⚄ TWEAK NOTES</button>
+            <button class="calling-slip-action-btn" id="calling-slip-pin" type="button" aria-pressed="false" title="Pin this creature's species &amp; tone: subsequent phrases explore melodic variations within this exact flavor">FLAVOR: FREE 🔓</button>
+          </div>
+          <span id="calling-slip-hint">IDENTICAL WORDS SUMMON THE IDENTICAL SPECIMEN · USE "# 2" FOR OPUS VARIATIONS.</span>
         </div>
       </form>
     </section>
@@ -1185,12 +1189,12 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "c0fb6e3df99b";
+      const ASSET_VERSION = "53e155656491";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "audio-export.mjs", "autopoiesis.mjs", "befunge.mjs", "bone-beat.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "history.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "live-recorder.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi-learn.mjs", "midi.mjs", "mixer.mjs", "muscaria.mjs", "music.mjs", "mycelium.mjs", "part-lock.mjs", "schedulers.mjs", "score.mjs",
-        "session.mjs", "shakespeare.mjs", "share.mjs", "spore-harp.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "view-mode.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "spore-harp.mjs", "temperament.mjs", "theremin.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "view-mode.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
       for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;

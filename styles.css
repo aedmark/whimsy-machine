@@ -1300,6 +1300,41 @@ h1 em {
   color: var(--ink);
 }
 
+.calling-slip-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.calling-slip-action-btn {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--oxblood-muted, #7c4436);
+  border-radius: 2px;
+  background: rgba(43, 31, 26, 0.08);
+  color: var(--oxblood);
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.calling-slip-action-btn:hover {
+  background: var(--parchment-light);
+  color: var(--ink);
+  border-color: var(--ebony);
+}
+
+.calling-slip-action-btn.is-pinned {
+  border-color: var(--brass-bright);
+  background: var(--ebony);
+  color: var(--brass-bright);
+  box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
+}
+
 .reading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

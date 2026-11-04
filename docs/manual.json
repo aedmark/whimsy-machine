@@ -161,6 +161,54 @@
           ]
         },
         {
+          "id": "opus-variations",
+          "title": "Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning",
+          "summary": "Enables melodic takes and variations via '#' opus delimiters, calling-slip note tweaking, and species flavor pinning while preserving exact color, style, and species identity.",
+          "tags": [
+            "score",
+            "variations",
+            "melody",
+            "opus",
+            "calling-slip",
+            "determinism"
+          ],
+          "what": "Allows visitors and musicians to explore alternate melodic sentences for any summoned specimen without losing its taxonomic genus, visual morphology, color palette, or musical flavor. Entering a variation delimiter (such as '# 2', '~ 3', '// b', or ': 2') or clicking '[⚄ TWEAK NOTES]' directly on the Calling Slip pins the creature's core properties (root, scale, voice, beat, bass, harmony, color, shape, and temperament) while deterministically varying the 12-step melody notes and motif turn. The '[FLAVOR: PINNED 🔒]' toggle pins the active specimen so subsequent phrase inputs (including single-character variations) explore melodic takes within that species.",
+          "how": {
+            "lead": "src/score.mjs and src/app.mjs implement functional variation parsing and Calling Slip orchestration:",
+            "points": [
+              "parseVariationPhrase() decomposes phrase inputs into basePhrase and variationKey via supported delimiters (#, ~, //, :, (opus), - take).",
+              "deriveScoreVariation() calculates deterministic degree-level perturbations in [-2, +2] across all 12 steps and shifts melodyTurn, guaranteeing all steps remain in [0, 8].",
+              "Keeps the creature's full visual and sonic identity intact: hue, palette, symmetry, eyes, fungal form, scale, root, voice, beat, bass, chimes, choir, bell jar, and temperament remain identical to the base creature.",
+              "Appends an engraved opus badge (e.g. 'THE VELVET MOTH (OPUS 2)') to the creature's ceremonial name.",
+              "Calling Slip quick-action '[⚄ TWEAK NOTES]' advances through sequential takes (# 2, # 3, # 4), while '[FLAVOR: PINNED 🔒]' freezes the current genus for continuous phrase exploration."
+            ]
+          },
+          "why": "Entering phrases differing by only one character formerly caused radical avalanche changes due to FNV-1a hashing. Opus variations and flavor pinning give performers intuitive melodic exploration and take sequencing while strictly preserving phrase determinism (roadmap P12-06, ADR D-107).",
+          "evidence": [
+            {
+              "label": "Score variation derivation and parser",
+              "target": "src/score.mjs"
+            },
+            {
+              "label": "Calling Slip UI and Pinning Orchestration",
+              "target": "src/app.mjs"
+            },
+            {
+              "label": "Opus and seed variation unit tests",
+              "target": "tests/seed-variation.test.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-107",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "deterministic-hashing",
+            "score-boundary",
+            "client-url-sharing"
+          ]
+        },
+        {
           "id": "zero-dependency-model",
           "title": "Zero-Dependency & Client-Only Privacy Boundary",
           "summary": "Maintains an unyielding guarantee that all computation, rendering, and synthesis occur locally on-device.",
@@ -423,6 +471,59 @@
           "related": [
             "silhouette-flux",
             "lookahead-scheduler",
+            "cellular-appendages"
+          ]
+        },
+        {
+          "id": "creature-temperaments",
+          "title": "Creature Temperaments & Multi-Archetype Vitrine Tap Dynamics",
+          "summary": "Deterministically derives one of five somatic/psychological temperaments, giving each creature distinct tap, escalation, and recovery behaviors.",
+          "tags": [
+            "temperament",
+            "vitrine",
+            "gestures",
+            "canvas",
+            "audio",
+            "personality"
+          ],
+          "what": "Each summoned creature possesses an innate psychological and physical temperament (The Retaliator, The Timid Hermit, The Playful Musician, The Chromatophore, or The Stoic Clockwork) deterministically derived from its score traits. Tapping the glass produces archetype-specific acoustic sounds (flutter, melody burst, shimmer, escapement click, or strike) and escalates into distinctive behavioral reactions (retreating into shadows without striking the glass, playing virtuosic musical cadenzas, discharging radiant bioluminescent aurora flares, ignoring strikes stoically, or violently cracking the bell jar).",
+          "how": {
+            "lead": "src/temperament.mjs, src/schedulers.mjs, src/vitrine-canvas.mjs, and src/app.mjs deliver multi-archetype tap dynamics:",
+            "points": [
+              "Maps 64 ceremonial adjectives and morphological score traits deterministically to one of 5 archetypes with balanced distribution.",
+              "The Retaliator defends its vitrine: rapid tapping escalates to a violent lunge, fractured glass, sub-bass cabinet boom, and sulk recovery.",
+              "The Timid Hermit flees physical contact: taps emit soft fluttering chimes; repeated disturbance causes it to retreat into the shadows (depth scaling, dimming opacity, and volume ducking) without cracking the glass.",
+              "The Playful Musician sings in response: taps voice 2-note scale micro-arpeggios; escalation triggers a virtuosic 5-note cadenza flurry with golden standing waves.",
+              "The Chromatophore excites bioluminescence: taps pulse iridescent hue shifts across its body; escalation floods the vitrine with a radiant prismatic auroral flare.",
+              "The Stoic Clockwork remains indifferent: taps produce crisp brass escapement ticks; it absorbs disturbance with heavy damping and never lunges or flees."
+            ]
+          },
+          "why": "Identical tap responses across all creatures broke the illusion of distinct living organisms. Providing diverse behavioral temperaments realizes the variety suggested by user intuition while respecting D-003 phrase determinism and D-012 non-mutating gesture expression (roadmap P12-05, ADR D-106).",
+          "evidence": [
+            {
+              "label": "Creature Temperament Model",
+              "target": "src/temperament.mjs"
+            },
+            {
+              "label": "Vitrine Synthesis Schedulers",
+              "target": "src/schedulers.mjs"
+            },
+            {
+              "label": "Vitrine Canvas Dynamic Staging",
+              "target": "src/vitrine-canvas.mjs"
+            },
+            {
+              "label": "Temperament Unit Tests",
+              "target": "tests/temperament.test.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-106",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "interactive-vitrine",
+            "silhouette-flux",
             "cellular-appendages"
           ]
         },

@@ -1,4 +1,5 @@
 import { runLolcode } from "./lolcode.mjs";
+import { deriveTemperament } from "./temperament.mjs";
 
 const REQUIRED_RANGES = Object.freeze({
   pulse: [42, 167],
@@ -289,6 +290,104 @@ export function parseScore(lines, seed, phrase) {
     steps: Object.freeze(steps),
     rawValues: Object.freeze({ ...values }),
     name: creatureName(values),
+    temperament: deriveTemperament(values),
+  });
+}
+
+function formatOpusLabel(variationKey) {
+  const clean = String(variationKey).trim();
+  if (/^\d+$/.test(clean)) return `OPUS ${clean}`;
+  if (/^(take|opus|var|variation)\s+(.+)$/i.test(clean)) {
+    const parts = clean.split(/\s+/);
+    return `${parts[0].toUpperCase()} ${parts.slice(1).join(" ").toUpperCase()}`;
+  }
+  return `TAKE ${clean.toUpperCase()}`;
+}
+
+export function parseVariationPhrase(rawPhrase) {
+  if (typeof rawPhrase !== "string") {
+    return { basePhrase: "", variationKey: null, hasVariation: false, opusLabel: null };
+  }
+  const trimmed = rawPhrase.trim();
+
+  // Pattern 1: # or ~ or // (e.g. "cat # 2", "blue moth #take 2", "garden ~ 3", "seed // 2")
+  let match = /^(.*?)(?:\s*(?:#|~|\/\/)\s*)([a-zA-Z0-9_\-\s]+)$/.exec(trimmed);
+  if (match && match[1].trim() && match[2].trim()) {
+    const basePhrase = match[1].trim();
+    const variationKey = match[2].trim();
+    return { basePhrase, variationKey, hasVariation: true, opusLabel: formatOpusLabel(variationKey) };
+  }
+
+  // Pattern 2: colon followed by variation (e.g. "cat: 2", "garden: take b")
+  match = /^(.*?):\s*(\d+|[a-zA-Z0-9_\-]+)$/.exec(trimmed);
+  if (match && match[1].trim() && match[2].trim()) {
+    const basePhrase = match[1].trim();
+    const variationKey = match[2].trim();
+    return { basePhrase, variationKey, hasVariation: true, opusLabel: formatOpusLabel(variationKey) };
+  }
+
+  // Pattern 3: parenthesized variation (e.g. "cat (2)", "garden (take 2)", "moth (opus 3)")
+  match = /^(.*?)\s*\((?:take|opus|var|variation)?\s*([a-zA-Z0-9_\-]+)\)$/i.exec(trimmed);
+  if (match && match[1].trim() && match[2].trim()) {
+    const basePhrase = match[1].trim();
+    const variationKey = match[2].trim();
+    return { basePhrase, variationKey, hasVariation: true, opusLabel: formatOpusLabel(variationKey) };
+  }
+
+  // Pattern 4: hyphen followed by opus / take / var (e.g. "cat - opus 2", "garden - take 3", "moth - var 2")
+  match = /^(.*?)\s+-\s+(?:opus|take|var|variation)\s+([a-zA-Z0-9_\-]+)$/i.exec(trimmed);
+  if (match && match[1].trim() && match[2].trim()) {
+    const basePhrase = match[1].trim();
+    const variationKey = match[2].trim();
+    return { basePhrase, variationKey, hasVariation: true, opusLabel: formatOpusLabel(variationKey) };
+  }
+
+  return { basePhrase: trimmed, variationKey: null, hasVariation: false, opusLabel: null };
+}
+
+export function deriveScoreVariation(baseScore, phrase, variationKey, opusLabel = null) {
+  if (!baseScore) return null;
+  const cleanVariation = String(variationKey || "1")
+    .normalize("NFKC")
+    .trim()
+    .toLocaleLowerCase("en-US");
+  const varSeed = hashPhrase(cleanVariation);
+
+  const steps = [];
+  const rawValues = { ...baseScore.rawValues };
+
+  // Melody turn variation: shifts motif phase and rhythm syncopation
+  const turnShift = (varSeed % 11) + 1;
+  const melodyTurn = (baseScore.melodyTurn + turnShift) % 12;
+  rawValues.melody_turn = melodyTurn;
+
+  for (let i = 0; i < 12; i++) {
+    const stepHash = Math.imul(varSeed ^ (i * 37 + 101), 0x45d9f3b) >>> 0;
+    // Step delta in [-2, +2]
+    const delta = (stepHash % 5) - 2;
+    let newStep = baseScore.steps[i] + delta;
+    if (newStep < 0) newStep = ((newStep % 9) + 9) % 9;
+    else if (newStep > 8) newStep = newStep % 9;
+    steps.push(newStep);
+    rawValues[`step_${i}`] = newStep;
+  }
+
+  const label = opusLabel || formatOpusLabel(cleanVariation);
+  const name = `${baseScore.name} (${label})`;
+  const seed = (Math.imul(baseScore.seed ^ varSeed, 0x01000193) >>> 0) || 1;
+
+  return Object.freeze({
+    ...baseScore,
+    seed,
+    phrase,
+    steps: Object.freeze(steps),
+    rawValues: Object.freeze(rawValues),
+    melodyTurn,
+    name,
+    isVariation: true,
+    basePhrase: baseScore.phrase,
+    variationKey: cleanVariation,
+    opusLabel: label,
   });
 }
 
@@ -298,6 +397,20 @@ export function composeScore(source, phrase) {
     .trim()
     .slice(0, 72)
     .toLocaleLowerCase("en-US");
+
+  const parsed = parseVariationPhrase(cleanPhrase);
+  if (parsed.hasVariation) {
+    const cleanBase = parsed.basePhrase
+      .normalize("NFKC")
+      .trim()
+      .slice(0, 72)
+      .toLocaleLowerCase("en-US");
+    const baseSeed = hashPhrase(cleanBase);
+    const { output } = runLolcode(source, { INPUT_SEED: baseSeed });
+    const baseScore = parseScore(output, baseSeed, cleanBase);
+    return deriveScoreVariation(baseScore, cleanPhrase, parsed.variationKey, parsed.opusLabel);
+  }
+
   const seed = hashPhrase(cleanPhrase);
   const { output } = runLolcode(source, { INPUT_SEED: seed });
   return parseScore(output, seed, cleanPhrase);

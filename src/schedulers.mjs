@@ -381,6 +381,165 @@ export function triggerPercussion(kind, normX = 0, normY = 0, strength = 1, {
     thudOsc.start(now);
     thudOsc.stop(now + 0.11);
     cleanupOnEnded(thudOsc, thudGain);
+  } else if (kind === "flutter") {
+    // Timid delicate chime: high sine with soft attack and breath
+    for (const [partialIndex, ratio] of [1.5, 2.25].entries()) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(baseFreq * ratio, now);
+      const dur = 0.26 - partialIndex * 0.05;
+      const peak = (partialIndex === 0 ? 0.065 : 0.03) * strength;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(peak, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(gain).connect(currentTransport.mix);
+      osc.start(now);
+      osc.stop(now + dur + 0.03);
+      cleanupOnEnded(osc, gain);
+    }
+    const breathSource = audioContext.createBufferSource();
+    breathSource.buffer = ensureNoiseBuffer(audioContext);
+    const breathFilter = audioContext.createBiquadFilter();
+    breathFilter.type = "bandpass";
+    breathFilter.frequency.setValueAtTime(1400, now);
+    breathFilter.Q.setValueAtTime(3.0, now);
+    const breathGain = audioContext.createGain();
+    breathGain.gain.setValueAtTime(0.0001, now);
+    breathGain.gain.exponentialRampToValueAtTime(0.025 * strength, now + 0.015);
+    breathGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    breathSource.connect(breathFilter).connect(breathGain).connect(currentTransport.mix);
+    breathSource.start(now);
+    breathSource.stop(now + 0.18);
+    cleanupOnEnded(breathSource, breathFilter, breathGain);
+  } else if (kind === "hush") {
+    // Timid gentle retreat: breathy filtered noise sigh sweeping downward
+    const hushSource = audioContext.createBufferSource();
+    hushSource.buffer = ensureNoiseBuffer(audioContext);
+    const hushFilter = audioContext.createBiquadFilter();
+    hushFilter.type = "bandpass";
+    hushFilter.frequency.setValueAtTime(1600, now);
+    hushFilter.frequency.exponentialRampToValueAtTime(320, now + 0.5);
+    hushFilter.Q.setValueAtTime(2.4, now);
+    const hushGain = audioContext.createGain();
+    hushGain.gain.setValueAtTime(0.0001, now);
+    hushGain.gain.exponentialRampToValueAtTime(0.08 * strength, now + 0.04);
+    hushGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    hushSource.connect(hushFilter).connect(hushGain).connect(currentTransport.mix);
+    hushSource.start(now);
+    hushSource.stop(now + 0.6);
+    cleanupOnEnded(hushSource, hushFilter, hushGain);
+  } else if (kind === "melody_burst") {
+    // Musician cheerful 2-note improv micro-arpeggio
+    const nextDegree = melody[(currentTransport.step + sector + 1) % melody.length] || 4;
+    const secondFreq = midiToFrequency(score.root + nextDegree + registerLift);
+    const notes = [
+      { freq: baseFreq, time: now },
+      { freq: secondFreq, time: now + 0.075 },
+    ];
+    for (const n of notes) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(n.freq, n.time);
+      const dur = 0.32;
+      const peak = 0.09 * strength;
+      gain.gain.setValueAtTime(0.0001, n.time);
+      gain.gain.exponentialRampToValueAtTime(peak, n.time + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, n.time + dur);
+      osc.connect(gain).connect(currentTransport.mix);
+      osc.start(n.time);
+      osc.stop(n.time + dur + 0.03);
+      cleanupOnEnded(osc, gain);
+    }
+  } else if (kind === "cadenza") {
+    // Musician virtuosic 5-note melodic flurry
+    const noteCount = 5;
+    for (let i = 0; i < noteCount; i += 1) {
+      const deg = melody[(currentTransport.step + sector + i) % melody.length] || (i * 2);
+      const freq = midiToFrequency(score.root + deg + registerLift);
+      const noteTime = now + i * 0.055;
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = i === noteCount - 1 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(freq, noteTime);
+      const dur = i === noteCount - 1 ? 0.65 : 0.28;
+      const peak = (i === noteCount - 1 ? 0.12 : 0.08) * strength;
+      gain.gain.setValueAtTime(0.0001, noteTime);
+      gain.gain.exponentialRampToValueAtTime(peak, noteTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + dur);
+      osc.connect(gain).connect(currentTransport.mix);
+      osc.start(noteTime);
+      osc.stop(noteTime + dur + 0.04);
+      cleanupOnEnded(osc, gain);
+    }
+  } else if (kind === "shimmer") {
+    // Chromatophore prismatic crystalline bell chime with overtone dispersion
+    for (const [idx, ratio] of [1, 2.25, 3.16, 4.75].entries()) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = idx % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(baseFreq * ratio, now);
+      osc.detune.setValueAtTime((idx - 1.5) * 4.0, now);
+      const dur = 0.45 - idx * 0.06;
+      const peak = [0.08, 0.06, 0.04, 0.025][idx] * strength;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(peak, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(gain).connect(currentTransport.mix);
+      osc.start(now);
+      osc.stop(now + dur + 0.04);
+      cleanupOnEnded(osc, gain);
+    }
+  } else if (kind === "bioluminescent_pulse") {
+    // Chromatophore resonant auroral harmonic sweep
+    const sweepOsc = audioContext.createOscillator();
+    const sweepFilter = audioContext.createBiquadFilter();
+    const sweepGain = audioContext.createGain();
+    sweepOsc.type = "sawtooth";
+    sweepOsc.frequency.setValueAtTime(baseFreq * 0.75, now);
+    sweepOsc.frequency.exponentialRampToValueAtTime(baseFreq * 2.0, now + 0.5);
+    sweepFilter.type = "lowpass";
+    sweepFilter.frequency.setValueAtTime(450, now);
+    sweepFilter.frequency.exponentialRampToValueAtTime(3800, now + 0.35);
+    sweepFilter.frequency.exponentialRampToValueAtTime(600, now + 0.8);
+    sweepFilter.Q.setValueAtTime(4.5, now);
+    sweepGain.gain.setValueAtTime(0.0001, now);
+    sweepGain.gain.exponentialRampToValueAtTime(0.14 * strength, now + 0.06);
+    sweepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+    sweepOsc.connect(sweepFilter).connect(sweepGain).connect(currentTransport.mix);
+    sweepOsc.start(now);
+    sweepOsc.stop(now + 0.9);
+    cleanupOnEnded(sweepOsc, sweepFilter, sweepGain);
+  } else if (kind === "clockwork_tick") {
+    // Stoic crisp mechanical brass escapement click
+    const clickOsc = audioContext.createOscillator();
+    const clickGain = audioContext.createGain();
+    clickOsc.type = "triangle";
+    clickOsc.frequency.setValueAtTime(1420, now);
+    clickOsc.frequency.exponentialRampToValueAtTime(260, now + 0.035);
+    clickGain.gain.setValueAtTime(0.0001, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.12 * strength, now + 0.003);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+    clickOsc.connect(clickGain).connect(currentTransport.mix);
+    clickOsc.start(now);
+    clickOsc.stop(now + 0.045);
+    cleanupOnEnded(clickOsc, clickGain);
+
+    const tickNoise = audioContext.createBufferSource();
+    tickNoise.buffer = ensureNoiseBuffer(audioContext);
+    const tickFilter = audioContext.createBiquadFilter();
+    tickFilter.type = "bandpass";
+    tickFilter.frequency.setValueAtTime(2800, now);
+    tickFilter.Q.setValueAtTime(5.0, now);
+    const tickNoiseGain = audioContext.createGain();
+    tickNoiseGain.gain.setValueAtTime(0.0001, now);
+    tickNoiseGain.gain.exponentialRampToValueAtTime(0.07 * strength, now + 0.002);
+    tickNoiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+    tickNoise.connect(tickFilter).connect(tickNoiseGain).connect(currentTransport.mix);
+    tickNoise.start(now);
+    tickNoise.stop(now + 0.035);
+    cleanupOnEnded(tickNoise, tickFilter, tickNoiseGain);
   }
 }
 
