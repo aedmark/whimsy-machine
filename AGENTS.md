@@ -6,11 +6,13 @@ This is the canonical instruction file for coding agents. `CLAUDE.md` imports it
 
 ## Start here
 
-1. Read `docs/HANDOFF.md` for current state and active work.
+Every session runs the session loop (the Mellon fellowship quest loop): scout (steps 1 to 4), scope (step 5), build and verify (While working, `docs/TESTING.md`), and hand off (Finishing a change). Bedrock rules live in `docs/INVARIANTS.md`; process vocabulary and its Mellon names live in `docs/GLOSSARY.md`.
+
+1. Read `docs/HANDOFF.md` for current state and active work, and `docs/INVARIANTS.md`.
 2. Read the relevant `ROADMAP.md` item and applicable parts of `docs/ARCHITECTURE.md` and `docs/TESTING.md`.
 3. Inspect `git status` and recent history. Preserve work you did not create.
-4. Separate observed repository facts from fore-conceptions. Do not assume a build step, package manager, framework idiom, or directory role the files do not show; verify important inherited claims with the fastest relevant check.
-5. State the intended scope briefly and surface unstated assumptions. When requirements, scope, or edge cases admit several valid readings, ask targeted questions before editing, then work on one independently reviewable change at a time.
+4. Separate observed repository facts from fore-conceptions (INV-010). Do not assume a build step, package manager, framework idiom, or directory role the files do not show; verify important inherited claims with the fastest relevant check.
+5. State the intended scope briefly and surface unstated assumptions. When requirements, scope, or edge cases admit several valid readings, ask targeted questions before editing (INV-009), then work on one independently reviewable change at a time.
 
 For an unfamiliar session, read `README.md` and `docs/README.md` first. Stop for maintainer direction when a request conflicts with these instructions or overlaps unrelated working-tree edits.
 
@@ -30,6 +32,7 @@ This repository is one Zone. Its rules apply here and nowhere else.
 - Check part against whole: verify how a local change affects `docs/ARCHITECTURE.md` and `docs/DECISIONS.md`. When the change and the system invariants leave a gap, ask rather than guess a bridge.
 - Loop back when a part reshapes the whole: if implementation or testing invalidates a scoping assumption, or alters an interface, invariant, or boundary in `docs/ARCHITECTURE.md`, stop, return to step 5 of Start here, and re-align scope with the maintainer.
 - Treat resistance from the codebase as a stop-and-inquire trigger. When a test fails for an unexpected reason, a file contradicts `docs/ARCHITECTURE.md`, or a check refuses the change, do not route around it with a silent fallback, loosened assertion, or suppression. Surface it, or record it under Claims vs. code in `docs/ARCHITECTURE.md` and Corrections in the handoff session entry.
+- Keep one fact in one home (INV-002); link to the owner instead of copying.
 - Reconstruct the question before removing the answer: before deleting or altering a constraint, guard clause, or non-obvious boundary, find the decision (`D-NNN`), held tension (`T-NNN`), or commit that explains it. With no record, ask first.
 - Never compile silent assumptions into code. An unanswered clarifying question goes under Open questions in `docs/DECISIONS.md` and is referenced from `docs/HANDOFF.md`.
 - Record durable, revisitable choices in `docs/DECISIONS.md`.
@@ -41,12 +44,12 @@ This repository is one Zone. Its rules apply here and nowhere else.
 
 ## Finishing a change
 
-1. Run the checks specified in `docs/TESTING.md`.
+1. Run the checks specified in `docs/TESTING.md`, including the negative proof for any new test (INV-007).
 2. Review the diff for unrelated edits, generated files, credentials, stale names, and documentation drift.
-3. Update `docs/HANDOFF.md` when current state materially changes or work pauses.
+3. Update `docs/HANDOFF.md` when current state materially changes or work pauses. Badge every "What works" claim (INV-003), keep Current state within 80 lines and the log within 10 sessions (INV-005), and name an open roadmap item in every next step (INV-004).
 4. Update other documents only when their trigger in `docs/README.md` applies.
 5. Run `python3 tools/check_docs.py`.
-6. When the session log reaches its limit or a phase closes, run a consolidation pass: fold repeated lessons into `AGENTS.md` or `docs/DECISIONS.md`, archive finished roadmap phases, delete held tensions that no longer hold, and write one line on what the phase taught. Move text to the archive; compress insight in place.
+6. When the session log reaches its limit or a phase closes, run a consolidation pass: fold repeated lessons into `AGENTS.md` or `docs/DECISIONS.md`, archive finished roadmap phases, delete held tensions that no longer hold, and write one line on what the phase taught. Write distilled rules as single declarative sentences under 25 words (INV-008). Move text to the archive; compress insight in place.
 
 Do not manufacture ceremony: typo-only or mechanical changes need no decision, changelog entry, or handoff rewrite unless they alter a claim those documents make.
 
@@ -63,7 +66,7 @@ Never force-push or rewrite shared history.
 
 ## Maintainer preferences
 
-- **Writing:** Direct, playful, concrete. Preserve the LOLCODE voice without burying instructions in jokes.
+- **Writing:** Direct, playful, concrete. Preserve the LOLCODE voice without burying instructions in jokes. No em dashes in prose, code comments, or commit messages (INV-006); UI typography is exempt.
 - **Code comments:** Explain boundaries and surprising choices. Do not narrate obvious syntax.
 - **Asking vs. doing:** Implement bounded reversible work. Ask before publishing, adding dependencies, or expanding data collection.
 - **Reporting:** Lead with what now works, then exact verification and honest gaps.
@@ -73,8 +76,9 @@ Never force-push or rewrite shared history.
 | Path or thing | Rule | Why |
 | --- | --- | --- |
 | `LICENSE` | Do not change without maintainer permission | Legal ownership and terms are maintainer-controlled |
-| Determinism contract | Do not change casually | A phrase must summon the same creature across supported runs |
-| Zero-dependency boundary | Requires an accepted decision | It defines portability, privacy, and the product's technical character |
+| `docs/INVARIANTS.md` | Do not edit without maintainer decree | Holds the bedrock rules INV-001 to INV-011 (D-109) |
+| Determinism contract | Do not change casually | A phrase must summon the same creature across supported runs (INV-011) |
+| Zero-dependency boundary | Requires an accepted decision | It defines portability, privacy, and the product's technical character (INV-001) |
 
 ## Names and terms
 
@@ -88,6 +92,9 @@ Never force-push or rewrite shared history.
 | Zone | One repository and the rules that apply inside it | A branch, a folder, or a chat thread |
 | Fore-conception | A training-distribution default or prior expectation an agent brings into a fresh session | An observed fact in the repository |
 | Held tension | Two true claims that do not fit together yet, with an owner and a review trigger | An open question or a decision |
+| Proof badge | `[OBSERVED]`, `[DEDUCED]`, `[CONTRACT]`, `[HYPOTHESIS]`, or `[UNTESTED]` on a current claim | An unlabelled claim |
+
+The full process vocabulary, with Mellon names, is in `docs/GLOSSARY.md`.
 | host | Browser adapters, interpreter, Canvas, and Web Audio | A server or remote service |
 
 ## Repository map
@@ -159,7 +166,9 @@ Never force-push or rewrite shared history.
 | `tests/` | Dependency-free Node tests |
 | `ROADMAP.md` | Planned work with stable IDs |
 | `docs/` | Architecture, decisions, tests, risks, and current state |
-| `tools/check_docs.py` | Documentation consistency checker |
+| `docs/INVARIANTS.md` | Bedrock rules (Elder Runes), maintainer-protected |
+| `docs/GLOSSARY.md` | Product and process vocabulary with Mellon names |
+| `tools/check_docs.py` | Documentation consistency checker: IDs, invariants, proof badges, next steps, em dashes |
 | `tools/manual.py` | 3x documentation manual validator and builder |
 | `tools/build_desktop.sh` | Builds the standalone desktop application binary with Tauri v2 and Cargo |
 | `tools/stage_tauri_dist.mjs` | Stages static frontend assets into `src-tauri/dist/` for Tauri bundling |

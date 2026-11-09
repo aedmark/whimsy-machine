@@ -14,9 +14,15 @@ Errors (exit 1):
   - two session-log entries with the same number (HANDOFF and docs/archive/ together)
   - a relative link, or a path in AGENTS.md's Layout table, that points at nothing
   - an invisible or bidirectional control character in a document
+  - an invariant (INV-NNN) defined twice in docs/INVARIANTS.md, or cited but not defined (INV-004)
+  - a HANDOFF next step that names no roadmap item, or only completed ones (INV-004)
+  - a HANDOFF "What works" line with no proof badge (INV-003)
+  - an em dash in documentation prose or a src/*.mjs comment (INV-006); code spans, code blocks,
+    and docs/archive/ are exempt
 Warnings (exit 0):
   - HANDOFF's "Last updated" is missing, or older than its newest session-log entry
-  - HANDOFF's session log or "Current state" has outgrown the limits below (time to archive)
+  - HANDOFF's session log or "Current state" has outgrown the limits below (time to archive, INV-005)
+  - an invariant that nothing outside docs/INVARIANTS.md cites (INV-004)
 
 Standard library only. HTML comments are ignored, so examples can live in them.
 """
@@ -29,6 +35,7 @@ DOCS = [
     "AGENTS.md", "CLAUDE.md", "README.md", "ROADMAP.md",
     "docs/README.md", "docs/ROADMAP.md", "docs/HANDOFF.md", "docs/ARCHITECTURE.md", "docs/DECISIONS.md",
     "docs/TESTING.md", "docs/SECURITY.md", "docs/CHANGELOG.md", "docs/CONTRIBUTING.md",
+    "docs/INVARIANTS.md", "docs/GLOSSARY.md",
 ]
 # Keep in step with AGENTS.md (end of session, step 3) and HANDOFF's header.
 LOG_LIMIT = 10
@@ -38,6 +45,9 @@ ITEM_RE = re.compile(r"\bP(\d+)-(\d+)\b")
 DECISION_RE = re.compile(r"\bD-(\d{3})\b")
 QUESTION_RE = re.compile(r"\bQ-(\d{3})\b")
 TENSION_RE = re.compile(r"\bT-(\d{3})\b")
+INVARIANT_RE = re.compile(r"\bINV-(\d{3})\b")
+BADGE_RE = re.compile(r"\[(OBSERVED|DEDUCED|CONTRACT|HYPOTHESIS|UNTESTED)\]")
+EM_DASH = "\u2014"
 INVISIBLE_RE = re.compile(r"[\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)|\b(?:href|src)=\"([^\"]+)\"")
@@ -96,6 +106,19 @@ def main():
             if path.parent.name == "archive":
                 items.update(m.group(1) for m in re.finditer(r"^- \[.\] (P\d+-\d+)\b", text, flags=re.M))
 
+    completed = set()
+    if roadmap is not None:
+        completed = {m.group(1) for m in re.finditer(r"^- \[x\] (P\d+-\d+)\b", texts[roadmap], flags=re.M)}
+
+    invariants_path = ROOT / "docs" / "INVARIANTS.md"
+    invariants = set()
+    if invariants_path in texts:
+        text = texts[invariants_path]
+        for m in re.finditer(r"^## INV-(\d{3})\b", text, flags=re.M):
+            if f"INV-{m.group(1)}" in invariants:
+                errors.append(f"{where(invariants_path, text, m.start())}: INV-{m.group(1)} is defined twice")
+            invariants.add(f"INV-{m.group(1)}")
+
     decisions_path = ROOT / "docs" / "DECISIONS.md"
     decisions, supersessions, questions, tensions = set(), [], set(), set()
     if decisions_path in texts:
@@ -147,6 +170,16 @@ def main():
             for m in TENSION_RE.finditer(text):
                 if m.group(0) not in tensions:
                     errors.append(f"{where(path, text, m.start())}: {m.group(0)} is not in DECISIONS.md's held tensions")
+        if invariants_path in texts:
+            for m in INVARIANT_RE.finditer(text):
+                if m.group(0) not in invariants:
+                    errors.append(f"{where(path, text, m.start())}: {m.group(0)} is not in INVARIANTS.md")
+        if path.parent.name != "archive":
+            prose = re.sub(r"```.*?```", lambda c: "\n" * c.group(0).count("\n"), text, flags=re.S)
+            prose = re.sub(r"`[^`\n]+`", "", prose)
+            for m in re.finditer(EM_DASH, prose):
+                errors.append(f"{where(path, prose, m.start())}: em dash in prose (INV-006); use a comma, "
+                              f"semicolon, colon, or parentheses")
         for m in LINK_RE.finditer(text):
             target = (m.group(1) or m.group(2)).split("#")[0]
             if not target or "{{" in target or re.match(r"[a-z][a-z0-9+.-]*:", target):
@@ -188,6 +221,35 @@ def main():
         if current.count("\n") > CURRENT_STATE_LINES:
             warnings.append(f"docs/HANDOFF.md: Current state is {current.count(chr(10))} lines (limit "
                             f"{CURRENT_STATE_LINES}); move history to the session log")
+
+        steps, steps_at = section(text, "Next steps")
+        for m in re.finditer(r"^\d+\. .*$", steps, flags=re.M):
+            ids = ITEM_RE.findall(m.group(0))
+            named = [f"P{a}-{b}" for a, b in ids]
+            if not named:
+                errors.append(f"{where(handoff, text, steps_at + m.start())}: next step names no roadmap item (INV-004)")
+            elif all(i in completed for i in named):
+                errors.append(f"{where(handoff, text, steps_at + m.start())}: next step names only completed "
+                              f"roadmap items {', '.join(named)} (INV-004)")
+        works = re.search(r"^\*\*What works\*\*.*?(?=^\*\*|^## |\Z)", current, flags=re.M | re.S)
+        if works:
+            base = text.find(current) + works.start()
+            for m in re.finditer(r"^- .*$", works.group(0), flags=re.M):
+                if not BADGE_RE.search(m.group(0)) and "{{" not in m.group(0):
+                    errors.append(f"{where(handoff, text, base + m.start())}: 'What works' claim has no proof "
+                                  f"badge (INV-003): {m.group(0)[2:62]}")
+
+    if invariants_path in texts:
+        outside = [t for p, t in texts.items() if p != invariants_path and p.parent.name != "archive"]
+        for inv in sorted(invariants):
+            if not any(inv in t for t in outside):
+                warnings.append(f"docs/INVARIANTS.md: {inv} is cited nowhere outside INVARIANTS.md (INV-004)")
+
+    for path in sorted((ROOT / "src").glob("*.mjs")):
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            comment = re.search(r"(//.*$|^\s*/?\*.*$)", line)
+            if comment and EM_DASH in comment.group(0):
+                errors.append(f"{path.relative_to(ROOT)}:{n}: em dash in a code comment (INV-006)")
 
     for line in errors:
         print(f"ERROR {line}")

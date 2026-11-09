@@ -267,7 +267,7 @@
 - Harmonize all six esoteric interpreters through an Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`) using Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious triads, and Bjorklund Euclidean rhythm hocketing $E(k, 12)$.
 - Explore ten visual families, eight musical scales, six rhythmic grammars, wider color and size ranges, and more than 220,000 possible ceremonial names.
 - Meet creatures with eight eye silhouettes, eight colored iris treatments, eight pupil geometries, six eye arrangements, varied sizes, and independent gaze behavior.
-- Watch eight bounded kinetic cores—including a rotating projected tesseract—move inside eight independently deforming silhouette grammars.
+- Watch eight bounded kinetic cores, including a rotating projected tesseract, move inside eight independently deforming silhouette grammars.
 - Respect reduced-motion preferences while keeping the visual reading available.
 - Copy a privacy-preserving `#omen=...` link (`COPY OMEN LINK`) or engrave a 1200×1520 Victorian broadsheet PNG (`ENGRAVE PNG PLATE`) containing the creature portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble ledger.
 - Inspect the canonical LOLCODE spell, Malbolge beat tape, Brainfuck bass tape, Befunge torus playfield, Piet codel canvas, FRACTRAN prime fractions, and Shakespeare tragedy directly from the application.

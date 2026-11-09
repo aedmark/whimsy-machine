@@ -1279,7 +1279,7 @@
               "`highlightBeatStep()` updates the live readout on each 16th-note step and highlights the active region on the SVG Tonnetz compass."
             ]
           },
-          "why": "Different listeners enjoy different musical aesthetics—from tight contrapuntal elegance to smoky blues to raw, unfiltered avant-garde noise. Exposing the Kapellmeister console puts harmonic mastery directly in the user's hands without destroying the genuine execution of the underlying esoteric programs (ADR D-019).",
+          "why": "Different listeners enjoy different musical aesthetics, from tight contrapuntal elegance to smoky blues to raw, unfiltered avant-garde noise. Exposing the Kapellmeister console puts harmonic mastery directly in the user's hands without destroying the genuine execution of the underlying esoteric programs (ADR D-019).",
           "evidence": [
             {
               "label": "Kapellmeister conductor engine",

@@ -1,5 +1,5 @@
 /**
- * The Whimsy Machine — Autopoietic Creative Determinant & Fractal Morphogenesis Engine
+ * The Whimsy Machine: Autopoietic Creative Determinant & Fractal Morphogenesis Engine
  *
  * Implements the discrete graph and continuous 1D boundary formulation of the
  * Creative Determinant (CD) autopoietic field theory developed by Nelson Spence / Project Navi:

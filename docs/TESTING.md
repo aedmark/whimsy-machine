@@ -62,6 +62,27 @@ Score generation is deterministic by contract (D-003); a phrase test that varies
 - Say in the handoff whether a miss came from the code or the environment (a backgrounded tab, a throttled timer, a device).
 - To test handling of a rare bad input (a malformed `.fun` file, a hostile `#omen=` fragment), inject it directly instead of waiting for it.
 
+## The five-step trial
+
+When fixing a bug or adding behavior:
+
+1. **Claim:** state the exact behavior or invariant asserted.
+2. **Root cause:** name the defect or missing check.
+3. **Negative proof (INV-007):** run the new test against the unfixed code and watch it fail. A test that passes on broken code proves nothing.
+4. **Fix:** apply the minimal change.
+5. **Clear run:** run the suite on the fixed code and record the result as `[OBSERVED]` in `docs/HANDOFF.md` (INV-003).
+
+If a test or contract blocks the change unexpectedly, do not route around it; stop and ask (INV-009).
+
+## Proof badge boundaries
+
+| Command | Badge it supports | Proves | Does not prove |
+| --- | --- | --- | --- |
+| `node --test tests/*.test.mjs` | `[OBSERVED]` | Interpreters, score parsing, determinism fixtures (INV-011), session and export formats | Sound quality, visual composition, real browsers |
+| `python3 tools/check_docs.py` | `[OBSERVED]` | IDs, links, invariants, badges, next steps, em dashes (INV-003 to INV-006) | That any code runs |
+| `python3 tools/manual.py check docs/manual.json` | `[OBSERVED]` | Manual structure | That the manual is accurate |
+| Browser or listening review | `[OBSERVED]` only for the session that did it | What a person saw or heard | Other browsers or devices |
+
 ## Adding a check
 
 - Put interpreter and score behavior in `tests/oracle.test.mjs`.
@@ -103,6 +124,9 @@ Score generation is deterministic by contract (D-003); a phrase test that varies
 16. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
+
+- **Untagged handoff claims:** a "What works" line without a badge fails `tools/check_docs.py` (INV-003). Use `[UNTESTED]` for anything not run this session.
+- **Editing fingerprinted score programs for style:** `src/pad.piet`, `src/chimes.frac`, and `src/conductor.i` are hashed by `tests/engine-version.test.mjs`; even a comment edit changes the engine fingerprint (INV-011). Leave their punctuation alone.
 
 - Web Audio tests require human listening. An oscillator scheduling without throwing does not prove a good mix.
 - Timer throttling in background tabs can affect scheduling; the short look-ahead window limits the damage but requires browser review.

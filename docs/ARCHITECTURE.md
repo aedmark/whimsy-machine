@@ -116,6 +116,8 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 
 ## Invariants
 
+The bedrock rules, including determinism (INV-011) and zero dependencies (INV-001), live in [INVARIANTS.md](INVARIANTS.md). This list is the architecture-level detail.
+
 - A normalized phrase produces one stable score. Enforced by `tests/oracle.test.mjs` and D-003.
 - The LOLCODE spell produces every parameter used to distinguish the creature. Enforced by required score fields and range validation.
 - Malformed, duplicate, missing, unknown, or out-of-range output never reaches renderers. Enforced by `parseScore()` tests.
