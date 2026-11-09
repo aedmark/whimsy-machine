@@ -1,17 +1,6 @@
 # Glossary
 
-The full vocabulary. Product terms also appear in `AGENTS.md`; this file owns the process terms and their Mellon names, so either name can be searched.
-
-## Product terms
-
-| Term | Meaning | Not to be confused with |
-| --- | --- | --- |
-| The Whimsy Machine | The product | A generic synthesizer or toy |
-| HAI, ORACLE! | The generative score spell and engine | The overarching product |
-| spell | `src/oracle.lol`, the score-generating program | JavaScript rendering code |
-| score | Validated parameters emitted by the spell | Rendered sound alone |
-| creature | The combined named visual and musical result | A stored user profile |
-| host | Browser adapters, interpreter, Canvas, and Web Audio | A server or remote service |
+Process vocabulary and its Mellon names, so either name can be searched. Product terms (spell, score, creature, host) live in [AGENTS.md](../AGENTS.md), "Names and terms" (INV-002).
 
 ## Process terms
 

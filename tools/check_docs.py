@@ -17,6 +17,9 @@ Errors (exit 1):
   - an invariant (INV-NNN) defined twice in docs/INVARIANTS.md, or cited but not defined (INV-004)
   - a HANDOFF next step that names no roadmap item, or only completed ones (INV-004)
   - a HANDOFF "What works" line with no proof badge (INV-003)
+  - the same fact in two living documents (INV-002): a sentence of DUP_WORDS or more words, or a table
+    row of three or more cells, appearing in both. HANDOFF's session log, CHANGELOG, and docs/archive/
+    are history and exempt; code blocks are ignored
   - an em dash in documentation prose or a src/*.mjs comment (INV-006); code spans, code blocks,
     and docs/archive/ are exempt
 Warnings (exit 0):
@@ -40,6 +43,10 @@ DOCS = [
 # Keep in step with AGENTS.md (end of session, step 3) and HANDOFF's header.
 LOG_LIMIT = 10
 CURRENT_STATE_LINES = 80
+# INV-002: shorter sentences repeat innocently ("Run from the repository root."); 10 words is the
+# shortest length at which the living docs showed no accidental matches (measured 2026-11-08).
+DUP_WORDS = 10
+HISTORY = {"docs/CHANGELOG.md"}
 
 ITEM_RE = re.compile(r"\bP(\d+)-(\d+)\b")
 DECISION_RE = re.compile(r"\bD-(\d{3})\b")
@@ -244,6 +251,28 @@ def main():
         for inv in sorted(invariants):
             if not any(inv in t for t in outside):
                 warnings.append(f"docs/INVARIANTS.md: {inv} is cited nowhere outside INVARIANTS.md (INV-004)")
+
+    homes = {}
+    for path, text in texts.items():
+        rel = str(path.relative_to(ROOT))
+        if path.parent.name == "archive" or rel in HISTORY:
+            continue
+        if rel == "docs/HANDOFF.md":
+            text = text.split("\n## Session log", 1)[0]
+        body = re.sub(r"```.*?```", "", text, flags=re.S)
+        units = []
+        for row in re.findall(r"^\|.*\|[ \t]*$", body, flags=re.M):
+            if row.count("|") >= 4 and not re.fullmatch(r"[|\s:-]+", row):
+                units.append(("table row", re.sub(r"\s+", " ", row.lower()).strip(), row))
+        for piece in re.split(r"(?<=[.!?])\s+|\n|\|", body):
+            norm = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", "", piece.lower())).strip()
+            if len(norm.split()) >= DUP_WORDS:
+                units.append(("sentence", norm, piece))
+        for kind, key, raw in units:
+            first = homes.setdefault((kind, key), rel)
+            if first != rel:
+                errors.append(f"{rel}: {kind} also in {first}; keep one home and link to it (INV-002): "
+                              f"{raw.strip()[:60]}")
 
     for path in sorted((ROOT / "src").glob("*.mjs")):
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):

@@ -2499,7 +2499,7 @@ Visitors and musicians entering seeds differing by only one character (e.g. `see
 1. `docs/INVARIANTS.md` holds INV-001 to INV-010 adapted from Mellon, plus INV-011 phrase determinism promoted from the protected-areas table (D-003, D-077). It is maintainer-protected.
 2. "What works" in `docs/HANDOFF.md` carries proof badges; every next step names an open roadmap item. P6-02 and P12-07 were filed so the existing next steps have homes.
 3. Em dashes leave documentation prose, `src/*.mjs` comments, and commit messages. Existing decisions got punctuation-only edits, an accepted exception to append-only. UI typography, code spans, the archive, and the three fingerprinted score programs keep theirs.
-4. `docs/GLOSSARY.md` records plain names with their Mellon names. Instructions use the plain names so the LOLCODE voice stays the house voice.
+4. `docs/GLOSSARY.md` records plain process names with their Mellon names; product terms stay in `AGENTS.md`. Instructions use the plain names so the LOLCODE voice stays the house voice.
 5. `tools/check_docs.py` enforces the new rules; Mellon's separate `check_mellon.py` is not copied, so one checker remains.
 
 **Alternatives:** Renaming headings to Middle-earth terms would mix two playful voices. Badging "What works" with warnings only (Mellon's choice) would let unbadged claims through.

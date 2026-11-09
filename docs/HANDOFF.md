@@ -110,7 +110,7 @@ Each entry covers Contributor, Goal, Done, Changed, Decisions, Verified, Not ver
 
 **Corrections:** none.
 
-**Left undone:** INV-002 has no automated check. Fingerprinted score programs and UI strings keep their em dashes by design (D-109).
+**Left undone:** INV-002's checker catches verbatim copies only, not paraphrases. Fingerprinted score programs and UI strings keep their em dashes by design (D-109).
 
 ### Session 109 (2026-11-04): Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (P12-06, D-107)
 

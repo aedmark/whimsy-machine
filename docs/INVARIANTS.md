@@ -12,7 +12,7 @@ Identifiers are `INV-NNN`, permanent. Every invariant here must be cited somewhe
 ## INV-002 One fact, one home (the One Ring rule)
 - **Axiom:** Every fact, state, decision, or boundary has exactly one authoritative file. Other files link to it.
 - **Rationale:** Two copies drift, and a session cannot tell which one lies.
-- **Enforcement:** The ownership table in `docs/README.md`; review at consolidation. Nothing automated yet.
+- **Enforcement:** The ownership table in `docs/README.md`; `tools/check_docs.py` rejects a sentence of 10 or more words, or a table row, that appears in two living documents (history sections exempt). Paraphrased duplicates still need review at consolidation.
 
 ## INV-003 Proof badges on current claims (ranger marks)
 - **Axiom:** Every claim under "What works" in `docs/HANDOFF.md` carries one badge: `[OBSERVED]` (run this session), `[DEDUCED]` (follows from types, schemas, or invariants), `[CONTRACT]` (maintainer decree or specification), `[HYPOTHESIS]` (conjecture awaiting proof), or `[UNTESTED]` (not run this session).

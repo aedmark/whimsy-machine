@@ -79,7 +79,7 @@ If a test or contract blocks the change unexpectedly, do not route around it; st
 | Command | Badge it supports | Proves | Does not prove |
 | --- | --- | --- | --- |
 | `node --test tests/*.test.mjs` | `[OBSERVED]` | Interpreters, score parsing, determinism fixtures (INV-011), session and export formats | Sound quality, visual composition, real browsers |
-| `python3 tools/check_docs.py` | `[OBSERVED]` | IDs, links, invariants, badges, next steps, em dashes (INV-003 to INV-006) | That any code runs |
+| `python3 tools/check_docs.py` | `[OBSERVED]` | IDs, links, invariants, badges, next steps, em dashes, verbatim duplicates (INV-002 to INV-006) | That any code runs |
 | `python3 tools/manual.py check docs/manual.json` | `[OBSERVED]` | Manual structure | That the manual is accurate |
 | Browser or listening review | `[OBSERVED]` only for the session that did it | What a person saw or heard | Other browsers or devices |
 

@@ -12,7 +12,7 @@ to it instead of copying it.
 | `../ROADMAP.md` | Maintainers and contributors | Planned scope and status | Detailed implementation notes |
 | `HANDOFF.md` | The next work session | Current state, active context, immediate next steps | Permanent design rules |
 | `INVARIANTS.md` | Agents and maintainers | Bedrock rules INV-NNN, changed only by maintainer decree | Tunable conventions or history |
-| `GLOSSARY.md` | Everyone | Product and process vocabulary, with Mellon names | Rules themselves |
+| `GLOSSARY.md` | Everyone | Process vocabulary, with Mellon names | Product terms (AGENTS.md) or the rules themselves |
 | `ARCHITECTURE.md` | Developers | System shape, interfaces, invariants, data flow | Chronological history |
 | `DECISIONS.md` | Future decision-makers | Rationale and alternatives for durable choices | Routine implementation detail |
 | `TESTING.md` | Contributors and release owners | Verification commands, coverage boundaries, known pitfalls | A duplicate of current test results |

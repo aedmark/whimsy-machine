@@ -89,12 +89,8 @@ Never force-push or rewrite shared history.
 | spell | `src/oracle.lol`, the score-generating program | JavaScript rendering code |
 | score | Validated parameters emitted by the spell | Rendered sound alone |
 | creature | The combined named visual and musical result | A stored user profile |
-| Zone | One repository and the rules that apply inside it | A branch, a folder, or a chat thread |
-| Fore-conception | A training-distribution default or prior expectation an agent brings into a fresh session | An observed fact in the repository |
-| Held tension | Two true claims that do not fit together yet, with an owner and a review trigger | An open question or a decision |
-| Proof badge | `[OBSERVED]`, `[DEDUCED]`, `[CONTRACT]`, `[HYPOTHESIS]`, or `[UNTESTED]` on a current claim | An unlabelled claim |
 
-The full process vocabulary, with Mellon names, is in `docs/GLOSSARY.md`.
+Process terms (Zone, fore-conception, held tension, proof badge, and the rest, with Mellon names) live in `docs/GLOSSARY.md`.
 | host | Browser adapters, interpreter, Canvas, and Web Audio | A server or remote service |
 
 ## Repository map
@@ -167,7 +163,7 @@ The full process vocabulary, with Mellon names, is in `docs/GLOSSARY.md`.
 | `ROADMAP.md` | Planned work with stable IDs |
 | `docs/` | Architecture, decisions, tests, risks, and current state |
 | `docs/INVARIANTS.md` | Bedrock rules (Elder Runes), maintainer-protected |
-| `docs/GLOSSARY.md` | Product and process vocabulary with Mellon names |
+| `docs/GLOSSARY.md` | Process vocabulary with Mellon names |
 | `tools/check_docs.py` | Documentation consistency checker: IDs, invariants, proof badges, next steps, em dashes |
 | `tools/manual.py` | 3x documentation manual validator and builder |
 | `tools/build_desktop.sh` | Builds the standalone desktop application binary with Tauri v2 and Cargo |
