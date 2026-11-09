@@ -51,6 +51,16 @@ Expected results from specific runs live in `HANDOFF.md`.
 - Tests write no project files.
 - A browser review requires serving the directory over HTTP, preferably with `python3 tools/serve.py`. Direct `file:` loading cannot fetch the spell.
 - After any `src/` edit, run `node tools/stamp_assets.mjs`; the cache-boundary test names the expected stamp when it is stale.
+- Services: browser review needs `python3 tools/serve.py` listening on port 8000. Node suites need no service.
+- Resource caps: none needed so far; the suites are short and bounded. Add one here if a test ever loops or grows memory without bound.
+
+## Runs that vary
+
+Score generation is deterministic by contract (D-003); a phrase test that varies is a bug, not noise. Real-time audio scheduling, browser timing, and listening judgments do vary.
+
+- One run of a timing-sensitive or browser check proves little. Repeat it and record the tally with date and browser in `docs/HANDOFF.md`.
+- Say in the handoff whether a miss came from the code or the environment (a backgrounded tab, a throttled timer, a device).
+- To test handling of a rare bad input (a malformed `.fun` file, a hostile `#omen=` fragment), inject it directly instead of waiting for it.
 
 ## Adding a check
 

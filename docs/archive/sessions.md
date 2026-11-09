@@ -2610,9 +2610,40 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 - Zero-dependency boundary and phrase determinism contracts fully preserved.
 
+### Session 99 (2026-10-29): BioParasite Spore Harp Acoustic Calibration, Harmonic Consonance Sieve, and Default State (D-097)
 
+**Contributor:** Antigravity with maintainer direction
 
+**Goal:** Address user feedback that the BioParasite Spore Harp overpowered the rest of the ensemble by volume and dissonance, and set it to muted/off by default on summon and load.
 
+**Done:** All acoustic, harmonic, and ergonomic issues resolved and verified under D-097. 294/295 tests pass (1 skipped).
 
+**Changed:**
+1. Off-by-Default State & Ergonomics (`src/spore-harp.mjs`, `src/app.mjs`, `index.html`, D-097):
+   - Initialized `createSporeHarpModel` with `enabled: false`.
+   - Initialized mixer state with `harp` channel muted by default (`setMuted(createMixerState(), "harp", true)`), resetting to muted on `RESET CONSOLE`.
+   - Updated `index.html` static `#spore-harp-toggle` button to `aria-pressed="false"`, `○ SPORE HARP: MUTED`, and telemetry to `SPORE HARP · MUTED`.
+   - Wired `#spore-harp-strum` ("STRUM HYPHAE") to automatically unmute and engage the harp when clicked.
+2. Gain Staging & Parlor Volume Taming (`src/ensemble.mjs`, `src/spore-harp.mjs`):
+   - Reduced `sporeHarpBus.gain` from 0.62 down to 0.36 (~-5 dB), placing it in the delicate ambient bed behind lead, organ, and choir.
+   - Reduced `stringBus.gain` from 0.55 down to 0.38.
+   - Softened plectrum click transient gain from 0.09 down to 0.035 * vel and starting frequency to 2200 Hz.
+   - Reduced auto-strum velocity from 0.35 down to 0.18, and paced secondary shimmer to half-bar boundaries (steps 0 and 6) at 0.10 velocity.
+   - Capped interactive vitrine swipe velocity to 0.72.
+3. Harmonic Consonance Sieve & Pure Octave Bloom (`src/spore-harp.mjs`):
+   - In `LICHEN` mode: Replaced the clashing unvoiced fifth ($f_0 \times 1.5$) with pure harmonic octave shimmer ($f_0 \times 2.0$), dropped gain from 0.18 to 0.05 * vel, and routed it through the damping lowpass filter.
+   - In `MUTUAL` mode: Replaced microtonal drop chirp with harmonic 3.0 -> 2.0 intervals and dropped gain to 0.06 * vel.
+   - Tamed `baseDecay` from 2.8s down to 0.35..1.3s, allowing strings to naturally clear before chord transitions.
+   - Reduced inharmonicity from 0.014 down to 0.0025, preserving organic wooden string feel without sour pitch detuning.
+   - In `scheduleSporeHarpStep`, introduced harmonic consonance scoring for candidate fallback, explicitly rejecting semitone ($|d|=1$) and tritone ($|d|=6$) clashes against active chords.
+4. Documentation & Verification:
+   - Restamped asset version `ed33d9bb0a09` via `tools/stamp_assets.mjs`.
+   - Recorded D-097 in `docs/DECISIONS.md`.
+   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
+   - Archived Session 89 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
 
-
+**Verified:**
+- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
+- Zero-dependency boundary and phrase determinism contracts fully preserved.

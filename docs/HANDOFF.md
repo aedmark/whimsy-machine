@@ -4,7 +4,9 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-11-04, session 109, on `main`._
+_Last updated: 2026-11-08, session 110, on `main`._
+
+**Session owner:** none; session 110 (Claude Code) closed after adopting the expanded Manifold base scheme (D-108).
 
 - Phases 1–11 Complete: Esoteric engines (Plates I–VI), 22 Inform 7 rulebooks, FM-1 hardware, studio exports, autopoietic dynamics (D-001–D-088), 25-Key Manual (P11-01, D-098), Live Stream Audio & MIDI Recording (P11-02, D-099), and Preset Memory Schema v9 (P11-03, D-101).
 - Phase 8 Extensibility: Native CLAP Instrument Plugin (`P8-13`, `D-080`) complete: pure C ABI (C11) in isolated `plugin-clap/`, 23 automatable parameters, sample-accurate DAW beat/tempo synchronization, Session v9 project state recall, 9-bus stereo multi-out audio routing, and test suite verified via `test_clap.c` and `tests/clap.test.mjs`.
@@ -14,11 +16,11 @@ _Last updated: 2026-11-04, session 109, on `main`._
 
 **Where things stand:** P1–P7, P8-01 through P8-05, P8-13, P8-15 through P8-18, Phase 9, Polish Pass (D-088), Phase 10 (P10-01 through P10-04), Musicological Alignment, Firefox Stabilization (D-096), Spore Harp Calibration (D-097), 25-Key Manual Expansion (P11-01, D-098), Downbeat-Quantized Live Stream Audio & MIDI Recording Engine (P11-02, D-099), Polish & QoL Pass (D-100), Preset Memory Schema v9 (P11-03, D-101), Part Lock & Chimeras (P12-01, D-102), Production View / Salon Console (P12-04, D-103), Web MIDI Learn (P12-02, D-104), Global Undo/Redo Action History Stack (P12-03, D-105), Creature Temperaments & Multi-Archetype Vitrine Tap Dynamics (P12-05, D-106), and Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (P12-06, D-107) are fully implemented and verified! Version 1.5.0. 353/354 tests passing (353 passed, 1 skipped). Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-11-04, session 109, local Linux environment)
+**Verified** (2026-11-08, session 110, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **353/354 behavioral and structural checks passed (1 skipped)** |
+| `node --test tests/*.test.mjs` | **355/356 passed (1 skipped)** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 49 entries, 0 errors, 0 warnings** |
 
@@ -91,6 +93,24 @@ _Last updated: 2026-11-04, session 109, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+Each entry covers Contributor, Goal, Done, Changed, Decisions, Verified, Not verified, Problems, **Corrections** (earlier notes found wrong, and what was true), Left undone, and Next session.
+
+### Session 110 (2026-11-08): Adopt the expanded Manifold base scheme (D-108)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Close the gaps between this repository and the expanded Manifold base template.
+
+**Changed:** `AGENTS.md` (Zones, fore-conception and scoping steps, inquiry, loopback, ownership, Chesterton rules, consolidation step, three terms); `docs/DECISIONS.md` (format note, Held tensions, D-108); `docs/HANDOFF.md` (session owner, entry fields); `docs/TESTING.md` (services, resource caps, Runs that vary); `docs/SECURITY.md` (repository-content row); `tools/check_docs.py` (`T-NNN` and invisible-character checks).
+
+**Verified:** 355/356 Node tests (1 skipped), docs check 0/0, manual check 0 warnings; the new checker rules were each shown to fail on a planted violation before passing on the real docs.
+
+**Not verified:** no runtime code changed; no browser run.
+
+**Corrections:** none.
+
+**Left undone:** Mellon edition items (deferred in D-108). Next steps 2 and 3 still lack roadmap IDs; none exists to cite.
 
 ### Session 109 (2026-11-04): Opus Melodic Variations, Calling Slip Note Tweaker & Flavor Pinning (P12-06, D-107)
 
@@ -400,45 +420,3 @@ _Last updated: 2026-11-04, session 109, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 - Zero-dependency boundary and phrase determinism contracts fully preserved.
-
-### Session 99 (2026-10-29): BioParasite Spore Harp Acoustic Calibration, Harmonic Consonance Sieve, and Default State (D-097)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Address user feedback that the BioParasite Spore Harp overpowered the rest of the ensemble by volume and dissonance, and set it to muted/off by default on summon and load.
-
-**Done:** All acoustic, harmonic, and ergonomic issues resolved and verified under D-097. 294/295 tests pass (1 skipped).
-
-**Changed:**
-1. Off-by-Default State & Ergonomics (`src/spore-harp.mjs`, `src/app.mjs`, `index.html`, D-097):
-   - Initialized `createSporeHarpModel` with `enabled: false`.
-   - Initialized mixer state with `harp` channel muted by default (`setMuted(createMixerState(), "harp", true)`), resetting to muted on `RESET CONSOLE`.
-   - Updated `index.html` static `#spore-harp-toggle` button to `aria-pressed="false"`, `○ SPORE HARP: MUTED`, and telemetry to `SPORE HARP · MUTED`.
-   - Wired `#spore-harp-strum` ("STRUM HYPHAE") to automatically unmute and engage the harp when clicked.
-2. Gain Staging & Parlor Volume Taming (`src/ensemble.mjs`, `src/spore-harp.mjs`):
-   - Reduced `sporeHarpBus.gain` from 0.62 down to 0.36 (~-5 dB), placing it in the delicate ambient bed behind lead, organ, and choir.
-   - Reduced `stringBus.gain` from 0.55 down to 0.38.
-   - Softened plectrum click transient gain from 0.09 down to 0.035 * vel and starting frequency to 2200 Hz.
-   - Reduced auto-strum velocity from 0.35 down to 0.18, and paced secondary shimmer to half-bar boundaries (steps 0 and 6) at 0.10 velocity.
-   - Capped interactive vitrine swipe velocity to 0.72.
-3. Harmonic Consonance Sieve & Pure Octave Bloom (`src/spore-harp.mjs`):
-   - In `LICHEN` mode: Replaced the clashing unvoiced fifth ($f_0 \times 1.5$) with pure harmonic octave shimmer ($f_0 \times 2.0$), dropped gain from 0.18 to 0.05 * vel, and routed it through the damping lowpass filter.
-   - In `MUTUAL` mode: Replaced microtonal drop chirp with harmonic 3.0 -> 2.0 intervals and dropped gain to 0.06 * vel.
-   - Tamed `baseDecay` from 2.8s down to 0.35..1.3s, allowing strings to naturally clear before chord transitions.
-   - Reduced inharmonicity from 0.014 down to 0.0025, preserving organic wooden string feel without sour pitch detuning.
-   - In `scheduleSporeHarpStep`, introduced harmonic consonance scoring for candidate fallback, explicitly rejecting semitone ($|d|=1$) and tritone ($|d|=6$) clashes against active chords.
-4. Documentation & Verification:
-   - Restamped asset version `ed33d9bb0a09` via `tools/stamp_assets.mjs`.
-   - Recorded D-097 in `docs/DECISIONS.md`.
-   - Updated `docs/ARCHITECTURE.md` and `docs/HANDOFF.md`.
-   - Archived Session 89 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 294/295 checks passed (294 passed, 1 skipped).
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
-- Zero-dependency boundary and phrase determinism contracts fully preserved.
-
-
-
-

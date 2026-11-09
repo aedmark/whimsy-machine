@@ -2,6 +2,10 @@
 
 This append-only record holds choices that a future session might otherwise re-litigate.
 
+Record pre-existing choices too, the first time a session has to understand them. Every constraint in the codebase answers an earlier question or failure mode; recording that question stops a future session from removing a fence whose purpose it forgot.
+
+New entries use **Context**, **Decision**, **Alternatives** (optional), **Consequences**, and **Review trigger** (optional: the event that should cause reconsideration). To reverse a decision, add a new entry and mark the old one "superseded by D-MMM".
+
 ## D-001 Static site with no project dependencies  (2026-10-17, status: accepted)
 
 **Context:** The product must be browser-based, portable, and zero dependency.
@@ -1607,6 +1611,22 @@ Investigation showed two root causes:
 - Users can build and run `whimsy-machine.fwsc` directly in the `fm1-emu` emulator or flash it to physical hardware via `tools/flash_fm1.html`.
 - Full end-to-end testing of the compiled RISC binary is automated.
 
+## Held tensions
+
+A tension is two claims that are true and do not fit together yet. An open question has an unknown answer; a held tension has two known answers and a price. Each names an owner, both claims, why both hold, the cost of holding both, and a review trigger. One with no owner or trigger is deleted at consolidation; one that survives review becomes a decision, with the losing claim recorded as an alternative.
+
+```
+### T-NNN Title  (YYYY-MM-DD, status: held | resolved by D-MMM)
+**Owner:** ...
+**Claim A:** ...
+**Claim B:** ...
+**Why both hold:** ...
+**Cost of holding both:** ...
+**Review trigger:** ...
+```
+
+None held yet.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
@@ -2455,13 +2475,18 @@ Visitors and musicians entering seeds differing by only one character (e.g. `see
 - Calling Slip provides one-click melodic take exploration directly from the main view.
 - 100% of automated tests pass (353 passed, 1 skipped). Zero runtime dependencies added.
 
+## D-108 Adopt the expanded Manifold base scheme  (2026-11-08, status: accepted)
 
+**Context:** The Manifold template (`../the-manifold`, through commit e0560d2) added Zones, fore-conception checks, inquiry and loopback rules, held tensions, session ownership, consolidation passes, and checker coverage for `T-NNN` and invisible characters. This repository followed the earlier template.
 
+**Decision:**
+1. Adopt the base scheme's rules in `AGENTS.md`, the held-tension section here, a session owner line in `docs/HANDOFF.md`, "Runs that vary" in `docs/TESTING.md`, and the repository-content row in `docs/SECURITY.md`.
+2. `tools/check_docs.py` checks `T-NNN` definitions and references and rejects invisible or bidirectional control characters.
+3. Keep the maintainer's own writing preference; the template's default writing rules are not imported.
+4. Existing decisions are not backfilled with review triggers.
 
+**Alternatives:** The Mellon edition (Elder Runes `INV-NNN`, proof badges, em-dash ban, its own checker) was considered and deferred; it needs a decision on which architecture invariants become protected and a sweep of existing prose.
 
+**Consequences:** Agents now stop and ask on contradictions instead of routing around them, which may slow some sessions. The scheme stays a copy, not a dependency: later template changes need another adoption pass.
 
-
-
-
-
-
+**Review trigger:** The Manifold template changes again, or the maintainer chooses to adopt Mellon.

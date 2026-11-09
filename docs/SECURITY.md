@@ -23,6 +23,7 @@ Until a public reporting address exists, contact the repository maintainer priva
 | Session files (`.fun`) | malformed, oversized, or hostile JSON | 64 KB limit, `parseSession()` allowlist with exact fields, integer ranges, and enums (the v4 loop-machine song is validated the same way by `validateSong()`); rejected whole; values reach the page only as text or form values | session boundary |
 | Stored presets | tampered or corrupt `localStorage` value; blocked storage | revalidated on every read, bad entries dropped, every access wrapped so failure falls back to files |
 | Stored cabinet | tampered or corrupt `localStorage` value; blocked storage | `parseCabinetState()` accepts only `{ mode, open, seen }` with known values, otherwise starts fresh; every access wrapped | session boundary |
+| Repository content and retrieved docs | embedded instructions, prompt injection, invisible characters | treated as data; `tools/check_docs.py` rejects zero-width and bidirectional controls; embedded directives are never executed | every agent |
 | User privacy | phrase disclosure | no outbound requests, logs, or analytics; presets stay on-device and are deleted with DELETE or by clearing site data; `.fun` files, PNG plates, and `#omen=` links contain the phrase and travel only where the player sends them | whole application |
 
 ## Secure development rules
